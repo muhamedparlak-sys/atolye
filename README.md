@@ -10,6 +10,8 @@ Mobilya ustası için telefondan çalışan tasarım ve kesim uygulaması. Tek b
 4. **Düzenle** Satranç tahtası gibi ızgara: her sütun ayrı renk ve harf, satırlar numaralı (B2 gibi). Hücreye dokununca ölçüleri ve ayarları açılır.
 5. **Kesim** Parça listesi (bant bilgisiyle), plaka yerleşimi, hırdavat listesi (kulp / çekbas, menteşe tipi, ray, minifix…), kesimhaneye ve hırdavatçıya kopyalanacak metin.
 
+Duvardaki kolon ve tavandaki kiriş Ölçü adımında girilir; kolonun önü boş bırakılır, kirişin altına giren dolap 1 cm montaj payıyla kısaltılır, mutfakta sığmayan cihaz başka duvara taşınır.
+
 Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf aralığı, kapak genişliği (60 cm üstü otomatik çift kapak), kapak boyu (220 cm üstü tavan dolabı), tezgah 85–95 cm, menteşe sayısı, raf sehimi.
 
 ## Varsayılanlar

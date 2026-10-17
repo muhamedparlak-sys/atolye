@@ -378,21 +378,38 @@ function pack(parts,mat){
 /* ====================== VARYASYON ÜRETİCİ ====================== */
 function splitEq(L,target,min,max){if(L<min)return[];let k=Math.max(1,Math.round(L/target));
   while(L/k>max)k++;while(k>1&&L/k<min)k--;return Array(k).fill(Math.round(L/k))}
+/* Engeller: kolon (duvardan çıkıntı, tam boy) ve kiriş (tavandan sarkan). inp.obs: [{type,wall,x,w,d,h}] cm */
+function obsOf(inp,wall,type){return (inp.obs||[]).filter(o=>o.type===type&&(o.wall||"A")===wall)}
+function kolonRanges(inp,wall,L){return obsOf(inp,wall,"kolon").map(o=>({x0:Math.max(0,Math.round(o.x*10)),x1:Math.min(L,Math.round((o.x+o.w)*10)),d:Math.round(o.d*10)})).filter(r=>r.x1>r.x0)}
+function kirisLimit(inp,wall,x0,x1){let lim=Infinity;obsOf(inp,wall,"kiris").forEach(o=>{const a=o.w>0?o.x*10:-1e9,b=o.w>0?(o.x+o.w)*10:1e9;
+  if(a<x1&&b>x0)lim=Math.min(lim,Math.round(o.h*10)-10)});return lim}
+function cutRange(a,b,rs){let segs=[{s:a,e:b}];rs.forEach(r=>{segs=segs.flatMap(g=>{if(r.x1<=g.s||r.x0>=g.e)return[g];const o=[];if(r.x0>g.s)o.push({s:g.s,e:r.x0});if(r.x1<g.e)o.push({s:r.x1,e:g.e});return o})});return segs.filter(g=>g.e-g.s>0)}
+function refit(m,newH){m.H=newH;if(m.cols)m.cols=m.cols.map(c=>({...c,bands:COLP[c.p||"raf"].make(newH-m.baza)}))}
 function furnitureVariants(type,inp){
   const W=Math.round(inp.W*10),H=Math.round(inp.H*10),D=Math.round(inp.D*10);
   const out=[];
+  const kol=kolonRanges(inp,"A",W),segs=cutRange(0,W,kol);
   const build=(name,desc,pattern,opts={})=>{
-    const bz=opts.bz??(type==="gardirop"?80:60);
-    const tavan=type==="gardirop"&&H>2350?H-2150:0, mainH=H-tavan;
-    const nb=Math.max(1,Math.ceil(W/(opts.maxBody||1200)));const bws=Array(nb).fill(Math.round(W/nb));bws[nb-1]=W-bws[0]*(nb-1);
-    const mods=[];let x=0,pi=0;
-    bws.forEach((bw,bi)=>{const nc=bw<=650?1:Math.max(2,Math.round(bw/600));
+    const bz=opts.bz??(type==="gardirop"?80:60);const maxB=opts.maxBody||1200;
+    const mods=[],notes=[];let pi=0,bi=0;
+    const bodies=[];segs.forEach(g=>{const L=g.e-g.s;if(L<300){bodies.push({x:g.s,w:L,fill:true});return}
+      const nb=Math.max(1,Math.ceil(L/maxB));const w0=Math.round(L/nb);for(let k=0;k<nb;k++)bodies.push({x:g.s+k*w0,w:k===nb-1?L-w0*(nb-1):w0})});
+    const nBody=bodies.filter(b=>!b.fill).length;
+    bodies.forEach(b=>{
+      if(b.fill){mods.push(mkMod({role:"govde",x:b.x,W:b.w,H,D,gap:"Dolgu "+cm(b.w)+" cm"}));return}
+      bi++;const lim=kirisLimit(inp,"A",b.x,b.x+b.w),effH=Math.min(H,lim);
+      if(effH<1000){mods.push(mkMod({role:"govde",x:b.x,W:b.w,H:Math.max(300,effH),D,gap:"Kiriş altı"}));notes.push("Kiriş çok alçak; "+cm(b.x)+" cm'den sonraki "+cm(b.w)+" cm boş bırakıldı.");return}
+      const tavan=type==="gardirop"&&effH>2350?effH-2150:0, mainH=effH-tavan;
+      const nc=b.w<=650?1:Math.max(2,Math.round(b.w/600));
       const preset=[];for(let c=0;c<nc;c++){preset.push(pattern[pi%pattern.length]);pi++}
-      mods.push(mkMod({role:"govde",label:(nb>1?"G"+(bi+1):"G"),x,mount:0,W:bw,H:mainH,D,baza:bz,preset}));
-      if(tavan)mods.push(mkMod({role:"tavan",label:"T"+(nb>1?bi+1:""),x,mount:mainH,W:bw,H:tavan,D,baza:0,preset:Array(nc).fill("raf").map(()=> "raf")}));
-      x+=bw});
-    if(tavan)mods.filter(m=>m.role==="tavan").forEach(m=>m.cols.forEach(c=>c.bands=[B("raf",0,{door:true})]));
-    out.push({name,desc,mods})};
+      const lb=nBody>1?"G"+bi:"G";
+      const g=mkMod({role:"govde",label:lb,x:b.x,mount:0,W:b.w,H:mainH,D,baza:bz,preset});
+      if(effH<H)g.obsNote="kiriş payı düşüldü, gövde boyu "+cm(effH)+" cm (kiriş altına 1 cm montaj payı).";
+      mods.push(g);
+      if(tavan){const t=mkMod({role:"tavan",label:"T"+(nBody>1?bi:""),x:b.x,mount:mainH,W:b.w,H:tavan,D,baza:0,preset:Array(nc).fill("raf")});t.cols.forEach(c=>c.bands=[B("raf",0,{door:true})]);mods.push(t)}});
+    kol.forEach(k=>mods.push(mkMod({role:"kolon",x:k.x0,W:k.x1-k.x0,H,D:k.d,gap:"Kolon"})));
+    if(kol.length)notes.push(kol.length+" kolon payı düşüldü; kolon önleri boş bırakıldı.");
+    out.push({name,desc,mods,notes})};
   if(type==="gardirop"){
     build("Klasik","Askılı ve raflı bölmeler yan yana; her bölmenin altında çekmece yok, en az parça.",["aski","raf"]);
     build("Çekmeceli","Her bölmenin altında çekmece; küçük eşya için düzenli, işçiliği biraz fazla.",["cekmeceaski","cekmeceraf"]);
@@ -425,7 +442,8 @@ function kitchenVariants(inp){
   const runs={};wl.forEach(w=>{const L=walls[w];let r={as:0,ae:L,us:0,ue:L,cs:false,ce:false};
     if(plan==="L"){if(w==="A")r.ce=true;else{r.as=offA;r.us=offU}}
     if(plan==="U"){if(w==="B"){r.cs=true;r.ce=true}else if(w==="A"){r.ae=L-offA;r.ue=L-offU}else{r.as=offA;r.us=offU}}
-    r.free=(r.ae-r.as)-(r.cs?CA:0)-(r.ce?CA:0);runs[w]=r});
+    r.kol=kolonRanges(inp,w,L);
+    r.free=(r.ae-r.as)-(r.cs?CA:0)-(r.ce?CA:0)-r.kol.reduce((q,k)=>q+Math.max(0,Math.min(k.x1,r.ae)-Math.max(k.x0,r.as)),0);runs[w]=r});
   // cihaz grupları ve duvar ataması
   const groups=[];
   if(inp.fridge)groups.push({k:"fridge",w:700,wall:"A",first:true});
@@ -438,6 +456,18 @@ function kitchenVariants(inp){
     const alt=wl.filter(w=>w!==g.wall).sort((x,y)=>(runs[y].free-load(y))-(runs[x].free-load(x)))[0];
     if(alt&&runs[alt].free-load(alt)>=g.w){notes.push({fridge:"Buzdolabı",sink:"Eviye",oven:"Fırın"}[k]+" sığmadığı için "+alt+" duvarına alındı.");g.wall=alt;g.first=false}
     else{notes.push({fridge:"Buzdolabı",sink:"Eviye",oven:"Fırın"}[k]+" hiçbir duvara sığmadı; duvar ölçülerini kontrol edin.");groups.splice(groups.indexOf(g),1)}});
+  // duvar parçaları (köşe modülleri ve kolonlar düşülmüş) ve cihaz gruplarının parçalara yerleşimi
+  const NM={fridge:"Buzdolabı",sink:"Eviye",oven:"Fırın"};
+  const SEGS={};wl.forEach(w=>{const r=runs[w];const a=r.as+(r.cs?CA:0),e=r.ae-(r.ce?CA:0);SEGS[w]=cutRange(a,e,r.kol).map(g=>({...g,gs:[]}))});
+  const sfree=g=>g.e-g.s-g.gs.reduce((q,x)=>q+x.w,0);
+  groups.slice().sort((x,y)=>(y.first?1:0)-(x.first?1:0)).forEach(g=>{
+    const own=SEGS[g.wall]||[];let sg=g.first?own.find(x=>sfree(x)>=g.w):[...own].sort((a,b)=>sfree(b)-sfree(a)).find(x=>sfree(x)>=g.w);
+    if(!sg){const other=wl.filter(w=>w!==g.wall).flatMap(w=>SEGS[w].map(x=>({x,w}))).sort((a,b)=>sfree(b.x)-sfree(a.x)).find(o=>sfree(o.x)>=g.w);
+      if(other){sg=other.x;notes.push(NM[g.k]+(runs[g.wall].kol.length?" kolon nedeniyle ":" yer olmadığı için ")+other.w+" duvarına alındı.");g.first=false}}
+    if(!sg&&g.k==="sink"&&inp.dish){const cand=wl.flatMap(w=>SEGS[w]).sort((a,b)=>sfree(b)-sfree(a))[0];
+      if(cand&&sfree(cand)>=800){g.w=800;g.noDish=true;sg=cand;notes.push("Eviye ile bulaşık makinesi yan yana sığmadı; bulaşık makinesi çıkarıldı.")}}
+    if(sg)sg.gs.push(g);else notes.push(NM[g.k]+" hiçbir duvara sığmadı; duvar ve kolon ölçülerini kontrol edin.")});
+  wl.forEach(w=>SEGS[w].forEach(sg=>sg.gs.sort((x,y)=>(y.first?1:0)-(x.first?1:0))));
   return styles.map(st=>{
     const mods=[];let ai=0;
     const nc=w=>w>800?2:1;
@@ -451,29 +481,41 @@ function kitchenVariants(inp){
     wl.forEach(w=>{const r=runs[w];let as=r.as,ae=r.ae,us=r.us,ue=r.ue;
       if(r.cs){altMod(w,as,CA,{blind:{side:"l",w:offA}});as+=CA;ustMod(w,us,CU,{blind:{side:"l",w:offU}});us+=CU}
       if(r.ce){altMod(w,ae-CA,CA,{blind:{side:"r",w:offA}});ae-=CA;ustMod(w,ue-CU,CU,{blind:{side:"r",w:offU}});ue-=CU}
-      const gs=groups.filter(g=>g.wall===w).sort((x,y)=>(y.first?1:0)-(x.first?1:0));
+      const tavanH=Math.round(inp.tavan*10);
+      r.kol.forEach(k=>gapMod(w,k.x0,k.x1-k.x0,"Kolon","kolon",tavanH));
+      const segs=SEGS[w];
+      const blocks=[];
+      segs.forEach(sg=>{const gs=sg.gs,as=sg.s,ae=sg.e;
       const rest=(ae-as)-gs.reduce((s,g)=>s+g.w,0);
       let fill=rest>=300?splitEq(rest,st.t,300,st.max):[];let extra=rest-fill.reduce((s,q)=>s+q,0);
       const sink=gs.find(g=>g.k==="sink");
       if(extra>0&&fill.length)fill[fill.length-1]+=extra,extra=0;
-      if(extra>0&&sink&&extra<=200){sink.ev=800+extra;extra=0}
-      // dolgu dağıtımı: sona, aralara, (buzdolabı yoksa) başa
+      let evW=800;if(extra>0&&sink&&extra<=200){evW=800+extra;extra=0}
       const n=gs.length,pref=[n];for(let k=1;k<n;k++)pref.push(k);if(!(gs[0]&&gs[0].k==="fridge"))pref.push(0);
       const slots=Array(n+1).fill(0).map(()=>[]);fill.forEach((f,i)=>slots[pref[i%pref.length]].push(f));
-      let x=as;const blocks=[];
+      let x=as;
       for(let k=0;k<=n;k++){slots[k].forEach(f=>{altMod(w,x,f);x+=f});
         const g=gs[k];if(!g)continue;
-        if(g.k==="fridge"){gapMod(w,x,700,"Buzdolabı","alt",1850);blocks.push({k,x,w:700,t:"fridge"});x+=700}
-        if(g.k==="sink"){const ev=g.ev||800;altMod(w,x,ev,{preset:"eviye"});x+=ev;if(inp.dish){gapMod(w,x,600,"Bulaşık mak.","alt");x+=600}}
+        if(g.k==="fridge"){gapMod(w,x,700,"Buzdolabı","alt",1850);blocks.push({x,w:700,t:"fridge"});x+=700}
+        if(g.k==="sink"){altMod(w,x,evW,{preset:"eviye"});x+=evW;if(inp.dish&&!g.noDish){gapMod(w,x,600,"Bulaşık mak.","alt");x+=600}}
         if(g.k==="oven"){gapMod(w,x,600,"Fırın + ocak","alt");blocks.push({x,w:600,t:"oven"});x+=600}}
       if(extra>0)gapMod(w,x,extra,"Dolgu "+cm(extra)+" cm","alt");
-      // üst sıra
+      });
+      // üst sıra: kolonlar arası segmentler, cihaz blokları
+      cutRange(us,ue,r.kol).forEach(sg=>{const us=sg.s,ue=sg.e;
       let ux=us;blocks.filter(bk=>bk.x+bk.w>us&&bk.x<ue).sort((p,q)=>p.x-q.x).forEach(bk=>{const bx=Math.max(us,bk.x),bw=Math.min(ue,bk.x+bk.w)-bx;
         fillRow(w,ux,bx-ux,"ust");
         if(bk.t==="oven")gapMod(w,bx,bw,"Davlumbaz","ust",ustH);
         else{const h=Math.max(300,mountU+ustH-1900);ustMod(w,bx,bw,{mount:mountU+ustH-h,H:h})}
         ux=bx+bw});
-      fillRow(w,ux,ue-ux,"ust");
+      fillRow(w,ux,ue-ux,"ust");});
+      // kiriş: altına giren üst dolapları kısalt
+      mods.filter(m=>m.wall===w&&(m.role==="ust"||m.role==="alt")&&m.gap!=="Kolon").forEach(m=>{const lim=kirisLimit(inp,w,m.x,m.x+m.W);if(m.mount+m.H<=lim)return;
+        const nh=lim-m.mount;
+        if(m.gap){m.H=Math.max(100,nh);return}
+        if(m.role==="ust"&&nh>=300){refit(m,nh);m.obsNote="kiriş payı düşüldü, üst dolap boyu "+cm(nh)+" cm."}
+        else if(m.role==="ust"){m.gap="Kiriş altı";delete m.cols;m.H=Math.max(100,nh)}
+        else notes.push(w+" duvarında kiriş tezgah seviyesine iniyor; ölçüyü kontrol edin.")});
     });
     wl.forEach(w=>{let a=0,u=0;mods.filter(m=>m.wall===w).sort((p,q)=>p.x-q.x||p.mount-q.mount).forEach(m=>{if(m.gap)m.label=m.gap;else if(m.role==="alt")m.label=w+(++a);else m.label=w+"Ü"+(++u)})});
     return{name:st.name,desc:st.desc,mods,notes};
@@ -511,6 +553,8 @@ function bandCheck(m,ci,k,BG){const u=USES[useOf(m,ci,k)],sp=BG.space,inner=BG.i
 function advise(mods,R){
   const out=[];const add=(lvl,txt,why)=>{if(!out.some(o=>o.txt===txt))out.push({lvl,txt,why})};
   const child=S.type==="cocuk",vest=S.type==="vestiyer",kitchen=S.type==="mutfak";
+  mods.forEach(m=>{if(m.obsNote)add("info",m.label+": "+m.obsNote,"Kiriş ya da kolon olan duvarda dolap engele göre kısaltılır. Kirişin derinliği dolaptan azsa, gövdenin arka üst köşesini kertip tam boy yapmak da mümkündür; bunu ustaya bırakın.")});
+  if(mods.some(m=>m.gap==="Kolon"))add("info","Kolon önü boş bırakıldı.","Kolonun yanlarına ve önüne gövdeyle aynı malzemeden kapama paneli kesin; ölçüyü yerinde alın, duvar ve kolon gönyesiz olabilir.");
   mods.forEach(m=>{if(m.gap)return;const G=R.geo[m.id];if(!G)return;
     G.cols.forEach((c,i)=>{const pre=m.label+(m.cols.length>1?" / bölme "+(i+1):"")+": ";
       c.bands.forEach((b,k)=>{
@@ -607,6 +651,9 @@ function modDraw(m,G,ox,oy,o){
   const t=+SET.t,fs=o.fs;let s=`<g class="mod" data-mod="${m.id}" transform="translate(${ox} ${oy})">`;
   const st=`stroke="var(--wood-edge)" stroke-width="${fs/8}"`;
   if(m.gap){const isApp=/Bulaşık|Fırın|Buzdolabı/.test(m.gap);
+    if(m.gap==="Kolon"){s+=`<rect x="0" y="0" width="${m.W}" height="${m.H}" fill="var(--line)" stroke="var(--ink)" stroke-width="${fs/8}"/>`;
+      for(let q=-m.H;q<m.W;q+=fs*1.6)s+=`<line x1="${Math.max(0,q)}" y1="${Math.max(0,-q)}" x2="${Math.min(m.W,q+m.H)}" y2="${Math.min(m.H,m.W-q)}" stroke="var(--muted)" stroke-width="${fs/10}"/>`;
+      s+=`<text x="${m.W/2}" y="${m.H/2}" font-size="${fs*.8}" text-anchor="middle" fill="var(--ink)" font-family="IBM Plex Sans,sans-serif" transform="rotate(-90 ${m.W/2} ${m.H/2})">Kolon ${cm(m.W)}×${cm(m.D)}</text>`;return s+"</g>"}
     s+=`<rect x="0" y="0" width="${m.W}" height="${m.H}" fill="var(--bg)" stroke="var(--muted)" stroke-width="${fs/10}" stroke-dasharray="${fs/2} ${fs/3}"/>`;
     if(m.gap==="Davlumbaz")s+=`<path d="M${m.W*.2} ${m.H*.55} L${m.W*.8} ${m.H*.55} L${m.W} ${m.H} L0 ${m.H} Z" fill="var(--line)"/>`;
     if(!o.small&&m.W>250)s+=`<text x="${m.W/2}" y="${Math.min(m.H/2,600)}" font-size="${fs*.8}" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Sans,sans-serif">${esc(m.gap.replace(/ \d.*$/,""))}</text>`;
@@ -659,7 +706,8 @@ function wallSVG(mods,R,wall,o={}){
   const ms=mods.filter(m=>m.wall===wall);if(!ms.length)return"";
   const kitchen=S.type==="mutfak";
   const Lw=kitchen?Math.round(S.inp[wall]*10):Math.max(...ms.map(m=>m.x+m.W));
-  const top=Math.max(...ms.map(m=>m.mount+m.H),kitchen?Math.round(S.inp.tavan*10):0);
+  const kir=obsOf(S.inp,wall,"kiris");
+  const top=Math.max(...ms.map(m=>m.mount+m.H),kitchen?Math.round(S.inp.tavan*10):0,...kir.map(o=>Math.round(o.h*10)+150));
   const fs=Math.max(Lw,top)/(o.small?30:38),pad=fs*(o.grid?3.8:3.2);
   let s=`<svg viewBox="${-pad} ${-pad*(o.small?.4:o.grid?1.3:1)} ${Lw+pad*2} ${top+pad*(o.small?.9:o.grid?2.5:2.2)}" role="img" aria-label="${wall} duvarı görünüşü">`;
   if(kitchen){s+=`<rect x="0" y="0" width="${Lw}" height="${top}" fill="var(--bg)" opacity=".5"/>`;
@@ -670,6 +718,10 @@ function wallSVG(mods,R,wall,o={}){
   ms.filter(m=>!m.gap).sort((p,q)=>p.x-q.x||p.mount-q.mount).forEach(m=>m.cols.forEach((c,i)=>{const key=m.id+":"+i;hueIdx[key]=li;
     names[key]=kitchen?m.label+(m.cols.length>1?"abcdef"[i]:""):colLetter(li);li++}));
   const grid=!!o.grid;
+  kir.forEach(ob=>{const x0=ob.w>0?ob.x*10:0,x1=ob.w>0?(ob.x+ob.w)*10:Lw,yb=top-ob.h*10;
+    s+=`<rect x="${x0}" y="0" width="${x1-x0}" height="${yb}" fill="var(--line)" stroke="var(--ink)" stroke-width="${fs/8}"/>`;
+    for(let q=x0-yb;q<x1;q+=fs*1.6)s+=`<line x1="${Math.max(x0,q)}" y1="${Math.max(0,x0-q)}" x2="${Math.min(x1,q+yb)}" y2="${Math.min(yb,x1-q)}" stroke="var(--muted)" stroke-width="${fs/12}"/>`;
+    if(!o.small&&!o.grid)s+=`<text x="${(x0+x1)/2}" y="${yb+fs*1.1}" font-size="${fs*.7}" text-anchor="middle" fill="var(--ink)" font-family="IBM Plex Sans,sans-serif">Kiriş · alt ${fmt(ob.h)} cm</text>`});
   ms.forEach(m=>{s+=modDraw(m,R.geo[m.id],m.x,top-(m.mount+m.H),{fs,doors:!grid&&o.doors!==false&&S.showDoors,small:o.small,sel:o.sel===m.id,labels:!o.small,grid,names,hueIdx,selCell:o.selCell})});
   s+=`<line x1="${-pad*.5}" x2="${Lw+pad*.5}" y1="${top}" y2="${top}" stroke="var(--ink)" stroke-width="${fs/5}"/>`;
   if(!o.small){const tk=`stroke="var(--ink)" stroke-width="${fs/10}"`;const y=o.grid?-pad*.8:-pad*.45;
@@ -693,7 +745,10 @@ function planSVG(mods,small,plan=S.inp.plan,inp=S.inp){
     const lx=w.dir==="h"?w.L/2:w.dir==="v"?w.x+wt*1.6:-wt*1.6,ly=w.dir==="h"?-wt*2:w.L/2;
     if(!small)s+=`<text x="${lx}" y="${ly}" font-size="${wt*1.6}" text-anchor="${w.dir==="h"?"middle":w.dir==="v"?"start":"end"}" fill="var(--ink)" font-family="Barlow Condensed,sans-serif" font-weight="700">${k} · ${cm(w.L)}</text>`;
     else s+=`<text x="${lx}" y="${ly+wt*.6}" font-size="${wt*2.6}" text-anchor="middle" fill="var(--muted)" font-family="Barlow Condensed,sans-serif" font-weight="700">${k}</text>`});
-  (mods||[]).forEach(m=>{const w=walls[m.wall];if(!w)return;const d=m.role==="ust"?m.D:(m.gap==="Buzdolabı"?650:600);
+  (inp.obs||[]).filter(o=>o.type==="kolon").forEach(o=>{const w=walls[o.wall||"A"];if(!w)return;const x=o.x*10,ww=o.w*10,d=o.d*10;
+    let r;if(w.dir==="h")r=[x,0,ww,d];else if(w.dir==="v")r=[w.x-d,x,d,ww];else r=[0,w.L-x-ww,d,ww];
+    s+=`<rect x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" fill="var(--ink)" opacity=".75"/>`});
+  (mods||[]).forEach(m=>{const w=walls[m.wall];if(!w||m.gap==="Kolon")return;const d=m.role==="ust"?m.D:(m.gap==="Buzdolabı"?650:600);
     let r;if(w.dir==="h")r=[m.x,0,m.W,d];else if(w.dir==="v")r=[w.x-d,m.x,d,m.W];else r=[0,w.L-m.x-m.W,d,m.W];
     const ust=m.role==="ust";if(ust&&small)return;
     s+=`<rect x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" fill="${ust?"none":m.gap?"var(--bg)":"var(--wood)"}" stroke="${ust?"var(--accent)":"var(--wood-edge)"}" stroke-width="${ust?18:12}" ${ust?'stroke-dasharray="40 30"':""}/>`});
@@ -750,8 +805,19 @@ function renderOlcu(){
     <div class="panel"><label class="field"><span class="k">Derinlik · cm</span><input type="number" inputmode="decimal" id="in-D" data-inp="D" value="${i.D}"><span class="h" id="dhint">${depthHint()}</span></label></div>
     <div class="note" id="sizehint">${sizeHint()}</div>`;
   }
+  h+=obsPanel();
   $("#view").innerHTML=h;setBar("tur","oneri","Önerileri gör");
 }
+function obsPanel(){const obs=S.inp.obs||[],kitchen=S.type==="mutfak";
+  const walls=kitchen?(S.inp.plan==="I"?["A"]:S.inp.plan==="L"?["A","B"]:["A","B","C"]):["A"];
+  const f=(i,k,l,v,h)=>`<label class="field"><span class="k">${l}</span><input type="number" inputmode="decimal" id="ob-${i}-${k}" data-obs="${i}:${k}" value="${v}">${h?`<span class="h">${h}</span>`:""}</label>`;
+  return `<div class="panel"><span class="lbl">Kolon ve kiriş</span>
+   <div class="note">Duvarda kolon ya da tavanda kiriş varsa ekleyin; payı düşülür. Kolonun önü boş bırakılır, kirişin altına giren dolap kısaltılır (1 cm montaj payıyla).</div>
+   ${obs.map((o,i)=>`<div class="band"><div class="band-h"><span>${o.type==="kolon"?"Kolon":"Kiriş"} ${i+1}</span><button class="btn small danger" data-obsdel="${i}">Sil</button></div>
+     ${kitchen&&walls.length>1?`<div class="chips">${walls.map(w=>`<button class="chip" data-obswall="${i}:${w}" aria-pressed="${(o.wall||"A")===w}">${w} duvarı</button>`).join("")}</div>`:""}
+     <div class="grid3">${o.type==="kolon"?f(i,"x","Soldan cm",o.x)+f(i,"w","Genişlik cm",o.w)+f(i,"d","Duvardan çıkıntı cm",o.d)
+       :f(i,"h","Alt yüksekliği cm",o.h,"yerden kirişin altına")+f(i,"d","Duvardan çıkıntı cm",o.d)+f(i,"x","Soldan cm",o.x,"0 = baştan")+f(i,"w","Genişlik cm",o.w,"0 = tüm duvar")}</div></div>`).join("")}
+   <div class="btns"><button class="btn small ghost" data-obsadd="kolon">+ Kolon ekle</button><button class="btn small ghost" data-obsadd="kiris">+ Kiriş ekle</button></div></div>`}
 function depthHint(){return{gardirop:"Askılı gardırop için 58–60 cm standart. 56 cm altında askı sığmaz.",vestiyer:"Vestiyer 35–40 cm; bu derinlikte askı yerine kanca kullanılır.",kahve:"Kahve köşesi 40–50 cm; makineye göre ayarlayın.",cocuk:"Çocuk dolabı 50–55 cm."}[S.type]||""}
 function sizeHint(){const i=S.inp;const W=i.W*10,H=i.H*10;const tips=[];
   if(S.type==="gardirop"&&H>2350)tips.push("Boy 235 cm'yi geçtiği için üstü ayrı tavan dolabı olarak önerilecek.");
@@ -862,6 +928,7 @@ function cutText(){
   matsUsed(R.parts).forEach(m=>{L.push("",`${SET.mats[m].name} (${SET.mats[m].L}×${SET.mats[m].W})`);
     R.parts.filter(p=>p.mat===m).forEach(p=>{const b=[];if(p.bl)b.push(p.bl+" uzun");if(p.bs)b.push(p.bs+" kısa");
       L.push(`${p.id}  ${p.name}: ${p.qty} ad  ${p.a} x ${p.b}${b.length?"  bant: "+b.join(" + "):""}`)})});
+  (S.inp.obs||[]).forEach(o=>L.push((o.type==="kolon"?"Kolon":"Kiriş")+" ("+(o.wall||"A")+" duvarı): "+(o.type==="kolon"?`soldan ${o.x} cm, ${o.w}×${o.d} cm`:`alt ${o.h} cm, çıkıntı ${o.d} cm`)));
   L.push("","Arkalık: "+BACKS[backOf()].label+(backOf()==="18"?" (yan dikmeler arasına içten)":" (dıştan bindirme)"));
   L.push("",`Toplam bant: ${fmt(R.band,1)} m · Testere payı ${SET.kerf} mm${SET.grain?" · Desen yönü: boy plakanın uzun kenarı yönünde":""}`);
   return L.join("\n")}
@@ -998,6 +1065,11 @@ document.addEventListener("click",e=>{
   if(d.type){const changed=S.type!==d.type;S.type=d.type;if(changed&&d.type!=="mutfak"){const T=TYPES[d.type];Object.assign(S.inp,{W:T.W,H:T.H,D:T.D/10})}
     if(changed){S.mods=[];S.sel=null;S.back=BACK_DEF[d.type]||"3";if(S.name==="Yeni proje"||Object.values(TYPES).some(t=>t.label===S.name))S.name=TYPES[d.type].label}
     S.step="olcu";render();window.scrollTo(0,0);return}
+  if(d.obsadd){S.inp.obs=S.inp.obs||[];const kitchen=S.type==="mutfak",L=kitchen?S.inp.A:S.inp.W;
+    S.inp.obs.push(d.obsadd==="kolon"?{type:"kolon",wall:"A",x:Math.max(0,L-40),w:40,d:30}:{type:"kiris",wall:"A",x:0,w:0,d:25,h:kitchen?S.inp.tavan-40:Math.max(100,S.inp.H-10)});
+    S.mods=[];renderOlcu();persist();return}
+  if(d.obsdel!==undefined){S.inp.obs.splice(+d.obsdel,1);S.mods=[];renderOlcu();persist();return}
+  if(d.obswall){const[i,w]=d.obswall.split(":");S.inp.obs[+i].wall=w;S.mods=[];renderOlcu();persist();return}
   if(d.plan){S.inp.plan=d.plan;Object.assign(S.inp,{I:{A:360},L:{A:360,B:240},U:{A:240,B:320,C:240}}[d.plan]);renderOlcu();persist();return}
   if(d.pick){S.mods=clone(VARS[+d.pick].mods);S.sel=null;S.band=null;S.col=0;S.wall=S.type==="mutfak"?(S.inp.plan==="U"?"B":"A"):"A";S.step="duzen";render();window.scrollTo(0,0);toast("Seçildi: "+VARS[+d.pick].name);return}
   if(d.grid!==undefined){S.grid=d.grid==="1";S.band=null;renderDuzen();return}
@@ -1046,6 +1118,8 @@ document.addEventListener("click",e=>{
 });
 document.addEventListener("input",e=>{const x=e.target,d=x.dataset;
   if(x.id==="projName"){S.name=x.value;persist();return}
+  if(d.obs){const[i,k]=d.obs.split(":");const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)&&S.inp.obs[+i]){S.inp.obs[+i][k]=v;persist();
+    if(S.type==="mutfak"){const el=document.querySelector(".panel .elev");if(el)el.innerHTML=planSVG(null,false)}}return}
   if(d.inp){const v=parseFloat(x.value);if(!isNaN(v)){S.inp[d.inp]=v;persist();
     if(S.type==="mutfak"){const el=document.querySelector(".panel .elev");if(el)el.innerHTML=planSVG(null,false)}else{const h=$("#sizehint");if(h)h.textContent=sizeHint()}}return}
   if(d.mat){const[m,k]=d.mat.split(":");SET.mats[m][k]=k==="name"?x.value:(parseFloat(x.value)||0);persist();return}
