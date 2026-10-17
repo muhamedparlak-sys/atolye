@@ -266,7 +266,7 @@ const backOf=()=>BACKS[S.back]?S.back:(BACK_DEF[S.type]||"3");
 const TYPES={
   gardirop:{label:"Gardırop",desc:"Askı, raf, çekmece",D:580,W:200,H:220},
   vestiyer:{label:"Vestiyer",desc:"Antre, ayakkabılık, oturak",D:380,W:110,H:200},
-  kahve:{label:"Kahve köşesi",desc:"Tezgah, niş, üst dolap",D:450,W:90,H:200},
+  kahve:{label:"Kahve köşesi",desc:"Tezgah, niş, üst dolap",D:450,W:90,H:210,hL:"Toplam yükseklik",dL:"Alt derinlik"},
   cocuk:{label:"Çocuk dolabı",desc:"Alçak askı, oyuncak rafı",D:500,W:100,H:160},
   kitaplik:{label:"Kitaplık",desc:"Açık raf, alt dolap",D:330,W:120,H:200},
   tv:{label:"TV ünitesi",desc:"Konsol, yan kule, asma raf",D:420,W:240,H:200},
@@ -332,11 +332,11 @@ const COLP={
   oyuncak:{label:"Oyuncak rafı",make:Z=>[B("raf",700,{shelves:1,use:"oyuncak"}),B("raf",0,{door:true,use:"genel",shelves:autoShelves(Z-700)})]},
   /* mutfak */
   kapakli:{label:"Kapaklı",make:Z=>[B("raf",0,{door:true,shelves:Z>500?1:0})]},
-  ustkapakli:{label:"Kapaklı",make:Z=>[B("raf",0,{door:true,shelves:Z>500?2:0})]},
+  ustkapakli:{label:"Kapaklı",make:Z=>[B("raf",0,{door:true,shelves:Z>=700?2:Z>=400?1:0})]},
   cekmeceli:{label:"3 çekmece",make:Z=>[B("cekmece",0,{n:3})]},
   cekkap:{label:"Çekmece + kapak",make:Z=>[B("raf",0,{door:true}),B("cekmece",180,{n:1})]},
   eviye:{label:"Eviye altı",make:Z=>[B("raf",0,{door:true,use:"serbest"})]},
-  mkacik:{label:"Açık raf",make:Z=>[B("raf",0,{shelves:Z>500?2:1})]},
+  mkacik:{label:"Açık raf",make:Z=>[B("raf",0,{shelves:Z>=700?2:1})]},
   /* kitaplık */
   kitapacik:{label:"Açık kitaplık",make:Z=>[B("raf",0,{shelves:autoShelves(Z,300),use:"kitap"})]},
   kitapalt:{label:"Alt dolaplı",make:Z=>[B("raf",800,{door:true,shelves:1,use:"genel"}),B("raf",0,{shelves:autoShelves(Z-800,300),use:"kitap"})]},
@@ -367,7 +367,7 @@ const COLP={
 };
 const COLSETS={gardirop:["aski","uzunaski","ciftaski","cekmeceaski","raf","cekmeceraf","ayakkabi","acik"],
   vestiyer:["vaski","oturak","vkapali","ayakkabi","raf","acik"],
-  kahve:["kahve","kahvecek","kahveacik","raf","acik"],
+  kahve:["kapakli","cekkap","cekmeceli","kahve","raf"],kahve_asma:["ustkapakli","mkacik","raf"],
   cocuk:["caski","oyuncak","cekmeceraf","raf","acik"],
   kitaplik:["kitapacik","kitapalt","kitapcek","raf","acik"],
   tv:["tvkapak","tvnis","tvcek","tvkule","kitapacik"],asma:["tvasma","raf"],
@@ -534,6 +534,20 @@ function tvVariants(inp){const W=Math.round(inp.W*10),H=Math.round(inp.H*10),D=M
   {const mods=[cons(0,W,500,"tvcek")];out.push({name:"Çekmeceli konsol",desc:"Tek parça alçak konsol, çekmeceli; en az iş, en sade görünüm.",mods,notes:[]})}
   return out}
 function panel(o,name,x,mount,W,H,D,label){return mkMod({role:"panel",label,x,mount,W,H,D,baza:0,preset:[],panel:{o,name}})}
+function kahveVariants(inp){const W=Math.round(inp.W*10),H=Math.round(inp.H*10),D=Math.round(inp.D*10),Du=Math.round((inp.Du||30)*10),tz=Math.round((inp.tzK||90)*10),t=+SET.t;const out=[];
+  const nis=Math.max(450,Math.min(650,Math.round((inp.nisK||55)*10))),um=tz+nis,uh=Math.max(300,H-um);
+  const nb=Math.max(1,Math.ceil(W/1200)),bw=Math.round(W/nb);
+  const mk=(name,desc,alt,ust,notes=[])=>{const mods=[];
+    for(let i=0;i<nb;i++){const x=i*bw,w=i===nb-1?W-bw*(nb-1):bw,nc=w>800?2:1;const sfx=nb>1?String(i+1):"";
+      mods.push(mkMod({role:"govde",label:"A"+sfx,x,mount:0,W:w,H:tz-t,D,baza:80,preset:Array(nc).fill(alt)}));
+      mods.push(mkMod({role:"asma",label:"Ü"+sfx,x,mount:um,W:w,H:uh,D:Du,baza:0,preset:Array(nc).fill(ust)}))}
+    mods.push(panel("h","Tezgah tablası",0,tz-t,W,t,D+20,"TZ"));
+    if(H-um<300)notes.push("Üst dolap için yükseklik az; üst dolap 30 cm yapıldı, toplam yükseklik "+cm(um+300)+" cm oldu.");
+    out.push({name,desc,mods,notes})};
+  mk("Klasik","Altta kapaklı dolap, tezgah, makine nişi, üstte sığ kapaklı dolap.","kapakli","ustkapakli");
+  mk("Çekmeceli","Tezgah altında kapsül-kaşık çekmecesi, altında kapaklı dolap.","cekkap","ustkapakli");
+  mk("Açık üst raf","Üstte açık raf; fincan ve kavanozlar görünür.","kapakli","mkacik");
+  return out}
 function banyoVariants(inp){const W=Math.round(inp.W*10),H=Math.round(inp.H*10),D=Math.round(inp.D*10);const out=[];
   const lw=W-1000<350?Math.min(W,1300):1000,rest=W-lw,tall=rest>=350?Math.min(rest,500):0;
   const mk=(name,desc,lav,hung)=>{const mods=[];
@@ -604,10 +618,7 @@ function furnitureVariants(type,inp){
     build("Askılık + ayakkabılık","Açık kancalı askı, yanında kapaklı ayakkabılık.",["vaski","ayakkabi"],{maxBody:1300});
     build("Oturaklı","Ayakkabı giyerken oturmak için 45 cm oturak, yanında ayakkabılık.",["oturak","ayakkabi"],{maxBody:1300});
     build("Tam kapalı","Her şey kapak arkasında; toz tutmaz, daha çok menteşe ister.",["vkapali","ayakkabi"],{maxBody:1300});
-  }else if(type==="kahve"){
-    build("Klasik","Altta kapaklı dolap, 85 cm'de tezgah ve açık niş, üstte kapaklı dolap.",["kahve"],{maxBody:1000});
-    build("Çekmeceli","Tezgah altında kaşık-kapsül çekmecesi, altında dolap.",["kahvecek"],{maxBody:1000});
-    build("Açık üst","Üst bölüm açık raf; fincan ve kavanozlar görünür.",["kahveacik"],{maxBody:1000});
+  }else if(type==="kahve"){return kahveVariants(inp)
   }else if(type==="balkon"){
     build("Raflı","Kapaklı raflı bölmeler; deterjan, alet, kavanoz.",["balkonraf"]);
     build("Süpürge bölmeli","Bir bölme süpürge, ütü masası, paspas için boş; yanında raflar.",["supurge","balkonraf"]);
@@ -626,7 +637,7 @@ function furnitureVariants(type,inp){
 }
 function kitchenVariants(inp){
   inp=withDoors(inp);
-  const plan=inp.plan,tz=Math.round(inp.tezgah*10),altH=tz-40,altD=560,ustH=720,ustD=320,mountU=tz+550,bzA=100;
+  const plan=inp.plan,tz=Math.round(inp.tezgah*10),altH=tz-40,altD=Math.round((inp.altD||56)*10),ustH=720,ustD=Math.round((inp.ustD||32)*10),mountU=tz+550,bzA=100;
   const walls={A:Math.round(inp.A*10),B:Math.round(inp.B*10),C:Math.round(inp.C*10)};
   const wl=plan==="I"?["A"]:plan==="L"?["A","B"]:["A","B","C"];
   const CA=1050,CU=700,offA=altD+40,offU=ustD+30;
@@ -769,7 +780,7 @@ Object.keys(USES).forEach(k=>USES[k].key=k);
 function useOf(m,ci,k){const c=m.cols[ci],b=c.bands[k];if(b.use&&USES[b.use])return b.use;if(b.shoe)return"ayakkabi";
   if(b.kind==="nis")return S.type==="kahve"?"makine":"genel";
   if(m.role==="ust")return"tabak";if(m.role==="tavan")return"genel";if(m.role==="alt")return"tencere";
-  if(S.type==="kahve")return k===c.bands.length-1?"tabak":"genel";
+  if(S.type==="kahve")return m.role==="asma"?"tabak":(c.bands.length>1&&k===c.bands.length-1?"tabak":"genel");
   if(S.type==="cocuk"&&c.p==="oyuncak"&&k===0)return"oyuncak";
   if(S.type==="kitaplik")return"kitap";if(S.type==="banyo"&&m.role==="asma")return"kozmetik";
   if(S.type==="gardirop"||S.type==="cocuk")return"giysi";return"genel"}
@@ -808,6 +819,8 @@ function advise(mods,R){
   if(kitchen){const tz=S.inp.tezgah;
     if(tz<85||tz>95)add("warn","Tezgah "+tz+" cm, standart dışı.","Tezgah yüksekliği 85–95 cm arası olmalı; standart 90 cm. Kısa kullanıcı 85, uzun kullanıcı 95 seçer.");
     else add("ok","Tezgah "+tz+" cm.","Standart 90 cm; 85–95 arası kullanıcının boyuna göre ayarlanır.");
+    {const ad=S.inp.altD||56,ud=S.inp.ustD||32;if(ud>ad-15)add("warn","Üst dolap ("+ud+" cm) alt dolaba ("+ad+" cm) çok yakın derinlikte.","Üst dolap tezgahta çalışırken başa çarpmasın diye alt dolaptan en az 15 cm sığ olmalı; 30–35 cm önerilir.");
+      if(ad<50||ad>62)add("info","Alt dolap gövde derinliği "+ad+" cm.","Standart tezgah 60 cm; gövde 55–58 cm olur ki tezgah önden 2–4 cm taşsın, ankastre cihazlar sığsın.")}
     add("info","Üst dolap tezgahtan 55 cm yukarıda, alt kenarı "+(tz+55)+" cm'de.","Genel uygulama: tezgah ile üst dolap arası 50–65 cm. Daha alçağı ocakta çalışırken başa çarpar, daha yükseği üst rafa uzanmayı zorlaştırır.");
     const ut=tz+55+72;if(ut>S.inp.tavan)add("warn","Üst dolap tavana sığmıyor ("+ut+" cm).","Tavan yüksekliğini kontrol edin ya da üst dolabı kısaltın.");
     else if(S.inp.tavan-ut>=30)add("info","Üst dolabın üstünde "+(S.inp.tavan-ut)+" cm boşluk var.","Toz tutmaması için tavana kadar kapatma paneli ya da 30–35 cm yükseklikte ek dolap düşünebilirsiniz.");
@@ -824,6 +837,13 @@ function advise(mods,R){
         if(sink&&sill-tz<300)add("warn","Eviye pencerenin altında; batarya kanada çarpabilir ("+cm(sill-tz)+" cm).","İçe açılan pencerenin altında batarya için tezgahtan denizliğe yaklaşık 30 cm gerekir. Yatırılabilir (pencere önü) ya da kısa batarya seçin, veya bataryayı pencere kenarına alın.");
         else if(sink)add("ok","Eviye pencere altında, batarya kanada çarpmaz.","Denizlik tezgahtan "+cm(sill-tz)+" cm yukarıda.")}
       if(k==="ic")add("info",(o.wall||"A")+" duvarı: pencere içe açılıyor.","Kanadın süpürdüğü alana (planda mavi yay) yüksek eşya, davlumbaz ya da üst dolap konmaz.")})}
+  if(S.type==="kahve"){const A=mods.find(m=>/^A/.test(m.label||"")&&m.role==="govde"),U=mods.find(m=>/^Ü/.test(m.label||"")),T=mods.find(m=>m.label==="TZ");
+    if(T){const top=T.mount+T.H;if(top<850||top>950)add("warn","Tezgah "+cm(top)+" cm.","Kahve köşesi tezgahı 85–95 cm olmalı; ayakta kullanım için 90 cm yaygın.")}
+    if(U&&T){const n=U.mount-(T.mount+T.H);if(n<450)add("warn","Niş "+cm(n)+" cm, makine sığmayabilir.","Kahve makinesi, kettle ve öğütücü için tezgah ile üst dolap arası 45–65 cm olmalı; üstten su doldurulan makinede 55 cm ve üstü.");
+      else if(n>650)add("info","Niş "+cm(n)+" cm, üst dolaba uzanmak zorlaşır.","Üst dolabın alt kenarı tezgahtan 65 cm'den yukarıda olursa üst raflar zor kullanılır.");
+      else add("ok","Niş "+cm(n)+" cm.","Makine için 45–65 cm aralığı uygun.")}
+    if(U&&A){if(U.D>A.D-150)add("warn","Üst dolap derinliği "+cm(U.D)+" cm, alt dolaba çok yakın.","Üst dolap alt dolaptan en az 15 cm sığ olmalı; yoksa tezgahta çalışırken baş çarpar ve niş karanlık kalır. 30–35 cm önerilir.");
+      else add("ok","Üst dolap "+cm(U.D)+" cm, alt dolap "+cm(A.D)+" cm.","Üst dolap sığ, alt dolap derin: tezgah önü rahat kullanılır.")}}
   if(S.type==="banyo"){const L=mods.find(m=>m.label==="L"),A=mods.find(m=>m.label==="AY");
     if(L){const top=L.mount+L.H+20;if(top<800||top>900)add("warn","Lavabo üstü "+cm(top)+" cm.","Lavabo üst kenarı yerden 80–90 cm olmalı (lavabo kalınlığı ~2 cm dahil). Yetişkin için 85 cm yaygın.");else add("ok","Lavabo üstü "+cm(top)+" cm.","80–90 cm aralığı rahat kullanım sağlar.");
       add("info","Lavabo dolabında sifon payı.","Lavabo altı dolabın arkası sifon ve gider için açık ya da delikli bırakılır; çekmeceliyse üst çekmece U kesimli olur, rafı yoktur.")}
@@ -1285,7 +1305,9 @@ function renderOlcu(){
       <div class="otabs" role="tablist">${tabs.map(([k,l])=>`<button data-otab="${k}" aria-pressed="${tab===k}">${l}</button>`).join("")}</div>`;
     const heights=`<div class="panel"><span class="lbl">Yükseklikler · cm</span><div class="bigin">
       <label class="field"><span class="k">Tavan</span><input type="number" inputmode="decimal" id="in-tavan" data-inp="tavan" value="${i.tavan}"></label>
-      <label class="field"><span class="k">Tezgah</span><input type="number" inputmode="decimal" id="in-tezgah" data-inp="tezgah" value="${i.tezgah}"><span class="h">Standart 90; 85–95</span></label></div></div>`;
+      <label class="field"><span class="k">Tezgah</span><input type="number" inputmode="decimal" id="in-tezgah" data-inp="tezgah" value="${i.tezgah}"><span class="h">Standart 90; 85–95</span></label>
+      <label class="field"><span class="k">Alt dolap derinliği</span><input type="number" inputmode="decimal" id="in-altD" data-inp="altD" value="${i.altD||56}"><span class="h">gövde; tezgah +4 cm taşar</span></label>
+      <label class="field"><span class="k">Üst dolap derinliği</span><input type="number" inputmode="decimal" id="in-ustD" data-inp="ustD" value="${i.ustD||32}"><span class="h">30–35 cm önerilir</span></label></div></div>`;
     const devs=`<div class="panel"><span class="lbl">Cihazlar</span><div class="checks">
       <label class="check"><input type="checkbox" id="c-dish" data-chk="dish" ${i.dish?"checked":""}><span>Bulaşık makinesi<small>60 cm, eviyenin yanına</small></span></label>
       <label class="check"><input type="checkbox" id="c-oven" data-chk="oven" ${i.oven?"checked":""}><span>Ankastre fırın ve ocak<small>60 cm, üstüne davlumbaz</small></span></label>
@@ -1309,15 +1331,16 @@ function renderOlcu(){
   h=`<h1 class="c">${T.label} ölçüleri</h1>
     <div class="grid3"><label class="field big"><span class="k">En · cm</span><input type="number" inputmode="decimal" id="in-W" data-inp="W" value="${i.W}"></label>
     <label class="field big"><span class="k">${T.hL||"Boy"} · cm</span><input type="number" inputmode="decimal" id="in-H" data-inp="H" value="${i.H}"></label>
-    <label class="field big"><span class="k">Derinlik</span><input type="number" inputmode="decimal" id="in-D" data-inp="D" value="${i.D}"></label></div>
+    <label class="field big"><span class="k">${T.dL||"Derinlik"}</span><input type="number" inputmode="decimal" id="in-D" data-inp="D" value="${i.D}"></label></div>
     <div class="note" id="dhint">${depthHint()}</div>
+    ${S.type==="kahve"?`<div class="grid3"><label class="field"><span class="k">Üst derinlik</span><input type="number" inputmode="decimal" id="in-du" data-inp="Du" value="${i.Du||30}"><span class="h">30–35 cm</span></label><label class="field"><span class="k">Tezgah</span><input type="number" inputmode="decimal" id="in-tzk" data-inp="tzK" value="${i.tzK||90}"><span class="h">85–95 cm</span></label><label class="field"><span class="k">Niş</span><input type="number" inputmode="decimal" id="in-nk" data-inp="nisK" value="${i.nisK||55}"><span class="h">makine 45–65</span></label></div>`:""}
     ${S.type==="yatak"?`<div class="grid3"><label class="field"><span class="k">Yatak eni · cm</span><input type="number" inputmode="decimal" id="in-bw" data-inp="bedW" value="${i.bedW||160}"></label><label class="field"><span class="k">Yatak yüksekliği</span><input type="number" inputmode="decimal" id="in-bh" data-inp="bedH" value="${i.bedH||50}"><span class="h">baza + şilte üstü</span></label></div>`:""}
     ${S.type==="tv"?`<label class="field"><span class="k">TV ekranı · inç</span><input type="number" inputmode="decimal" id="in-tv" data-inp="tvInch" value="${i.tvInch||55}"><span class="h">Konsol genişliği ve kule aralığı buna göre denetlenir</span></label>`:""}
     <div class="note" id="sizehint">${sizeHint()}</div>
     <details class="panel" ${(i.obs||[]).length?"open":""}><summary style="cursor:pointer;font-weight:600">Kolon ya da kiriş var mı? ${(i.obs||[]).length?"("+i.obs.length+")":""}</summary>${obsPanel().replace(/^<div class="panel">/,'<div style="display:flex;flex-direction:column;gap:12px;margin-top:10px">')}</details>`;
   $("#view").innerHTML=h;setBar("tur","oneri","Önerileri gör");
 }
-function kitchenRange(inp,w){const L=Math.round(inp[w]*10),altD=560,offA=altD+40,CA=1050;let a=0,e=L,cs=false,ce=false;
+function kitchenRange(inp,w){const L=Math.round(inp[w]*10),altD=Math.round((inp.altD||56)*10),offA=altD+40,CA=1050;let a=0,e=L,cs=false,ce=false;
   if(inp.plan==="L"){if(w==="A")ce=true;else a=offA}
   if(inp.plan==="U"){if(w==="B"){cs=true;ce=true}else if(w==="A")e=L-offA;else a=offA}
   return{L,a:a+(cs?CA:0),e:e-(ce?CA:0),dead:[...(a>0?[{x0:0,x1:a}]:[]),...(cs?[{x0:a,x1:a+CA,c:1}]:[]),...(ce?[{x0:e-CA,x1:e,c:1}]:[]),...(e<L?[{x0:e,x1:L}]:[])]}}
@@ -1367,7 +1390,7 @@ function obsPanel(){const obs=S.inp.obs||[],kitchen=S.type==="mutfak";
      <div class="grid3">${o.type==="kapi"||o.type==="bos"?f(i,"x","Soldan cm",o.x)+f(i,"w","Genişlik cm",o.w):o.type==="pencere"?f(i,"x","Soldan cm",o.x)+f(i,"w","Genişlik cm",o.w)+f(i,"h","Denizlik cm",o.h,"yerden")+f(i,"wh","Yükseklik cm",o.wh):o.type==="kolon"?f(i,"x","Soldan cm",o.x)+f(i,"w","Genişlik cm",o.w)+f(i,"d","Duvardan çıkıntı cm",o.d)
        :f(i,"h","Alt yüksekliği cm",o.h,"yerden kirişin altına")+f(i,"d","Duvardan çıkıntı cm",o.d)+f(i,"x","Soldan cm",o.x,"0 = baştan")+f(i,"w","Genişlik cm",o.w,"0 = tüm duvar")}</div>${openChips(o,(k,v)=>`data-obsset="${i}:${k}:${v}"`)}</div>`).join("")}
    <div class="btns"><button class="btn small ghost" data-obsadd="kolon">+ Kolon ekle</button><button class="btn small ghost" data-obsadd="kiris">+ Kiriş ekle</button>${kitchen?`<button class="btn small ghost" data-obsadd="kapi">+ Kapı</button><button class="btn small ghost" data-obsadd="pencere">+ Pencere</button>`:""}</div></div>`}
-function depthHint(){return{banyo:"Lavabo dolabı 45–50 cm; ayna dolabı 15 cm, boy dolabı 35 cm'ye otomatik iner.",masa:"Masa derinliği 60–80 cm; monitör için en az 60.",yatak:"Komodin derinliği 35–45 cm.",balkon:"Balkon dolabı 40–60 cm; çamaşır makinesi için 60 cm gerekir.",kitaplik:"Kitaplık 30–35 cm; A4 klasör için en az 33 cm.",tv:"TV konsolu 40–45 cm; yan kuleler 35 cm'ye otomatik iner.",gardirop:"Askılı gardırop için 58–60 cm standart. 56 cm altında askı sığmaz.",vestiyer:"Vestiyer 35–40 cm; bu derinlikte askı yerine kanca kullanılır.",kahve:"Kahve köşesi 40–50 cm; makineye göre ayarlayın.",cocuk:"Çocuk dolabı 50–55 cm."}[S.type]||""}
+function depthHint(){return{kahve:"Alt dolap 45–60 cm (tezgah 2 cm taşar); üst dolap 30–35 cm, nişte makine rahat görünsün diye.",banyo:"Lavabo dolabı 45–50 cm; ayna dolabı 15 cm, boy dolabı 35 cm'ye otomatik iner.",masa:"Masa derinliği 60–80 cm; monitör için en az 60.",yatak:"Komodin derinliği 35–45 cm.",balkon:"Balkon dolabı 40–60 cm; çamaşır makinesi için 60 cm gerekir.",kitaplik:"Kitaplık 30–35 cm; A4 klasör için en az 33 cm.",tv:"TV konsolu 40–45 cm; yan kuleler 35 cm'ye otomatik iner.",gardirop:"Askılı gardırop için 58–60 cm standart. 56 cm altında askı sığmaz.",vestiyer:"Vestiyer 35–40 cm; bu derinlikte askı yerine kanca kullanılır.",cocuk:"Çocuk dolabı 50–55 cm."}[S.type]||""}
 function sizeHint(){const i=S.inp;const W=i.W*10,H=i.H*10;const tips=[];
   if(S.type==="gardirop"&&H>2350)tips.push("Boy 235 cm'yi geçtiği için üstü ayrı tavan dolabı olarak önerilecek.");
   if(W>1200)tips.push("En "+i.W+" cm; taşıma ve plaka boyu için "+Math.ceil(W/1200)+" ayrı gövde olarak bölünecek.");
