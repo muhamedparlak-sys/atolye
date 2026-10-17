@@ -15,7 +15,7 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 ## Varsayılanlar
 
 - Gövde: Suntalam 18 mm, plaka 2800 × 2100 mm
-- Arkalık: 8 mm (Ayarlar'dan değiştirilebilir)
+- Arkalık: 3 mm duralit, 8 mm ya da gövdeyle aynı 18 mm (içten geçme); türe göre önerilen seçim gelir, Düzenle ekranından değiştirilir
 - Testere payı 4 mm, kenar temizleme 10 mm, kapak boşluğu 3 mm
 
 Projeler ve fiyatlar tarayıcının yerel depolamasında (localStorage) tutulur; yalnızca o telefonda görünür.
