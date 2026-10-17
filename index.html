@@ -166,6 +166,10 @@ textarea{width:100%;min-height:200px;border:1px solid var(--line);border-radius:
 .bar .btn.ghost{flex:0 0 auto;min-width:96px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:9px;font-size:14px;z-index:20;max-width:90vw}
 button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.overlay{position:fixed;inset:0;z-index:30;background:rgb(0 0 0 / .45);display:flex;align-items:flex-end;justify-content:center;
+  padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
+.sheet-in{background:var(--surface);color:var(--ink);width:100%;max-width:720px;max-height:88vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+.sheet-in .ed-head b{font:700 22px var(--f-display);text-transform:uppercase;letter-spacing:.03em}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -232,10 +236,10 @@ const autoShelves=(h,sp=350)=>Math.max(0,Math.round(h/sp)-1);
 
 /* Bölme düzenleri (gövde mobilyaları) */
 const COLP={
-  aski:{label:"Askı + şapkalık",make:Z=>[B("aski",0,{door:true}),B("raf",400,{door:true,join:true,topName:""})]},
-  uzunaski:{label:"Uzun askı",make:Z=>[B("aski",0,{door:true}),B("raf",300,{door:true,join:true})]},
-  ciftaski:{label:"Çift askı",make:Z=>[B("aski",Math.round((Z-350)/2),{door:true}),B("aski",0,{door:true,join:true}),B("raf",350,{door:true,join:true})]},
-  cekmeceaski:{label:"Çekmece + askı",make:Z=>[B("cekmece",360,{n:2}),B("aski",0,{door:true}),B("raf",400,{door:true,join:true})]},
+  aski:{label:"Askı + şapkalık",make:Z=>[B("aski",0,{door:true}),B("raf",400,{door:true,join:true,use:"genel"})]},
+  uzunaski:{label:"Uzun askı",make:Z=>[B("aski",0,{door:true}),B("raf",300,{door:true,join:true,use:"genel"})]},
+  ciftaski:{label:"Çift askı",make:Z=>[B("aski",Math.round((Z-350)/2),{door:true}),B("aski",0,{door:true,join:true}),B("raf",350,{door:true,join:true,use:"genel"})]},
+  cekmeceaski:{label:"Çekmece + askı",make:Z=>[B("cekmece",360,{n:2}),B("aski",0,{door:true}),B("raf",400,{door:true,join:true,use:"genel"})]},
   raf:{label:"Raflı",make:Z=>[B("raf",0,{door:true,shelves:autoShelves(Z)})]},
   cekmeceraf:{label:"Çekmece + raf",make:Z=>[B("cekmece",540,{n:3}),B("raf",0,{door:true,shelves:autoShelves(Z-540)})]},
   ayakkabi:{label:"Ayakkabılık",make:Z=>[B("raf",Math.min(1050,Z-300),{door:true,shoe:true,shelves:autoShelves(Math.min(1050,Z-300),180)}),B("raf",0,{door:true,shelves:autoShelves(Math.max(300,Z-1050))})]},
@@ -245,15 +249,15 @@ const COLP={
   vkapali:{label:"Kapalı askı",make:Z=>[B("raf",450,{door:true,shelves:1,shoe:true}),B("aski",0,{door:true,hook:true}),B("raf",300,{door:true,join:true})]},
   kahve:{label:"Kapak + niş + kapak",make:Z=>[B("raf",850,{door:true,shelves:1,topName:"Tezgah tablası"}),B("nis",550),B("raf",0,{door:true,shelves:1})]},
   kahvecek:{label:"Çekmeceli tezgah",make:Z=>[B("raf",630,{door:true,shelves:1}),B("cekmece",220,{n:1,topName:"Tezgah tablası"}),B("nis",550,{shelves:0}),B("raf",0,{door:true,shelves:1})]},
-  kahveacik:{label:"Açık üst raf",make:Z=>[B("raf",850,{door:true,shelves:1,topName:"Tezgah tablası"}),B("nis",550,{shelves:1}),B("raf",0,{shelves:1})]},
-  caski:{label:"Çocuk askısı",make:Z=>[B("cekmece",360,{n:2}),B("aski",0,{door:true}),B("raf",350,{door:true,join:true})]},
-  oyuncak:{label:"Oyuncak rafı",make:Z=>[B("raf",600,{shelves:1}),B("raf",0,{door:true,shelves:autoShelves(Z-600)})]},
+  kahveacik:{label:"Açık üst raf",make:Z=>[B("raf",850,{door:true,shelves:1,topName:"Tezgah tablası"}),B("nis",550),B("raf",0,{shelves:1})]},
+  caski:{label:"Çocuk askısı",make:Z=>[B("cekmece",360,{n:2}),B("aski",0,{door:true}),B("raf",350,{door:true,join:true,use:"genel"})]},
+  oyuncak:{label:"Oyuncak rafı",make:Z=>[B("raf",700,{shelves:1,use:"oyuncak"}),B("raf",0,{door:true,use:"genel",shelves:autoShelves(Z-700)})]},
   /* mutfak */
   kapakli:{label:"Kapaklı",make:Z=>[B("raf",0,{door:true,shelves:Z>500?1:0})]},
   ustkapakli:{label:"Kapaklı",make:Z=>[B("raf",0,{door:true,shelves:Z>500?2:0})]},
   cekmeceli:{label:"3 çekmece",make:Z=>[B("cekmece",0,{n:3})]},
   cekkap:{label:"Çekmece + kapak",make:Z=>[B("raf",0,{door:true}),B("cekmece",180,{n:1})]},
-  eviye:{label:"Eviye altı",make:Z=>[B("raf",0,{door:true})]},
+  eviye:{label:"Eviye altı",make:Z=>[B("raf",0,{door:true,use:"serbest"})]},
   mkacik:{label:"Açık raf",make:Z=>[B("raf",0,{shelves:Z>500?2:1})]}
 };
 const COLSETS={gardirop:["aski","uzunaski","ciftaski","cekmeceaski","raf","cekmeceraf","ayakkabi","acik"],
@@ -477,6 +481,32 @@ function kitchenVariants(inp){
 }
 function variants(){return S.type==="mutfak"?kitchenVariants(S.inp):furnitureVariants(S.type,S.inp)}
 
+
+/* ====================== STANDART RAF ARALIKLARI (net, mm) ====================== */
+const USES={
+  ayakkabi:{l:"Ayakkabı",min:150,max:210,ideal:170,why:"Düz ayakkabı için raf arası 15–21 cm yeterli; daha fazlası boş kalır, daha azına spor ayakkabı sığmaz."},
+  bot:{l:"Bot / çizme",min:350,max:500,ideal:420,why:"Bot ve çizme için raf arası 35–50 cm gerekir."},
+  giysi:{l:"Katlanmış giysi",min:280,max:380,ideal:320,why:"Katlanmış giysi yığını 28–38 cm aralıkta devrilmeden durur ve alttaki giysiye ulaşılır."},
+  kitap:{l:"Kitap / klasör",min:250,max:350,ideal:320,why:"Kitap için 25 cm, A4 klasör için 33 cm yeterli."},
+  oyuncak:{l:"Oyuncak kutusu",min:300,max:400,ideal:340,why:"Standart oyuncak kutuları 30–40 cm yüksekliğe sığar."},
+  tabak:{l:"Tabak / bardak",min:200,max:300,ideal:240,why:"Tabak, bardak ve fincan için 20–30 cm; daha fazlası rafa ulaşılamayan boşluk bırakır."},
+  tencere:{l:"Tencere",min:250,max:400,ideal:330,why:"Alt dolapta tencere ve tava için 25–40 cm."},
+  makine:{l:"Kahve makinesi",min:450,max:650,ideal:520,why:"Kahve makinesi, kettle ve öğütücü için niş 45–65 cm olmalı; üstten su doldurulan makinede üst sınıra yakın tutun."},
+  genel:{l:"Genel eşya",min:250,max:450,ideal:330,why:"Genel eşya için 25–45 cm verimli aralık."},
+  serbest:{l:"Serbest (eviye, çöp)",min:0,max:99999,ideal:330,why:"Bu alan için standart raf aralığı yok."}};
+Object.keys(USES).forEach(k=>USES[k].key=k);
+function useOf(m,ci,k){const c=m.cols[ci],b=c.bands[k];if(b.use&&USES[b.use])return b.use;if(b.shoe)return"ayakkabi";
+  if(b.kind==="nis")return S.type==="kahve"?"makine":"genel";
+  if(m.role==="ust")return"tabak";if(m.role==="tavan")return"genel";if(m.role==="alt")return"tencere";
+  if(S.type==="kahve")return k===c.bands.length-1?"tabak":"genel";
+  if(S.type==="cocuk"&&c.p==="oyuncak"&&k===0)return"oyuncak";
+  if(S.type==="gardirop"||S.type==="cocuk")return"giysi";return"genel"}
+function bestShelves(inner,u){const t=+SET.t;let best=null;
+  for(let n=0;n<=14;n++){const sp=(inner-n*t)/(n+1);if(sp<60)break;const d=Math.abs(sp-u.ideal);if(!best||d<best.d)best={n,sp,d}}return best}
+function bandCheck(m,ci,k,BG){const u=USES[useOf(m,ci,k)],sp=BG.space,inner=BG.ib-BG.it;
+  const st=sp<u.min-4?"low":sp>u.max+4?"high":"ok";let fix=null,fixSp=null;
+  if(st!=="ok"){const b=bestShelves(inner,u);if(b&&b.sp>=u.min-4&&b.sp<=u.max+4&&b.n!==m.cols[ci].bands[k].shelves){fix=b.n;fixSp=b.sp}}
+  return{u,st,fix,fixSp}}
 /* ====================== USTA NOTLARI (ergonomi) ====================== */
 function advise(mods,R){
   const out=[];const add=(lvl,txt,why)=>{if(!out.some(o=>o.txt===txt))out.push({lvl,txt,why})};
@@ -491,13 +521,9 @@ function advise(mods,R){
           else if(clr<168)add("info",pre+"askı altı "+clr+" cm: ceket ve gömlek sığar, uzun elbise sığmaz.","Uzun giysi için 170–180 cm gerekir. Bir bölmeyi 'Uzun askı' yapabilirsiniz.");
           else add("ok",pre+"askı altı "+clr+" cm, uzun giysiye uygun.","Uzun giysi için 170–180 cm boşluk önerilir.");
           if(!b.hook&&(m.D-(backOf()==="18"?+SET.t:0))<(child?450:560))add("warn",pre+"iç derinlik "+cm(m.D-(backOf()==="18"?+SET.t:0))+" cm, askı borusu için az.","Askı borusu için gövde derinliği en az 56–60 cm olmalı. Bu derinlikte öne bakan kanca ya da çekmeceli askı kullanın.")}
-        if((b.kind==="raf"||b.kind==="nis")&&b.space!=null&&b.shelvesY.length){const sp=Math.round(b.space/10);
-          const shoe=!!b.shoe;
-          if(shoe){if(sp<15)add("warn",pre+"ayakkabı rafı arası "+sp+" cm, dar.","Ayakkabı rafı arası 16–18 cm, bot için 45–50 cm.")}
-          else if(kitchen&&m.role==="ust"){if(sp<20)add("warn",pre+"üst dolap raf arası "+sp+" cm.","Bardak ve tabak için raf arası en az 22–25 cm olsun.")}
-          else if(sp<25)add("warn",pre+"raf arası "+sp+" cm, sıkışık.","Katlanmış giysi ve eşya için 30–38 cm arası verimli. Bir raf eksiltin.");
-          else if(sp>45&&!kitchen)add("info",pre+"raf arası "+sp+" cm, bir raf daha sığar.","30–38 cm aralık daha verimli kullanılır.")}
-        if(b.kind==="nis"&&!kitchen&&S.type==="kahve"){const nh=Math.round(b.h/10);if(nh<45)add("warn",pre+"niş yüksekliği "+nh+" cm, kahve makinesi sığmayabilir.","Kahve makinesi ve kettle için niş en az 45–55 cm olmalı.")}
+        if((b.kind==="raf"||b.kind==="nis")&&b.space!=null){const ck=bandCheck(m,i,k,b);
+          if(ck.st==="low")add("warn",pre+ck.u.l.toLocaleLowerCase("tr")+" rafı arası "+cm(b.space)+" cm, standart "+ck.u.min/10+"–"+ck.u.max/10+" cm.",ck.u.why+(ck.fix!=null?" Önerilen: "+ck.fix+" raf ("+cm(ck.fixSp)+" cm aralık).":" Satırı yükseltin."));
+          else if(ck.st==="high")add(ck.u.key==="makine"?"warn":"info",pre+ck.u.l.toLocaleLowerCase("tr")+" için raf arası "+cm(b.space)+" cm, standart "+ck.u.min/10+"–"+ck.u.max/10+" cm.",ck.u.why+(ck.fix!=null?" Önerilen: "+ck.fix+" raf ("+cm(ck.fixSp)+" cm aralık).":""))}
       });
       if(m.blind&&c.bands.some(b=>b.shelvesY.length))add("info",m.label+": köşe dolabı rafı "+cm(c.sw)+" cm uzun.","Uzun köşe rafını ortadan arkalığa vidalı bir çıta ile destekleyin, yoksa sehim yapar.");
       else if(c.sw>800&&c.bands.some(b=>b.shelvesY.length))add("warn",pre+"bölme "+cm(c.sw)+" cm geniş, 18 mm raf sehim yapar.","Atölye kuralı: 18 mm suntalam raf 80 cm'yi geçmesin. Bölme sayısını artırın.");
@@ -615,10 +641,12 @@ function modDraw(m,G,ox,oy,o){
         if(!o.small){const f2=Math.max(fs*.55,Math.min(fs*1.05,hh/3.2,c.sw/5));const id=nm+(S.type==="mutfak"?"·":"")+(k+1);
           s+=`<text x="${c.x+c.sw/2}" y="${y0+hh/2-(hh>f2*3.2?f2*.25:-f2*.35)}" font-size="${f2}" text-anchor="middle" fill="var(--ink)" font-family="IBM Plex Mono,monospace" font-weight="500" pointer-events="none">${esc(id)}</text>`;
           if(hh>f2*3.2)s+=`<text x="${c.x+c.sw/2}" y="${y0+hh/2+f2*1.05}" font-size="${f2*.78}" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Mono,monospace" pointer-events="none">${cm(c.sw)}×${cm(b.h)}</text>`;
-          const kn={raf:b.shelvesY.length?"raf×"+b.shelvesY.length:"boş",nis:"niş",aski:b.hook?"kanca":"askı",cekmece:"çekmece×"+c.drawers.filter(d=>d.y>=b.top-5&&d.y<b.bot).length}[b.kind];
+          const ckw=(b.kind==="raf"||b.kind==="nis")&&b.space!=null?bandCheck(m,i,k,b).st!=="ok":false;
+          const kn=(ckw?"⚠ ":"")+{raf:b.shelvesY.length?"raf×"+b.shelvesY.length:"boş",nis:"niş",aski:b.hook?"kanca":"askı",cekmece:"çekmece×"+c.drawers.filter(d=>d.y>=b.top-5&&d.y<b.bot).length}[b.kind];
+          if(ckw)s+=`<rect x="${c.x+fs*.2}" y="${y0+fs*.2}" width="${fs*1.3}" height="${fs*1.3}" rx="${fs*.65}" fill="var(--warn)" pointer-events="none"/><text x="${c.x+fs*.85}" y="${y0+fs*1.2}" font-size="${fs*1.0}" text-anchor="middle" fill="#fff" font-family="IBM Plex Sans,sans-serif" font-weight="700" pointer-events="none">!</text>`;
           if(hh>f2*4.6)s+=`<text x="${c.x+c.sw/2}" y="${y0+hh/2+f2*2.05}" font-size="${f2*.72}" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Sans,sans-serif" pointer-events="none">${kn}${b.door?" · kapak":""}</text>`}
       })});
-    if(!o.small)s+=`<text x="${W/2}" y="${H-bz/2+fs*.35}" font-size="${fs*.7}" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Mono,monospace" pointer-events="none">${esc(m.label)}</text>`;
+    if(!o.small&&bz>0&&S.type!=="mutfak")s+=`<text x="${W/2}" y="${H-bz/2+fs*.35}" font-size="${fs*.7}" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Mono,monospace" pointer-events="none">${esc(m.label)}</text>`;
   }
   if(o.sel&&!o.grid)s+=`<rect x="${-fs*.3}" y="${-fs*.3}" width="${W+fs*.6}" height="${H+fs*.6}" fill="none" stroke="var(--accent)" stroke-width="${fs/2.2}" rx="${fs/2}"/>`;
   if(o.labels&&!o.grid)s+=`<g><rect x="${W/2-fs*1.7}" y="${H*.08}" width="${fs*3.4}" height="${fs*1.5}" rx="${fs*.3}" fill="var(--surface)" opacity=".92"/><text x="${W/2}" y="${H*.08+fs*1.1}" font-size="${fs}" text-anchor="middle" fill="var(--ink)" font-family="IBM Plex Mono,monospace">${esc(m.label)}</text></g>`;
@@ -633,7 +661,7 @@ function wallSVG(mods,R,wall,o={}){
   const Lw=kitchen?Math.round(S.inp[wall]*10):Math.max(...ms.map(m=>m.x+m.W));
   const top=Math.max(...ms.map(m=>m.mount+m.H),kitchen?Math.round(S.inp.tavan*10):0);
   const fs=Math.max(Lw,top)/(o.small?30:38),pad=fs*(o.grid?3.8:3.2);
-  let s=`<svg viewBox="${-pad} ${-pad*(o.small?.4:1)} ${Lw+pad*2} ${top+pad*(o.small?.9:2.2)}" role="img" aria-label="${wall} duvarı görünüşü">`;
+  let s=`<svg viewBox="${-pad} ${-pad*(o.small?.4:o.grid?1.3:1)} ${Lw+pad*2} ${top+pad*(o.small?.9:o.grid?2.5:2.2)}" role="img" aria-label="${wall} duvarı görünüşü">`;
   if(kitchen){s+=`<rect x="0" y="0" width="${Lw}" height="${top}" fill="var(--bg)" opacity=".5"/>`;
     // tezgah
     const alts=ms.filter(m=>m.role==="alt"&&m.gap!=="Buzdolabı");if(alts.length){const x0=Math.min(...alts.map(m=>m.x)),x1=Math.max(...alts.map(m=>m.x+m.W));const tz=Math.round(S.inp.tezgah*10);
@@ -657,13 +685,13 @@ function planSVG(mods,small,plan=S.inp.plan,inp=S.inp){
   if(plan==="I"){walls={A:{x:0,y:0,dir:"h",L:A}};Wb=A;Hb=Math.max(1800,A*.45)}
   else if(plan==="L"){walls={A:{x:0,y:0,dir:"h",L:A},B:{x:A,y:0,dir:"v",L:Bw}};Wb=A;Hb=Bw}
   else{walls={B:{x:0,y:0,dir:"h",L:Bw},A:{x:0,y:0,dir:"vl",L:A},C:{x:Bw,y:0,dir:"v",L:C}};Wb=Bw;Hb=Math.max(A,C)}
-  const pad=wt*4;let s=`<svg viewBox="${-pad} ${-pad} ${Wb+pad*2} ${Hb+pad*2}" role="img" aria-label="Mutfak planı">`;
+  const pad=wt*7;let s=`<svg viewBox="${-pad} ${-pad} ${Wb+pad*2} ${Hb+pad*2}" role="img" aria-label="Mutfak planı">`;
   Object.entries(walls).forEach(([k,w])=>{
     if(w.dir==="h")s+=`<rect x="${-wt}" y="${-wt}" width="${w.L+2*wt}" height="${wt}" fill="var(--ink)"/>`;
     else if(w.dir==="v")s+=`<rect x="${w.x}" y="${-wt}" width="${wt}" height="${w.L+wt}" fill="var(--ink)"/>`;
     else s+=`<rect x="${-wt}" y="${-wt}" width="${wt}" height="${w.L+wt}" fill="var(--ink)"/>`;
-    const lx=w.dir==="h"?w.L/2:w.dir==="v"?w.x+wt*2.6:-wt*2.6,ly=w.dir==="h"?-wt*2:w.L/2;
-    if(!small)s+=`<text x="${lx}" y="${ly}" font-size="${wt*1.6}" text-anchor="middle" fill="var(--ink)" font-family="Barlow Condensed,sans-serif" font-weight="700">${k} · ${cm(w.L)}</text>`;
+    const lx=w.dir==="h"?w.L/2:w.dir==="v"?w.x+wt*1.6:-wt*1.6,ly=w.dir==="h"?-wt*2:w.L/2;
+    if(!small)s+=`<text x="${lx}" y="${ly}" font-size="${wt*1.6}" text-anchor="${w.dir==="h"?"middle":w.dir==="v"?"start":"end"}" fill="var(--ink)" font-family="Barlow Condensed,sans-serif" font-weight="700">${k} · ${cm(w.L)}</text>`;
     else s+=`<text x="${lx}" y="${ly+wt*.6}" font-size="${wt*2.6}" text-anchor="middle" fill="var(--muted)" font-family="Barlow Condensed,sans-serif" font-weight="700">${k}</text>`});
   (mods||[]).forEach(m=>{const w=walls[m.wall];if(!w)return;const d=m.role==="ust"?m.D:(m.gap==="Buzdolabı"?650:600);
     let r;if(w.dir==="h")r=[m.x,0,m.W,d];else if(w.dir==="v")r=[w.x-d,m.x,d,m.W];else r=[0,w.L-m.x-m.W,d,m.W];
@@ -758,6 +786,7 @@ function renderDuzen(){
     <div class="chips"><button class="chip" data-grid="1" aria-pressed="${S.grid}">Izgara</button><button class="chip" data-grid="0" aria-pressed="${!S.grid}">Kapaklı görünüş</button></div></div>
    <div id="elev">${wallSVG(S.mods,R,S.wall,{sel:S.sel,grid:S.grid,selCell:S.sel!=null&&S.band!=null?S.sel+":"+S.col+":"+S.band:null})}</div>
    ${S.grid?`<div class="note">Her renk bir sütun, harf sütunun adı, sayı alttan satır numarası. Hücrede genişlik × yükseklik (cm) yazar.</div>`:""}
+   <div class="btns"><button class="btn small ghost" data-expimg="1">Çizimi resim olarak al</button></div>
    ${kitchen?`<details><summary class="note" style="cursor:pointer">Plan görünüşü</summary>${planSVG(S.mods,false)}</details>`:""}</div>
   ${m?(S.band!=null&&!m.gap?cellEditorHTML(m):editorHTML(m)):`<div class="panel note" style="text-align:center">${S.grid?"Ayarlamak istediğiniz hücreye dokunun; ölçüleri burada açılır.":"Değiştirmek istediğiniz dolabın üstüne dokunun."}</div>`}
   <div class="stats">
@@ -809,6 +838,10 @@ function cellEditorHTML(m){
    <div class="chips" style="flex-wrap:wrap">${kinds.map(([kk,l])=>`<button class="chip" data-kind="${kk}" aria-pressed="${b.kind===kk}">${l}</button>`).join("")}</div>
    ${b.kind!=="cekmece"?`<div class="row"><span>Kapak</span><label class="toggle"><input type="checkbox" data-bdoor="${k}" ${b.door?"checked":""}> ${b.door?"var":"yok"}</label></div>`:""}
    ${b.door&&k>0&&c.bands[k-1].door&&c.bands[k-1].kind!=="cekmece"?`<div class="row"><span>Alttaki satırla tek kapak</span><label class="toggle"><input type="checkbox" data-bjoin="${k}" ${b.join?"checked":""}> ${b.join?"birleşik":"ayrı"}</label></div>`:""}
+   ${b.kind==="raf"||b.kind==="nis"?(()=>{const ck=bandCheck(m,col,k,BG),uk=useOf(m,col,k);
+     return `<span class="lbl">Ne konacak?</span><div class="chips" style="flex-wrap:wrap">${Object.entries(USES).map(([kk,u])=>`<button class="chip" data-use="${kk}" aria-pressed="${uk===kk}">${u.l}</button>`).join("")}</div>
+      <div class="note" style="${ck.st!=="ok"?"color:var(--warn)":""}">${uk==="serbest"?"Standart yok":`Standart raf arası ${ck.u.min/10}–${ck.u.max/10} cm`} · şu an ${cm(BG.space)} cm ${ck.st==="ok"?"✓":ck.st==="low"?"(dar)":"(fazla)"}</div>
+      ${ck.fix!=null?`<button class="btn small" data-fixsh="${ck.fix}">Standarda ayarla: ${ck.fix} raf, ${cm(ck.fixSp)} cm aralık</button>`:""}`})():""}
    ${b.kind==="raf"||b.kind==="nis"?`<div class="row"><span>Raf adedi${BG.space!=null&&b.shelves?` <small class="note">· aralık ${cm(BG.space)} cm</small>`:""}</span><div class="step"><button data-bs="${k}:-1">−</button><output>${b.shelves}</output><button data-bs="${k}:1">+</button></div></div>`:""}
    ${b.kind==="cekmece"?`<div class="row"><span>Çekmece adedi <small class="note">· ön ${cm(BG.h/Math.max(1,b.n))} cm</small></span><div class="step"><button data-bn="${k}:-1">−</button><output>${b.n}</output><button data-bn="${k}:1">+</button></div></div>`:""}
    ${b.kind==="aski"?`<div class="row"><span>Askı tipi <small class="note">· askı altı ${cm(BG.clear)} cm</small></span><div class="chips"><button class="chip" data-hook="0" aria-pressed="${!b.hook}">Boru</button><button class="chip" data-hook="1" aria-pressed="${b.hook}">Kanca</button></div></div>`:""}
@@ -869,17 +902,92 @@ function renderAyar(){
   $("#bar").innerHTML=`<button class="btn" data-back="1">Tamam</button>`;
 }
 function renderProj(){const projs=LS.get("atolye2_projeler")||[];
-  $("#view").innerHTML=`<h1>Projeler</h1><p class="lead">Kayıtlar yalnızca bu telefonda tutulur.</p>
-   <div class="btns"><button class="btn" data-save="1">Bu projeyi kaydet</button><button class="btn ghost" data-new="1">Yeni proje</button></div>
+  $("#view").innerHTML=`<h1>Projeler</h1><p class="lead">Kayıtlar bu telefonda tutulur. Başka telefona taşımak ya da yedeklemek için dosya olarak indirin.</p>
+   <div class="panel"><span class="lbl">Açık proje · ${esc(S.name)}</span>
+    <div class="btns"><button class="btn" data-save="1">Kaydet</button>${S.mods.length?`<button class="btn ghost" data-expjson="project">Dosya olarak indir</button><button class="btn ghost" data-expimg="1">Çizimi resim olarak al</button>`:""}<button class="btn ghost" data-new="1">Yeni proje</button></div></div>
+   <div class="panel"><span class="lbl">Dosyadan aç</span>
+    <label class="btn ghost" style="display:block">Dosya seç (.json)<input type="file" id="impFile" accept=".json,application/json" hidden></label>
+    <details class="more"><summary>Metinden aç</summary><textarea id="impText" placeholder="Kopyalanan proje metnini buraya yapıştırın" style="min-height:110px;margin-top:8px"></textarea><div class="btns" style="margin-top:8px"><button class="btn small" data-imptext="1">Yapıştırdığımı aç</button></div></details></div>
+   <div class="panel"><span class="lbl">Yedek</span><div class="note">Tüm projeler ve fiyatlar tek dosyada. Telefon değiştirirken ya da veriler silinmesin diye ara ara alın.</div>
+    <div class="btns"><button class="btn ghost" data-expjson="backup">Yedeği indir</button></div></div>
+   <h2>Kayıtlı projeler</h2>
    <div class="panel">${projs.length?`<ul class="projects">${projs.map((p,i)=>`<li><span>${esc(p.name)} · ${TYPES[p.type]?.label||""}</span><span class="btns"><button class="btn small" data-load="${i}">Aç</button><button class="btn small danger" data-pdel="${i}">Sil</button></span></li>`).join("")}</ul>`:`<div class="note">Henüz kayıtlı proje yok.</div>`}</div>`;
   $("#bar").innerHTML=`<button class="btn ghost" data-back="1">Geri</button>`}
 
+
+/* ====================== DIŞA AKTARMA ====================== */
+function slug(t){return (t||"proje").toLocaleLowerCase("tr").replace(/ç/g,"c").replace(/ğ/g,"g").replace(/ı/g,"i").replace(/ö/g,"o").replace(/ş/g,"s").replace(/ü/g,"u").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"proje"}
+function resolveVars(svg){const cs=getComputedStyle(document.documentElement);
+  return svg.replace(/var\(--([\w-]+)\)/g,(m,k)=>cs.getPropertyValue("--"+k).trim()||"#888")}
+function loadSvg(svg,w){return new Promise((res,rej)=>{
+  const vb=(svg.match(/viewBox="([^"]+)"/)||[])[1].split(/\s+/).map(Number);const h=Math.round(w*vb[3]/vb[2]);
+  const str=resolveVars(svg).replace("<svg",`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"`).replace(/ style="[^"]*"/,"");
+  const img=new Image();img.onload=()=>res({img,w,h});img.onerror=rej;img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(str)})}
+async function drawingPNG(){
+  const kitchen=S.type==="mutfak";R=computeAll(S.mods);
+  const walls=kitchen?(S.inp.plan==="I"?["A"]:S.inp.plan==="L"?["A","B"]:["A","B","C"]):["A"];
+  const parts=[];const W=1600;
+  if(kitchen)parts.push({cap:"Plan",svg:planSVG(S.mods,false),w:900});
+  walls.forEach(w=>parts.push({cap:kitchen?w+" duvarı":"",svg:wallSVG(S.mods,R,w,{grid:S.grid})}));
+  const imgs=[];for(const p of parts)imgs.push({...p,...await loadSvg(p.svg,p.w||W-80)});
+  const cs=getComputedStyle(document.documentElement),col=k=>cs.getPropertyValue("--"+k).trim();
+  const head=150,gapH=70,foot=60;const H=head+imgs.reduce((q,i)=>q+i.h+gapH,0)+foot;
+  const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  x.fillStyle=col("surface");x.fillRect(0,0,W,H);
+  x.fillStyle=col("ink");x.font="700 56px 'Barlow Condensed', 'Arial Narrow', sans-serif";x.fillText(S.name.toLocaleUpperCase("tr"),40,80);
+  x.fillStyle=col("muted");x.font="500 28px 'IBM Plex Sans', sans-serif";
+  const sub=kitchen?`${TYPES.mutfak.label} · ${S.inp.plan} plan · tezgah ${S.inp.tezgah} cm`:`${TYPES[S.type].label} · ${S.inp.W} × ${S.inp.H} × ${S.inp.D} cm`;
+  x.fillText(sub+" · arkalık "+BACKS[backOf()].short,40,124);
+  let y=head;imgs.forEach(i=>{if(i.cap){x.fillStyle=col("ink");x.font="700 32px 'Barlow Condensed', sans-serif";x.fillText(i.cap.toLocaleUpperCase("tr"),40,y+30)}
+    x.drawImage(i.img,(W-i.w)/2,y+44,i.w,i.h);y+=i.h+gapH});
+  x.fillStyle=col("muted");x.font="400 22px 'IBM Plex Sans', sans-serif";
+  x.fillText((S.grid?"Ölçüler cm · hücre: genişlik × yükseklik":"Ölçüler cm")+" · "+new Date().toLocaleDateString("tr-TR"),40,H-24);
+  return new Promise(r=>c.toBlob(b=>r(b),"image/png"))}
+function tryDownload(blob,name){try{const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}catch(e){}}
+async function saveFile(blob,name){
+  let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use("downloads"):null}catch(e){dl=null}
+  if(dl){try{await dl.save({filename:name,data:blob});toast("Kaydedildi: "+name)}
+    catch(e){toast(e&&e.code==="declined"?"İndirme iptal edildi":"İndirilemedi; resme uzun basıp kaydedin ya da metin olarak kopyalayın")}return}
+  tryDownload(blob,name);toast("İndiriliyor: "+name)}
+function canShareFile(file){try{return !!(navigator.canShare&&navigator.canShare({files:[file]}))}catch(e){return false}}
+let EXPORT=null;
+function openSheet(html){document.getElementById("sheet")?.remove();const d=document.createElement("div");d.className="overlay";d.id="sheet";d.innerHTML=`<div class="sheet-in" role="dialog" aria-modal="true">${html}</div>`;document.body.appendChild(d)}
+function closeSheet(){document.getElementById("sheet")?.remove();if(EXPORT&&EXPORT.url)URL.revokeObjectURL(EXPORT.url);EXPORT=null}
+async function exportDrawing(){
+  openSheet(`<div class="ed-head"><b>Çizim hazırlanıyor…</b></div>`);
+  try{const blob=await drawingPNG();const name=slug(S.name)+(S.grid?"-olculu":"-gorunus")+".png";const file=new File([blob],name,{type:"image/png"});
+    const url=URL.createObjectURL(blob);EXPORT={blob,name,file,url};
+    openSheet(`<div class="ed-head"><b>Çizim</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+      <img src="${url}" alt="Çizim önizlemesi" style="width:100%;border:1px solid var(--line);border-radius:10px;background:#fff">
+      <div class="btns"><button class="btn" data-dl="png">İndir</button>${canShareFile(file)?`<button class="btn ghost" data-share="png">Paylaş (WhatsApp…)</button>`:""}</div>
+      <div class="note">İndirme çalışmazsa resme uzun basıp "Fotoğraflara kaydet"i seçin. ${S.grid?"Ölçülü ızgara çizimi iner; kapaklı görünüş için önce 'Kapaklı görünüş'e geçin.":"Kapaklı görünüş iner; ölçülü çizim için önce 'Izgara'ya geçin."}</div>`);
+    EXPORT.url=url;
+  }catch(e){openSheet(`<div class="ed-head"><b>Çizim hazırlanamadı</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div><div class="note">Bu tarayıcı çizimi resme çeviremedi. Ekran görüntüsü alarak paylaşabilirsiniz.</div>`)}}
+function projectData(){const c=clone(S);c.view=null;return c}
+function exportJSON(kind){
+  const data=kind==="backup"?{app:"atolye",v:1,kind:"backup",date:new Date().toISOString(),projects:LS.get("atolye2_projeler")||[],current:projectData(),set:SET}
+    :{app:"atolye",v:1,kind:"project",date:new Date().toISOString(),project:projectData()};
+  const txt=JSON.stringify(data);const name=(kind==="backup"?"atolye-yedek-"+new Date().toISOString().slice(0,10):slug(S.name))+".json";
+  const blob=new Blob([txt],{type:"application/json"});const file=new File([blob],name,{type:"application/json"});EXPORT={blob,name,file,txt};
+  openSheet(`<div class="ed-head"><b>${kind==="backup"?"Yedek dosyası":"Proje dosyası"}</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+    <div class="note">${kind==="backup"?"Kayıtlı tüm projeler, açık proje ve atölye ayarları (plaka, bant ve hırdavat fiyatları dahil).":"Yalnızca bu proje: "+esc(S.name)+"."} Dosya adı: <b>${esc(name)}</b></div>
+    <div class="btns"><button class="btn" data-dl="json">İndir</button>${canShareFile(file)?`<button class="btn ghost" data-share="json">Paylaş</button>`:""}<button class="btn ghost" data-copyjson="1">Metin olarak kopyala</button></div>
+    <div class="note">Diğer telefonda Projeler → "Dosyadan aç" ile dosyayı seçin. İndirme çalışmazsa "Metin olarak kopyala"yı kullanıp diğer telefonda "Metinden aç"a yapıştırın.</div>`)}
+function importText(txt){let d;try{d=JSON.parse(txt)}catch(e){toast("Dosya okunamadı; atölye proje dosyası değil.");return}
+  if(!d||d.app!=="atolye"){toast("Bu bir atölye dosyası değil.");return}
+  const projs=LS.get("atolye2_projeler")||[];const put=p=>{const i=projs.findIndex(x=>x.name===p.name);if(i>=0)projs[i]=p;else projs.unshift(p)};
+  if(d.kind==="project"&&d.project&&d.project.type){put(d.project);LS.set("atolye2_projeler",projs);S=Object.assign(freshState(),clone(d.project));S.view=null;S.step=S.mods.length?"duzen":"olcu";render();toast("Açıldı: "+S.name);return}
+  if(d.kind==="backup"){(d.projects||[]).forEach(put);LS.set("atolye2_projeler",projs);
+    if(d.set){SET=Object.assign(clone(DEFAULT_SET),d.set);SET.mats=Object.assign(clone(DEFAULT_SET.mats),d.set.mats||{})}
+    persist();renderProj();toast((d.projects||[]).length+" proje ve fiyatlar yüklendi");return}
+  toast("Dosyada proje bulunamadı.")}
 /* ====================== OLAYLAR ====================== */
 function curMod(){return S.mods.find(x=>x.id===S.sel)}
 function reflow(m,dw){ // mutfakta aynı sıradaki sağdaki modülleri kaydır
   if(S.type!=="mutfak"){let x=0;S.mods.filter(q=>q.role!=="tavan").sort((a,b)=>a.x-b.x).forEach(q=>{q.x=x;x+=q.W});S.mods.filter(q=>q.role==="tavan").forEach(t=>{const g=S.mods.filter(q=>q.role==="govde");const i=S.mods.filter(q=>q.role==="tavan").indexOf(t);if(g[i]){t.x=g[i].x;t.W=g[i].W}});return}
   S.mods.filter(q=>q!==m&&q.wall===m.wall&&q.role===m.role&&q.x>m.x).forEach(q=>q.x+=dw)}
 document.addEventListener("click",e=>{
+  if(e.target.id==="sheet"){closeSheet();return}
   const cell=e.target.closest("[data-cell]");
   if(cell){const[mid,ci,bi]=cell.dataset.cell.split(":");S.sel=mid;S.col=+ci;S.band=+bi;renderDuzen();setTimeout(()=>document.querySelector(".editor")?.scrollIntoView({behavior:"smooth",block:"nearest"}),30);return}
   const b=e.target.closest("button,[data-mod]");if(!b)return;const d=b.dataset;
@@ -904,6 +1012,8 @@ document.addEventListener("click",e=>{
     const cc=m.cols&&m.cols[Math.min(S.col,m.cols.length-1)],bb0=cc&&S.band!=null?cc.bands[Math.min(S.band,cc.bands.length-1)]:null;
     if(d.kind&&bb0){bb0.kind=d.kind;if(d.kind==="cekmece"){bb0.door=false;bb0.join=false;bb0.n=bb0.n||Math.max(1,Math.round((bb0.h||400)/200))}
       if(d.kind==="aski"){bb0.hook=m.D<450;bb0.shelves=0}renderDuzen();return}
+    if(d.use&&bb0){bb0.use=d.use;renderDuzen();return}
+    if(d.fixsh!==undefined&&bb0){bb0.shelves=+d.fixsh;renderDuzen();toast("Raf sayısı standarda ayarlandı");return}
     if(d.hook!==undefined&&bb0){bb0.hook=d.hook==="1";renderDuzen();return}
     if(d.addrow&&cc){cc.bands.splice(S.band+1,0,B("raf",300,{shelves:0,door:bb0?bb0.door:false}));S.band++;cc.p=null;renderDuzen();return}
     if(d.delrow&&cc){if(b.dataset.armed){cc.bands.splice(S.band,1);S.band=Math.max(0,S.band-1);if(cc.bands[0])cc.bands[0].join=false;cc.p=null;renderDuzen()}else{b.dataset.armed=1;b.textContent="Silmek için tekrar dokun"}return}
@@ -917,6 +1027,13 @@ document.addEventListener("click",e=>{
   }
   if(d.rt){S.resTab=d.rt;renderSonuc();persist();return}
   if(d.backtype&&BACKS[d.backtype]){S.back=d.backtype;renderDuzen();persist();toast("Arkalık: "+BACKS[d.backtype].label);return}
+  if(d.expimg){exportDrawing();return}
+  if(d.expjson){exportJSON(d.expjson);return}
+  if(d.closesheet){closeSheet();return}
+  if(d.dl&&EXPORT){saveFile(EXPORT.blob,EXPORT.name);return}
+  if(d.share&&EXPORT){navigator.share({files:[EXPORT.file],title:S.name}).catch(()=>{});return}
+  if(d.copyjson&&EXPORT){const t=EXPORT.txt;try{navigator.clipboard.writeText(t).then(()=>toast("Proje metni kopyalandı"),()=>toast("Kopyalanamadı; indirmeyi deneyin"))}catch(err){toast("Kopyalanamadı; indirmeyi deneyin")}return}
+  if(d.imptext){const t=$("#impText").value.trim();if(t)importText(t);else toast("Önce metni yapıştırın");return}
   if(d.opener){S.opener=d.opener;renderSonuc();persist();return}
   if(d.copyhw){const txt=hwText(hardware(S.mods,R));const ta=$("#hwText");const fb=()=>{if(ta){ta.focus();ta.select();toast("Metni seçtim; uzun basıp kopyalayın")}else toast("Kopyalanamadı; Gönder sekmesinden seçip kopyalayın")};
     try{navigator.clipboard.writeText(txt).then(()=>toast("Hırdavat listesi kopyalandı"),fb)}catch(err){fb()}return}
@@ -937,6 +1054,7 @@ document.addEventListener("input",e=>{const x=e.target,d=x.dataset;
     const el=$("#hwTot");if(el){const t=hwCost(hardware(S.mods,R));el.textContent=t>0?fmt(t)+" ₺":"—"}return}
 });
 document.addEventListener("change",e=>{const x=e.target,d=x.dataset;const m=curMod();
+  if(x.id==="impFile"&&x.files&&x.files[0]){const fr=new FileReader();fr.onload=()=>importText(String(fr.result));fr.onerror=()=>toast("Dosya okunamadı");fr.readAsText(x.files[0]);x.value="";return}
   if(x.id==="showDoors"){S.showDoors=x.checked;renderDuzen();return}
   if(x.id==="grain"){SET.grain=x.checked;persist();return}
   if(d.chk){S.inp[d.chk]=x.checked;persist();return}
