@@ -30,11 +30,12 @@
   --accent:#8FA8FF; --accent-ink:#0E1430; --soft:#222B45;
   --wood:#5E4E33; --wood-edge:#C9A465; --back:#36433E; --back-edge:#93A9A0; --top:#A48E6E;
   --warn:#F0965A; --ok:#6CC892; color-scheme:dark}
-html,body{height:100%}
+html{height:100%;box-sizing:border-box}
+body{height:100%;display:flex;flex-direction:column;overflow:hidden}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line);
+.top{position:relative;flex:none;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px 0}
 .wrap{max-width:720px;margin:0 auto}
 .top-row{display:flex;align-items:center;gap:8px}
@@ -48,7 +49,37 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .steps button.done{color:var(--ink);border-bottom-color:var(--line)}
 .steps button.cur{color:var(--accent);border-bottom-color:var(--accent)}
 .steps button:disabled{cursor:default;opacity:.55}
-main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 120px}
+main{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 16px}
+main.fill{overflow:hidden;display:flex;flex-direction:column}
+main.fill>.wrap{flex:1;min-height:0;width:100%;display:flex;flex-direction:column}
+main .view{gap:12px}
+.dz-top{display:flex;gap:6px;align-items:center;flex:none;overflow-x:auto;scrollbar-width:none}
+.dz-top .sp{flex:1}
+.dz-draw{flex:1;min-height:120px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px;display:flex}
+.dz-draw svg{width:100%;height:100%;display:block;touch-action:manipulation}
+.dz-draw .mod,.dz-draw .cell{cursor:pointer}
+.dz-bottom{flex:none;max-height:50%;overflow-y:auto;overscroll-behavior:contain;border-radius:14px}
+.dz-bottom .editor{border-width:1.5px}
+.dz-bottom .editor{padding:12px;gap:10px}
+.dz-bottom .editor .grid3{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.dz-bottom .editor .field input{font-size:16px;padding:8px 8px}
+.dz-bottom .editor .field .h{font-size:11px}
+.sumrow{display:flex;gap:6px;flex-wrap:wrap}
+.sumbtn{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 11px;font:600 13.5px var(--f-body);cursor:pointer;display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.sumbtn.w{border-color:var(--warn);color:var(--warn)}
+.sumbtn.ok{border-color:var(--ok);color:var(--ok)}
+.hint{font-size:12.5px;color:var(--muted);text-align:center}
+.carousel{flex:1;min-height:0;display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:2px}
+.carousel>.vcard{flex:0 0 88%;scroll-snap-align:center;min-height:0;max-width:440px}
+.carousel .pic{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
+.carousel .pic svg{flex:1;min-height:0;width:100%;height:100%;max-height:none}
+.carousel .body{flex:none}
+.carousel .body p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.otabs{display:flex;gap:0;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.otabs button{flex:1;border:0;background:var(--surface);color:var(--muted);padding:9px 4px;font:600 13px var(--f-body);cursor:pointer;border-right:1px solid var(--line)}
+.otabs button:last-child{border-right:0}
+.otabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+h1.c{font-size:24px}
 .view{display:flex;flex-direction:column;gap:14px}
 h1{font-family:var(--f-display);font-weight:700;font-size:28px;line-height:1.05;letter-spacing:.01em;margin:0;text-wrap:balance}
 h2{font-family:var(--f-display);font-weight:700;font-size:19px;text-transform:uppercase;letter-spacing:.05em;margin:4px 0 0}
@@ -56,8 +87,9 @@ h2{font-family:var(--f-display);font-weight:700;font-size:19px;text-transform:up
 .lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
 .types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.tcard{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:14px 12px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-height:150px}
-.tcard svg{width:56px;height:56px;color:var(--accent)}
+.tcard{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:10px 12px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-height:0}
+.tcard svg{width:42px;height:42px;color:var(--accent)}
+.tcard b{font-size:18px!important}
 .tcard b{font:700 20px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.03em}
 .tcard span{font-size:13px;color:var(--muted)}
 .tcard[aria-pressed="true"]{border-color:var(--accent);background:var(--soft)}
@@ -66,7 +98,7 @@ h2{font-family:var(--f-display);font-weight:700;font-size:19px;text-transform:up
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .field .k{font-size:13px;color:var(--muted);font-weight:500}
 .field input,.field select{width:100%;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px 12px;font:500 18px var(--f-mono);font-variant-numeric:tabular-nums}
-.field.big input{font-size:30px;padding:12px;text-align:center}
+.field.big input{font-size:26px;padding:10px 6px;text-align:center}
 .field .h{font-size:12px;color:var(--muted)}
 .field input:focus{border-color:var(--accent);outline:none}
 .plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -159,7 +191,7 @@ textarea{width:100%;min-height:200px;border:1px solid var(--line);border-radius:
 .projects li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
 .projects li:last-child{border:0}
 .projects span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
+.bar{position:relative;flex:none;z-index:6;background:var(--surface);border-top:1px solid var(--line);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px calc(10px + env(safe-area-inset-bottom,0px))}
 .bar .wrap{display:flex;gap:10px}
 .bar .btn{flex:1}
@@ -168,7 +200,7 @@ textarea{width:100%;min-height:200px;border:1px solid var(--line);border-radius:
 button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .strip-h{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px}
 .strip-h b{font:700 16px var(--f-display);text-transform:uppercase;letter-spacing:.04em}
-.strip{position:relative;height:70px;background:var(--bg);border:1.5px solid var(--line);border-radius:8px;margin-bottom:16px;touch-action:pan-y}
+.strip{position:relative;height:58px;background:var(--bg);border:1.5px solid var(--line);border-radius:8px;margin-bottom:16px;touch-action:pan-y}
 .strip .dead{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,var(--line) 0 4px,transparent 4px 9px);font-size:11px;color:var(--muted);display:grid;place-items:center}
 .strip .dead.kolon{background:var(--ink);opacity:.75}
 .strip .dead.kapi,.strip .dead.bos{background:repeating-linear-gradient(-45deg,var(--warn) 0 3px,transparent 3px 8px);opacity:.6;color:var(--ink);font-weight:600}
@@ -250,6 +282,7 @@ function persist(){LS.set("atolye2_cur",S);LS.set("atolye2_set",SET)}
 const fmt=(n,d=0)=>Number(n).toLocaleString("tr-TR",{minimumFractionDigits:d,maximumFractionDigits:d});
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cm=mm=>fmt(mm/10,mm%10?1:0);
+const nv=v=>String(Math.round(v*10)/10);
 
 /* ====================== MODEL ======================
  Modül = gövde. cols = bölmeler. Her bölme alttan üste "bant" yığını:
@@ -870,28 +903,30 @@ function roomSVG(rm,c,small){const W=rm.W*10,L=rm.L*10,wt=100,pad=small?wt*2:wt*
     if(!small){const m=roomPt(rm,i,Ln/2,-wt*2.6);s+=`<text x="${m[0]}" y="${m[1]+50}" font-size="150" text-anchor="middle" fill="var(--ink)" font-family="Barlow Condensed,sans-serif" font-weight="700">${i} · ${RWN[i]} · ${fmt(Ln/10)}</text>`}
     else{const m=roomPt(rm,i,Ln/2,-wt*1.3);s+=`<text x="${m[0]}" y="${m[1]+70}" font-size="200" text-anchor="middle" fill="var(--muted)" font-family="Barlow Condensed,sans-serif" font-weight="700">${i}</text>`}});
   return s+"</svg>"}
-function roomPanelHTML(){const rm=roomOf();
-  const f=(i,k,l,v,h)=>`<label class="field"><span class="k">${l}</span><input type="number" inputmode="decimal" id="ro-${i}-${k}" data-rop="${i}:${k}" value="${v}">${h?`<span class="h">${h}</span>`:""}</label>`;
+function roomSizeHTML(){const rm=roomOf();
   return `<div class="panel"><span class="lbl">Oda · cm</span>
     <div class="bigin"><label class="field"><span class="k">En (1 ve 3. duvar)</span><input type="number" inputmode="decimal" id="room-W" data-room="W" value="${rm.W}"></label>
      <label class="field"><span class="k">Boy (2 ve 4. duvar)</span><input type="number" inputmode="decimal" id="room-L" data-room="L" value="${rm.L}"></label></div>
-    <div class="elev" style="border:0;padding:0">${roomSVG(rm,null,false)}</div>
-    <span class="lbl">Kapı ve pencereler</span>
-    <div class="note">"Soldan" ölçüsü: o duvara odanın içinden bakarken sol köşeden. Kapı genişliğine kasayı dahil edin.</div>
+    <div class="elev" style="border:0;padding:0">${roomSVG(rm,null,false).replace("<svg",'<svg style="max-height:32vh"')}</div></div>`}
+function roomOpenHTML(){const rm=roomOf();
+  const f=(i,k,l,v,h)=>`<label class="field"><span class="k">${l}</span><input type="number" inputmode="decimal" id="ro-${i}-${k}" data-rop="${i}:${k}" value="${v}">${h?`<span class="h">${h}</span>`:""}</label>`;
+  return `<div class="panel"><div class="elev" style="border:0;padding:0;max-height:30vh">${roomSVG(rm,null,false).replace("<svg",'<svg style="max-height:28vh"')}</div>
+    <div class="note">"Soldan": o duvara odanın içinden bakarken sol köşeden. Kapı genişliğine kasayı dahil edin.</div>
     ${rm.open.map((o,i)=>`<div class="band"><div class="band-h"><span>${o.type==="kapi"?"Kapı":"Pencere"} ${i+1}</span><button class="btn small danger" data-ropdel="${i}">Sil</button></div>
       <div class="chips">${[1,2,3,4].map(n=>`<button class="chip" data-ropwall="${i}:${n}" aria-pressed="${o.wall===n}">${n} ${RWN[n]}</button>`).join("")}</div>
       <div class="grid3">${f(i,"x","Soldan",o.x)+f(i,"w","Genişlik",o.w)+(o.type==="pencere"?f(i,"h","Denizlik",o.h,"yerden")+f(i,"wh","Yükseklik",o.wh):"")}</div></div>`).join("")}
     <div class="btns"><button class="btn small ghost" data-ropadd="kapi">+ Kapı</button><button class="btn small ghost" data-ropadd="pencere">+ Pencere</button></div></div>`}
+function roomPanelHTML(){return roomSizeHTML()+roomOpenHTML()}
 function roomCandsHTML(){const C=roomCands(),rm=roomOf();
   if(!C.length)return `<div class="panel note">Bu odaya uygun plan bulunamadı; oda ölçülerini kontrol edin.</div>`;
   const wn=c=>Object.values(c.map).map(i=>RWN[i]).join(" + ");
-  return `<h2>Bu oda için ${C.length} plan</h2><p class="lead">En çok tezgah ve dolap, rahat çalışma üçgeni ve pencere altında eviye olanlar üstte.</p>
-   <div class="vgrid">${C.map((c,k)=>{const t=c.sc.tri;
-    return `<div class="vcard"><div class="pic">${roomSVG(rm,c,true)}</div><div class="body"><b>${c.plan} plan · ${wn(c)}</b>
+  return `<p class="hint" style="margin:0">${C.length} plan · yana kaydırın · en iyisi solda</p>
+   <div class="carousel">${C.map((c,k)=>{const t=c.sc.tri;
+    return `<div class="vcard"><div class="pic">${roomSVG(rm,c,true)}</div><div class="body"><b>${k+1}. ${c.plan} plan · ${wn(c)}</b>
      <div class="tags"><span class="tag">tezgah ${fmt(c.sc.tez,1)} m</span><span class="tag">üst ${fmt(c.sc.ust,1)} m</span>${t?`<span class="tag ${t.ok?"":"w"}">üçgen ${fmt(t.sum/1000,1)} m ${t.ok?"✓":"!"}</span>`:""}${c.sinkWin?`<span class="tag">eviye pencere altında</span>`:""}${c.sc.fails?`<span class="tag w">${c.sc.fails} cihaz sığmadı</span>`:""}</div>
      ${c.v.notes.filter(n=>!/kaydırıldı/.test(n)).map(n=>`<p style="color:var(--warn)">${esc(n)}</p>`).join("")}
      <button class="btn" data-pickroom="${k}">Bu planı seç</button></div></div>`}).join("")}</div>
-   <div class="note">Çalışma üçgeni: buzdolabı, eviye ve ocak arası toplam 3,6–7,9 m, her kenar 1,2–2,7 m olunca mutfakta gereksiz yürüme olmaz (genel mutfak tasarım kuralı).</div>`}
+   <div class="hint">Üçgen: buzdolabı–eviye–ocak arası toplam 3,6–7,9 m, her kenar 1,2–2,7 m.</div>`}
 /* ====================== ÇİZİM ====================== */
 function modDraw(m,G,ox,oy,o){
   const t=+SET.t,fs=o.fs;let s=`<g class="mod" data-mod="${m.id}" transform="translate(${ox} ${oy})">`;
@@ -1027,7 +1062,8 @@ function renderSteps(){const ci=stepIdx();
   $("#steps").innerHTML=STEPS.map(([k,l],i)=>{const reach=i<=ci||(i<=3&&S.mods.length&&i<=4)||(i===4&&S.mods.length);
     return `<button data-go="${k}" class="${i===ci&&!S.view?"cur":i<ci?"done":""}" ${reach||i<ci?"":"disabled"}>${i+1}. ${l}</button>`}).join("")}
 function render(){
-  renderSteps();$("#projName").value=S.name;
+  renderSteps();$("#projName").value=S.name;closeSheet&&document.getElementById("sheet")?.remove();
+  const main=document.querySelector("main");main.className="";main.scrollTop=0;
   if(S.view==="ayar")return renderAyar();if(S.view==="proj")return renderProj();
   ({tur:renderTur,olcu:renderOlcu,oneri:renderOneri,duzen:renderDuzen,sonuc:renderSonuc})[S.step]();
   persist();
@@ -1036,40 +1072,50 @@ function setBar(back,next,nextLabel,nextDisabled){
   $("#bar").innerHTML=(back?`<button class="btn ghost" data-go="${back}">Geri</button>`:"")+(next?`<button class="btn" data-go="${next}" ${nextDisabled?"disabled style='opacity:.45'":""}>${nextLabel}</button>`:"");
 }
 function renderTur(){
-  $("#view").innerHTML=`<h1>Ne yapıyoruz?</h1><p class="lead">Türü seçin; ölçüleri girince uygulama size hazır düzenler önerecek.</p>
-  <div class="types">${Object.entries(TYPES).map(([k,v])=>`<button class="tcard ${k==="mutfak"?"wide":""}" data-type="${k}" aria-pressed="${S.type===k}">${ICONS[k]}<div style="display:flex;flex-direction:column;gap:4px"><b>${v.label}</b><span>${v.desc}</span></div></button>`).join("")}</div>`;
+  $("#view").innerHTML=`<h1 class="c">Ne yapıyoruz?</h1>
+  <div class="types">${Object.entries(TYPES).map(([k,v])=>`<button class="tcard ${k==="mutfak"?"wide":""}" data-type="${k}" aria-pressed="${S.type===k}">${ICONS[k]}<div style="display:flex;flex-direction:column;gap:2px"><b>${v.label}</b><span>${v.desc}</span></div></button>`).join("")}</div>
+  <p class="hint">Türü seçin; ölçüyü girince uygulama hazır düzenler önerecek.</p>`;
   setBar(null,"olcu","Ölçülere geç",!S.type);
 }
 function renderOlcu(){
-  const T=TYPES[S.type],i=S.inp;let h;
+  const T=TYPES[S.type],i=S.inp;let h;const main=document.querySelector("main");main.className="";
   if(S.type==="mutfak"){
-    const mode=i.mode||"oda";
-    const modeChips=`<div class="chips"><button class="chip" data-kmode="oda" aria-pressed="${mode==="oda"}">Odayı tarif et</button><button class="chip" data-kmode="plan" aria-pressed="${mode==="plan"}">Planı ben seçerim</button></div>`;
+    const mode=i.mode||"oda";S.otab=S.otab||{};
+    const tabs=mode==="oda"?[["oda","Oda"],["acik","Kapı · pencere"],["cihaz","Cihaz"],["planlar","Planlar"]]:[["duvar","Duvarlar"],["tesisat","Tesisat"],["engel","Engel"]];
+    let tab=S.otab[mode];if(!tabs.some(t=>t[0]===tab))tab=tabs[0][0];S.otab[mode]=tab;
+    const head=`<div class="chips" style="flex:none"><button class="chip" data-kmode="oda" aria-pressed="${mode==="oda"}">Odayı tarif et</button><button class="chip" data-kmode="plan" aria-pressed="${mode==="plan"}">Planı ben seçerim</button></div>
+      <div class="otabs" role="tablist">${tabs.map(([k,l])=>`<button data-otab="${k}" aria-pressed="${tab===k}">${l}</button>`).join("")}</div>`;
     const heights=`<div class="panel"><span class="lbl">Yükseklikler · cm</span><div class="bigin">
       <label class="field"><span class="k">Tavan</span><input type="number" inputmode="decimal" id="in-tavan" data-inp="tavan" value="${i.tavan}"></label>
-      <label class="field"><span class="k">Tezgah</span><input type="number" inputmode="decimal" id="in-tezgah" data-inp="tezgah" value="${i.tezgah}"><span class="h">Standart 90; kısa kullanıcı 85, uzun 95</span></label></div></div>`;
+      <label class="field"><span class="k">Tezgah</span><input type="number" inputmode="decimal" id="in-tezgah" data-inp="tezgah" value="${i.tezgah}"><span class="h">Standart 90; 85–95</span></label></div></div>`;
     const devs=`<div class="panel"><span class="lbl">Cihazlar</span><div class="checks">
       <label class="check"><input type="checkbox" id="c-dish" data-chk="dish" ${i.dish?"checked":""}><span>Bulaşık makinesi<small>60 cm, eviyenin yanına</small></span></label>
       <label class="check"><input type="checkbox" id="c-oven" data-chk="oven" ${i.oven?"checked":""}><span>Ankastre fırın ve ocak<small>60 cm, üstüne davlumbaz</small></span></label>
-      <label class="check"><input type="checkbox" id="c-fridge" data-chk="fridge" ${i.fridge?"checked":""}><span>Buzdolabı<small>70 cm</small></span></label></div></div>`;
-    if(mode==="oda"){h=`<h1>Mutfağı tarif edin</h1><p class="lead">Odanın ölçüsünü, kapı ve pencerelerini girin; uygun planları sizin için çıkaralım.</p>${modeChips}${roomPanelHTML()}${heights}${devs}<div id="roomCands">${roomCandsHTML()}</div>`;
-      $("#view").innerHTML=h;setBar("tur",null);return}
-    h=`<h1>Mutfak planı ve duvarlar</h1><p class="lead">Plan tipini seçin, dolap gelecek duvarların uzunluğunu köşeden köşeye ölçün.</p>${modeChips}
-    <div class="plans">${["I","L","U"].map(p=>`<button class="plan" data-plan="${p}" aria-pressed="${i.plan===p}">${planIcon(p)}${p} plan</button>`).join("")}</div>
-    <div class="panel"><span class="lbl">Duvar uzunlukları · cm</span><div class="bigin">
+      <label class="check"><input type="checkbox" id="c-fridge" data-chk="fridge" ${i.fridge?"checked":""}><span>Buzdolabı<small>70 cm; genişliği Tesisat'tan değişir</small></span></label></div></div>`;
+    let body="";
+    if(tab==="oda")body=roomSizeHTML()+heights;
+    else if(tab==="acik")body=roomOpenHTML();
+    else if(tab==="cihaz")body=devs;
+    else if(tab==="planlar"){main.className="fill";body=`<div id="roomCands" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:8px">${roomCandsHTML()}</div>`}
+    else if(tab==="duvar")body=`<div class="plans">${["I","L","U"].map(p=>`<button class="plan" data-plan="${p}" aria-pressed="${i.plan===p}">${planIcon(p)}${p} plan</button>`).join("")}</div>
+      <div class="panel"><span class="lbl">Duvar uzunlukları · cm</span><div class="bigin">
       ${(i.plan==="I"?["A"]:i.plan==="L"?["A","B"]:["A","B","C"]).map(w=>`<label class="field"><span class="k">${w} duvarı${i.plan==="U"&&w==="B"?" (karşı)":""}</span><input type="number" inputmode="decimal" id="in-${w}" data-inp="${w}" value="${i[w]}"></label>`).join("")}
-    </div><div class="elev" style="border:0;padding:0">${planSVG(null,false)}</div></div>
-    ${heights}${devs}`;
-  }else{
-    h=`<h1>${T.label} ölçüleri</h1><p class="lead">Mobilyanın gireceği yerin enini ve boyunu girin. Derinlik standart değerle dolu, gerekirse değiştirin.</p>
-    <div class="bigin"><label class="field big"><span class="k">En · cm</span><input type="number" inputmode="decimal" id="in-W" data-inp="W" value="${i.W}"></label>
-    <label class="field big"><span class="k">Boy · cm</span><input type="number" inputmode="decimal" id="in-H" data-inp="H" value="${i.H}"></label></div>
-    <div class="panel"><label class="field"><span class="k">Derinlik · cm</span><input type="number" inputmode="decimal" id="in-D" data-inp="D" value="${i.D}"><span class="h" id="dhint">${depthHint()}</span></label></div>
-    ${S.type==="tv"?`<div class="panel"><label class="field"><span class="k">TV ekranı · inç</span><input type="number" inputmode="decimal" id="in-tv" data-inp="tvInch" value="${i.tvInch||55}"><span class="h">Konsol genişliği ve kule aralığı buna göre denetlenir</span></label></div>`:""}
-    <div class="note" id="sizehint">${sizeHint()}</div>`;
-  }
-  if(S.type==="mutfak")h+=fixPanelHTML();
-  h+=obsPanel();
+      </div><div class="elev" style="border:0;padding:0">${planSVG(null,false)}</div></div>${heights}`;
+    else if(tab==="tesisat")body=fixPanelHTML()+devs;
+    else body=obsPanel();
+    $("#view").innerHTML=head+body;
+    if(mode==="oda"){const k=tabs.findIndex(t=>t[0]===tab);setBar(k>0?null:"tur",null);
+      $("#bar").innerHTML=(k>0?`<button class="btn ghost" data-otab="${tabs[k-1][0]}">Geri</button>`:`<button class="btn ghost" data-go="tur">Geri</button>`)+(k<tabs.length-1?`<button class="btn" data-otab="${tabs[k+1][0]}">${k===tabs.length-2?"Planları gör":"İleri: "+tabs[k+1][1]}</button>`:"")}
+    else setBar("tur","oneri","Önerileri gör");
+    return}
+  h=`<h1 class="c">${T.label} ölçüleri</h1>
+    <div class="grid3"><label class="field big"><span class="k">En · cm</span><input type="number" inputmode="decimal" id="in-W" data-inp="W" value="${i.W}"></label>
+    <label class="field big"><span class="k">Boy · cm</span><input type="number" inputmode="decimal" id="in-H" data-inp="H" value="${i.H}"></label>
+    <label class="field big"><span class="k">Derinlik</span><input type="number" inputmode="decimal" id="in-D" data-inp="D" value="${i.D}"></label></div>
+    <div class="note" id="dhint">${depthHint()}</div>
+    ${S.type==="tv"?`<label class="field"><span class="k">TV ekranı · inç</span><input type="number" inputmode="decimal" id="in-tv" data-inp="tvInch" value="${i.tvInch||55}"><span class="h">Konsol genişliği ve kule aralığı buna göre denetlenir</span></label>`:""}
+    <div class="note" id="sizehint">${sizeHint()}</div>
+    <details class="panel" ${(i.obs||[]).length?"open":""}><summary style="cursor:pointer;font-weight:600">Kolon ya da kiriş var mı? ${(i.obs||[]).length?"("+i.obs.length+")":""}</summary>${obsPanel().replace(/^<div class="panel">/,'<div style="display:flex;flex-direction:column;gap:12px;margin-top:10px">')}</details>`;
   $("#view").innerHTML=h;setBar("tur","oneri","Önerileri gör");
 }
 function kitchenRange(inp,w){const L=Math.round(inp[w]*10),altD=560,offA=altD+40,CA=1050;let a=0,e=L,cs=false,ce=false;
@@ -1102,9 +1148,9 @@ function fixPanelHTML(){const i=S.inp,fx=curFix(),wl=i.plan==="I"?["A"]:i.plan==
   let ctl="";if(sel){const f=fx[sel],r=kitchenRange(i,f.wall);
     ctl=`<div class="editor" style="margin-top:4px"><div class="ed-head"><b>${FIXN[sel].l}</b><span>${f.wall} duvarı · soldan ${fmt(f.x)} cm</span></div>
      ${wl.length>1?`<div class="chips">${wl.map(w=>`<button class="chip" data-ancwall="${w}" aria-pressed="${f.wall===w}">${w} duvarı</button>`).join("")}</div>`:""}
-     <div class="grid3"><label class="field"><span class="k">Soldan cm</span><input type="number" inputmode="decimal" id="anc-x" data-ancx="1" value="${fmt(f.x)}"></label>
-      <label class="field"><span class="k">Genişlik cm</span><input type="number" inputmode="decimal" id="anc-w" data-ancw="1" value="${fmt(f.w)}"><span class="h">${FIXN[sel].hint}</span></label>
-      ${sel==="sink"?`<label class="field"><span class="k">Gider merkezi cm</span><input type="number" inputmode="decimal" id="anc-c" data-ancc="1" value="${fmt(f.x+f.w/2)}"><span class="h">duvarın solundan</span></label>`:""}</div>
+     <div class="grid3"><label class="field"><span class="k">Soldan cm</span><input type="number" inputmode="decimal" id="anc-x" data-ancx="1" value="${nv(f.x)}"></label>
+      <label class="field"><span class="k">Genişlik cm</span><input type="number" inputmode="decimal" id="anc-w" data-ancw="1" value="${nv(f.w)}"><span class="h">${FIXN[sel].hint}</span></label>
+      ${sel==="sink"?`<label class="field"><span class="k">Gider merkezi cm</span><input type="number" inputmode="decimal" id="anc-c" data-ancc="1" value="${nv(f.x+f.w/2)}"><span class="h">duvarın solundan</span></label>`:""}</div>
      <div class="note">Dolaplar bu noktaların sağına ve soluna kalan boşluklara otomatik dağıtılır.</div></div>`}
   return `<div class="panel" id="fixPanel"><div class="prow"><span class="lbl">Tesisat ve cihaz yerleri</span>${i.fix?`<button class="btn small ghost" data-ancauto="1">Otomatiğe dön</button>`:`<span class="note">otomatik</span>`}</div>
    <div class="note">Pis su gideri eviyenin, prizler cihazların yerini belirler. Kutuları parmağınızla kaydırın; dokununca ölçüsünü girebilirsiniz.</div>
@@ -1127,56 +1173,61 @@ function sizeHint(){const i=S.inp;const W=i.W*10,H=i.H*10;const tips=[];
   if(W>1200)tips.push("En "+i.W+" cm; taşıma ve plaka boyu için "+Math.ceil(W/1200)+" ayrı gövde olarak bölünecek.");
   return tips.join(" ")}
 function renderOneri(){
-  VARS=variants();
-  $("#view").innerHTML=`<h1>Size ${VARS.length} düzen önerisi</h1><p class="lead">Birini seçin; sonra her bölmeyi dokunarak değiştirebilirsiniz.</p>
-  ${VARS.map((v,k)=>{const r=computeAll(v.mods);const p1=pack(r.parts,"sunta");const a=advise(v.mods,r);
+  VARS=variants();document.querySelector("main").className="fill";
+  $("#view").innerHTML=`<p class="hint" style="margin:0">${VARS.length} düzen · yana kaydırın · birini seçin</p>
+  <div class="carousel">${VARS.map((v,k)=>{const r=computeAll(v.mods);const p1=pack(r.parts,"sunta");const a=advise(v.mods,r);
     const doors=Object.values(r.geo).reduce((s,G)=>s+(G.gap?0:G.cols.reduce((q,c)=>q+c.doors.length,0)),0);
     const dr=Object.values(r.geo).reduce((s,G)=>s+(G.gap?0:G.cols.reduce((q,c)=>q+c.drawers.length,0)),0);
     const warns=a.filter(x=>x.lvl==="warn").length;const mainW=S.type==="mutfak"?(S.inp.plan==="U"?"B":"A"):"A";
-    return `<div class="vcard"><div class="pic">${S.type==="mutfak"?planSVG(v.mods,false).replace("<svg",'<svg style="max-height:150px"')+wallSVG(v.mods,r,mainW,{small:true}):wallSVG(v.mods,r,"A",{small:true})}</div>
-    <div class="body"><b>${esc(v.name)}</b><p>${esc(v.desc)}</p>
+    return `<div class="vcard"><div class="pic">${S.type==="mutfak"?planSVG(v.mods,false)+wallSVG(v.mods,r,mainW,{small:true}):wallSVG(v.mods,r,"A",{small:true})}</div>
+    <div class="body"><b>${k+1}. ${esc(v.name)}</b><p>${esc(v.desc)}</p>
     <div class="tags"><span class="tag">${v.mods.filter(m=>!m.gap).length} gövde</span><span class="tag">${doors} kapak</span><span class="tag">${dr} çekmece</span><span class="tag">${p1.sheets.length} plaka</span>${warns?`<span class="tag w">${warns} uyarı</span>`:""}</div>
-    ${(v.notes||[]).map(n=>`<p style="color:var(--warn)">${esc(n)}</p>`).join("")}
-    <button class="btn" data-pick="${k}">Bunu seç</button></div></div>`}).join("")}`;
+    ${(v.notes||[]).slice(0,2).map(n=>`<p style="color:var(--warn)">${esc(n)}</p>`).join("")}
+    <button class="btn" data-pick="${k}">Bunu seç</button></div></div>`}).join("")}</div>`;
   setBar("olcu",S.mods.length?"duzen":null,"Mevcut tasarıma dön");
 }
 function presetsFor(m){if(m.role==="asma")return COLSETS.asma;if(m.role==="alt")return COLSETS.alt;if(m.role==="ust")return COLSETS.ust;if(m.role==="tavan")return COLSETS.tavan;return COLSETS[S.type]||COLSETS.gardirop}
 function renderDuzen(){
-  relabel();R=computeAll(S.mods);
+  relabel();R=computeAll(S.mods);document.querySelector("main").className="fill";
   const kitchen=S.type==="mutfak";const wallsList=kitchen?(S.inp.plan==="I"?["A"]:S.inp.plan==="L"?["A","B"]:["A","B","C"]):["A"];
   if(!wallsList.includes(S.wall))S.wall=wallsList[0];
   const m=S.mods.find(x=>x.id===S.sel);
-  const adv=advise(S.mods,R);const nw=adv.filter(a=>a.lvl==="warn").length;
+  const adv=advise(S.mods,R);const nw=adv.filter(a=>a.lvl==="warn").length+R.err.length;
   const used=matsUsed(R.parts),packs=used.map(k=>pack(R.parts,k));
   const cost=packs.reduce((q,P,i)=>q+P.sheets.length*SET.mats[used[i]].price,0)+R.band*SET.bandPrice+hwCost(hardware(S.mods,R));
+  const bottom=m?(S.band!=null&&!m.gap?cellEditorHTML(m):editorHTML(m)):`
+    <div class="sumrow">
+      <button class="sumbtn" data-go="sonuc">${packs.map((P,i)=>P.sheets.length+" "+(used[i]==="sunta"?"plaka":"arkalık")).join(" · ")} · ${fmt(R.band,0)} m bant</button>
+      <button class="sumbtn" data-rtgo="teklif">${cost>0?fmt(quote().rounded)+" ₺":"Fiyat yok"}</button>
+      <button class="sumbtn ${nw?"w":"ok"}" data-sheet="notes">${nw?"⚠ "+nw+" uyarı":"✓ Usta notları"}</button>
+      <button class="sumbtn" data-sheet="back">Arkalık ${BACKS[backOf()].short}</button>
+      ${kitchen?`<button class="sumbtn" data-sheet="plan">Plan</button>`:""}
+    </div>
+    <p class="hint">${S.grid?"Bir hücreye dokunun; ölçüleri ve ayarları açılır.":"Değiştirmek istediğiniz dolaba dokunun."}</p>`;
   $("#view").innerHTML=`
-  ${kitchen?`<div class="chips">${wallsList.map(w=>`<button class="chip" data-wall="${w}" aria-pressed="${S.wall===w}">${w} duvarı · ${S.inp[w]} cm</button>`).join("")}</div>`:""}
-  <div class="elev"><div class="prow"><span class="lbl">${S.grid?"Bir hücreye dokunun":"Bir dolaba dokunun"}</span>
-    <div class="chips"><button class="chip" data-grid="1" aria-pressed="${S.grid}">Izgara</button><button class="chip" data-grid="0" aria-pressed="${!S.grid}">Kapaklı görünüş</button></div></div>
-   <div id="elev">${wallSVG(S.mods,R,S.wall,{sel:S.sel,grid:S.grid,selCell:S.sel!=null&&S.band!=null?S.sel+":"+S.col+":"+S.band:null})}</div>
-   ${S.grid?`<div class="note">Her renk bir sütun, harf sütunun adı, sayı alttan satır numarası. Hücrede genişlik × yükseklik (cm) yazar.</div>`:""}
-   <div class="btns"><button class="btn small ghost" data-expimg="1">Çizimi resim olarak al</button></div>
-   ${kitchen?`<details><summary class="note" style="cursor:pointer">Plan görünüşü</summary>${planSVG(S.mods,false)}</details>`:""}</div>
-  ${m?(S.band!=null&&!m.gap?cellEditorHTML(m):editorHTML(m)):`<div class="panel note" style="text-align:center">${S.grid?"Ayarlamak istediğiniz hücreye dokunun; ölçüleri burada açılır.":"Değiştirmek istediğiniz dolabın üstüne dokunun."}</div>`}
-  <div class="stats">
-   ${packs.slice(0,2).map((P,i)=>`<div class="stat"><b>${P.sheets.length}</b><span>${esc(SET.mats[used[i]].name)} plaka</span></div>`).join("")}${packs.length<2?`<div class="stat"><b>${R.parts.filter(p=>p.mat==="sunta").reduce((q,p)=>q+p.qty,0)}</b><span>parça</span></div>`:""}
-   <div class="stat"><b>${fmt(R.band,1)} m</b><span>PVC bant</span></div>
-   <div class="stat"><b>${cost>0?fmt(quote().rounded)+" ₺":"—"}</b><span>${cost>0?"teklif (KDV dahil)":"fiyat Ayarlar'da"}</span></div></div>
-  <div class="panel"><span class="lbl">Arkalık</span><div class="chips" style="flex-wrap:wrap">${Object.entries(BACKS).map(([k,v])=>`<button class="chip" data-backtype="${k}" aria-pressed="${backOf()===k}">${v.label}</button>`).join("")}</div>
-   <div class="note">${esc(BACKS[backOf()].desc)}${backOf()===(BACK_DEF[S.type]||"3")?" Bu mobilya için önerilen seçim.":" Bu mobilya için önerilen: "+BACKS[BACK_DEF[S.type]||"3"].label+"."}</div></div>
-  <div class="panel"><div class="prow"><span class="lbl">Usta notları</span><span class="note">${nw?nw+" uyarı":"uyarı yok"}</span></div>
-   ${R.err.map(e=>`<div class="adv"><li class="warn" style="display:flex;gap:10px"><span class="ic">!</span><span>${esc(e.m+": "+e.txt)}</span></li></div>`).join("")}
-   <ul class="adv">${adv.map(x=>`<li class="${x.lvl}"><span class="ic">${{ok:"✓",warn:"!",info:"i"}[x.lvl]}</span><details><summary>${esc(x.txt)}</summary><p>${esc(x.why)}</p></details></li>`).join("")}</ul></div>`;
+  <div class="dz-top">${kitchen?wallsList.map(w=>`<button class="chip" data-wall="${w}" aria-pressed="${S.wall===w}">${w} · ${S.inp[w]}</button>`).join(""):""}
+    <span class="sp"></span><button class="chip" data-grid="1" aria-pressed="${S.grid}">Ölçülü</button><button class="chip" data-grid="0" aria-pressed="${!S.grid}">Kapaklı</button>
+    <button class="icobtn" data-expimg="1" aria-label="Çizimi resim olarak al"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M7 10l5 5 5-5M5 19h14"/></svg></button></div>
+  <div class="dz-draw" id="elev">${wallSVG(S.mods,R,S.wall,{sel:S.sel,grid:S.grid,selCell:S.sel!=null&&S.band!=null?S.sel+":"+S.col+":"+S.band:null})}</div>
+  <div class="dz-bottom">${bottom}</div>`;
   setBar("oneri","sonuc","Kesim listesi");
 }
+function notesSheet(){const adv=advise(S.mods,R);
+  openSheet(`<div class="ed-head"><b>Usta notları</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+   ${R.err.map(e=>`<ul class="adv"><li class="warn"><span class="ic">!</span><span>${esc(e.m+": "+e.txt)}</span></li></ul>`).join("")}
+   <ul class="adv">${adv.map(x=>`<li class="${x.lvl}"><span class="ic">${{ok:"✓",warn:"!",info:"i"}[x.lvl]}</span><details><summary>${esc(x.txt)}</summary><p>${esc(x.why)}</p></details></li>`).join("")}</ul>`)}
+function backSheet(){openSheet(`<div class="ed-head"><b>Arkalık</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+   <div class="chips" style="flex-wrap:wrap">${Object.entries(BACKS).map(([k,v])=>`<button class="chip" data-backtype="${k}" aria-pressed="${backOf()===k}">${v.label}</button>`).join("")}</div>
+   <div class="note">${esc(BACKS[backOf()].desc)}${backOf()===(BACK_DEF[S.type]||"3")?" Bu mobilya için önerilen seçim.":" Bu mobilya için önerilen: "+BACKS[BACK_DEF[S.type]||"3"].label+"."}</div>`)}
+function planSheet(){openSheet(`<div class="ed-head"><b>Plan</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>${planSVG(S.mods,false)}`)}
 function editorHTML(m){
   if(m.gap)return `<div class="editor"><div class="ed-head"><b>${esc(m.label)}</b><span>${cm(m.W)} cm boşluk</span></div>
-   <div class="row"><span>Genişlik (cm)</span><div class="step"><button data-mw="-5">−</button><input id="ed-w" data-modw value="${cm(m.W)}" inputmode="decimal"><button data-mw="5">+</button></div></div>
+   <div class="row"><span>Genişlik (cm)</span><div class="step"><button data-mw="-5">−</button><input id="ed-w" data-modw value="${nv((m.W)/10)}" inputmode="decimal"><button data-mw="5">+</button></div></div>
    ${m.role!=="ust"||m.gap!=="Davlumbaz"?`<div class="btns"><button class="btn small ghost" data-togap="1">Dolaba çevir</button></div>`:""}</div>`;
   const col=Math.min(S.col,m.cols.length-1);const c=m.cols[col];const kitchen=S.type==="mutfak";
   const roleName={alt:"Alt dolap",ust:"Üst dolap",govde:"Gövde",tavan:"Tavan dolabı"}[m.role];
   return `<div class="editor"><div class="ed-head"><div><b>${esc(m.label)}</b> <span>${roleName} · ${cm(m.W)}×${cm(m.H)}×${cm(m.D)} cm</span></div><button class="icobtn" data-close="1" aria-label="Kapat">✕</button></div>
-   <div class="row"><span>Genişlik (cm)</span><div class="step"><button data-mw="-5">−</button><input id="ed-w" data-modw value="${cm(m.W)}" inputmode="decimal"><button data-mw="5">+</button></div></div>
+   <div class="row"><span>Genişlik (cm)</span><div class="step"><button data-mw="-5">−</button><input id="ed-w" data-modw value="${nv((m.W)/10)}" inputmode="decimal"><button data-mw="5">+</button></div></div>
    ${!m.blind?`<div class="row"><span>Bölme sayısı</span><div class="step"><button data-cols="-1">−</button><output>${m.cols.length}</output><button data-cols="1">+</button></div></div>`:""}
    ${m.cols.length>1?`<div class="chips">${m.cols.map((x,k)=>`<button class="chip" data-col="${k}" aria-pressed="${k===col}">Bölme ${k+1}</button>`).join("")}</div>`:""}
    <span class="lbl">${m.cols.length>1?"Bölme "+(col+1)+" düzeni":"Düzen"}</span>
@@ -1184,7 +1235,7 @@ function editorHTML(m){
    <details class="more"><summary>İç ayrıntı (yükseklik, raf, kapak)</summary>
     ${c.bands.map((b,k)=>`<div class="band"><div class="band-h"><span>${k+1}. ${{raf:"Raf alanı",nis:"Niş",aski:b.hook?"Kanca":"Askı",cekmece:"Çekmece"}[b.kind]} ${k===0?"(alt)":k===c.bands.length-1?"(üst)":""}</span>
       <label class="toggle">${b.kind==="cekmece"?"":`<input type="checkbox" data-bdoor="${k}" ${b.door?"checked":""}> Kapak`}</label></div>
-     <div class="row"><span class="note">Yükseklik (cm, 0 = kalan)</span><div class="field" style="width:96px"><input type="number" inputmode="decimal" id="bh-${m.id}-${col}-${k}" data-bh="${k}" value="${b.h?cm(b.h):0}"></div></div>
+     <div class="row"><span class="note">Yükseklik (cm, 0 = kalan)</span><div class="field" style="width:96px"><input type="number" inputmode="decimal" id="bh-${m.id}-${col}-${k}" data-bh="${k}" value="${b.h?nv(b.h/10):0}"></div></div>
      ${b.kind==="raf"||b.kind==="nis"?`<div class="row"><span class="note">Raf</span><div class="step"><button data-bs="${k}:-1">−</button><output>${b.shelves}</output><button data-bs="${k}:1">+</button></div></div>`:""}
      ${b.kind==="cekmece"?`<div class="row"><span class="note">Çekmece adedi</span><div class="step"><button data-bn="${k}:-1">−</button><output>${b.n}</output><button data-bn="${k}:1">+</button></div></div>`:""}
     </div>`).join("")}</details>
@@ -1199,9 +1250,9 @@ function cellEditorHTML(m){
   return `<div class="editor">
    <div class="ed-head"><div><b>${esc(name)}</b> <span>${esc(m.label)} · sütun ${col+1}, satır ${k+1}</span></div><button class="icobtn" data-close="1" aria-label="Kapat">✕</button></div>
    <div class="grid3">
-    <label class="field"><span class="k">Genişlik cm</span><input type="number" inputmode="decimal" id="cw-${m.id}-${col}" data-cw="1" value="${cm(CG.sw)}"><span class="h">${m.cols.length>1?(c.w>0?"sabit":"otomatik")+" · tüm sütun":"gövdenin içi"}</span></label>
-    <label class="field"><span class="k">Yükseklik cm</span><input type="number" inputmode="decimal" id="bh-${m.id}-${col}-${k}" data-bh="${k}" value="${cm(BG.h)}"><span class="h">${b.h>0?"sabit":"otomatik (kalan)"} · iç ${inH}</span></label>
-    <label class="field"><span class="k">Derinlik cm</span><input type="number" inputmode="decimal" id="md-${m.id}" data-md="1" value="${cm(m.D)}"><span class="h">tüm gövde</span></label>
+    <label class="field"><span class="k">Genişlik cm</span><input type="number" inputmode="decimal" id="cw-${m.id}-${col}" data-cw="1" value="${nv((CG.sw)/10)}"><span class="h">${m.cols.length>1?(c.w>0?"sabit":"otomatik")+" · tüm sütun":"gövdenin içi"}</span></label>
+    <label class="field"><span class="k">Yükseklik cm</span><input type="number" inputmode="decimal" id="bh-${m.id}-${col}-${k}" data-bh="${k}" value="${nv((BG.h)/10)}"><span class="h">${b.h>0?"sabit":"otomatik (kalan)"} · iç ${inH}</span></label>
+    <label class="field"><span class="k">Derinlik cm</span><input type="number" inputmode="decimal" id="md-${m.id}" data-md="1" value="${nv((m.D)/10)}"><span class="h">tüm gövde</span></label>
    </div>
    <span class="lbl">Bu hücrede ne var?</span>
    <div class="chips" style="flex-wrap:wrap">${kinds.map(([kk,l])=>`<button class="chip" data-kind="${kk}" aria-pressed="${b.kind===kk}">${l}</button>`).join("")}</div>
@@ -1361,7 +1412,7 @@ document.addEventListener("click",e=>{
   if(e.target.id==="sheet"){closeSheet();return}
   const anc=e.target.closest("[data-anc]");if(anc){S.ancSel=anc.dataset.anc;refreshFix();return}
   const cell=e.target.closest("[data-cell]");
-  if(cell){const[mid,ci,bi]=cell.dataset.cell.split(":");S.sel=mid;S.col=+ci;S.band=+bi;renderDuzen();setTimeout(()=>document.querySelector(".editor")?.scrollIntoView({behavior:"smooth",block:"nearest"}),30);return}
+  if(cell){const[mid,ci,bi]=cell.dataset.cell.split(":");S.sel=mid;S.col=+ci;S.band=+bi;renderDuzen();return}
   const b=e.target.closest("button,[data-mod]");if(!b)return;const d=b.dataset;
   if(d.go){if(b.disabled)return;
     if(d.go==="duzen"&&!S.mods.length)return;S.step=d.go;S.view=null;render();window.scrollTo(0,0);return}
@@ -1375,7 +1426,7 @@ document.addEventListener("click",e=>{
   if(d.ropdel!==undefined){roomOf().open.splice(+d.ropdel,1);persist();renderOlcu();return}
   if(d.ropwall){const[i,n]=d.ropwall.split(":");roomOf().open[+i].wall=+n;persist();renderOlcu();return}
   if(d.pickroom!==undefined){const c=ROOMC[+d.pickroom];if(!c)return;Object.assign(S.inp,{plan:c.plan,A:c.inp.A,B:c.inp.B,C:c.inp.C,obs:clone(c.inp.obs),fix:c.inp.fix?clone(c.inp.fix):null,mode:"plan"});
-    S.mods=[];S.ancSel=null;persist();renderOlcu();window.scrollTo(0,0);toast(c.plan+" plan seçildi; tesisat yerlerini kontrol edip önerilere geçin");return}
+    S.otab=S.otab||{};S.otab.plan="tesisat";S.mods=[];S.ancSel=null;persist();renderOlcu();window.scrollTo(0,0);toast(c.plan+" plan seçildi; tesisat yerlerini kontrol edip önerilere geçin");return}
   if(d.ancauto){S.inp.fix=null;S.ancSel=null;S.mods=[];persist();refreshFix();toast("Yerleşim otomatiğe döndü");return}
   if(d.ancwall&&S.ancSel){if(!S.inp.fix)S.inp.fix=clone(autoAnchors());const f=S.inp.fix[S.ancSel];f.wall=d.ancwall;const r=kitchenRange(S.inp,f.wall);f.x=Math.max(r.a/10,Math.min(f.x,r.e/10-f.w));S.mods=[];persist();refreshFix();return}
   if(d.obsadd){S.inp.obs=S.inp.obs||[];const kitchen=S.type==="mutfak",L=kitchen?S.inp.A:S.inp.W;
@@ -1386,7 +1437,7 @@ document.addEventListener("click",e=>{
   if(d.plan){S.inp.plan=d.plan;Object.assign(S.inp,{I:{A:360},L:{A:360,B:240},U:{A:240,B:320,C:240}}[d.plan]);renderOlcu();persist();return}
   if(d.pick){S.mods=clone(VARS[+d.pick].mods);S.sel=null;S.band=null;S.col=0;S.wall=S.type==="mutfak"?(S.inp.plan==="U"?"B":"A"):"A";S.step="duzen";render();window.scrollTo(0,0);toast("Seçildi: "+VARS[+d.pick].name);return}
   if(d.grid!==undefined){S.grid=d.grid==="1";S.band=null;renderDuzen();return}
-  if(d.mod){S.sel=S.sel===d.mod?null:d.mod;S.col=0;S.band=null;renderDuzen();if(S.sel)setTimeout(()=>document.querySelector(".editor")?.scrollIntoView({behavior:"smooth",block:"nearest"}),30);return}
+  if(d.mod){S.sel=S.sel===d.mod?null:d.mod;S.col=0;S.band=null;renderDuzen();if(S.sel)return}
   if(d.wall){S.wall=d.wall;S.sel=null;S.band=null;renderDuzen();return}
   if(d.close){S.sel=null;S.band=null;renderDuzen();return}
   const m=curMod();
@@ -1414,7 +1465,10 @@ document.addEventListener("click",e=>{
   if(d.qmode){qset().laborMode=d.qmode;persist();renderSonuc();return}
   if(d.qround!==undefined){qset().round=+d.qround;persist();renderSonuc();return}
   if(d.copyq){const t=quoteText(),ta=$("#qText");try{navigator.clipboard.writeText(t).then(()=>toast("Teklif kopyalandı"),()=>{ta.focus();ta.select();toast("Metni seçtim; uzun basıp kopyalayın")})}catch(err){ta.focus();ta.select()}return}
-  if(d.backtype&&BACKS[d.backtype]){S.back=d.backtype;renderDuzen();persist();toast("Arkalık: "+BACKS[d.backtype].label);return}
+  if(d.backtype&&BACKS[d.backtype]){S.back=d.backtype;renderDuzen();persist();backSheet();toast("Arkalık: "+BACKS[d.backtype].label);return}
+  if(d.sheet){({notes:notesSheet,back:backSheet,plan:planSheet})[d.sheet]();return}
+  if(d.rtgo){S.resTab=d.rtgo;S.step="sonuc";render();return}
+  if(d.otab){S.otab=S.otab||{};S.otab[S.inp.mode||"oda"]=d.otab;persist();renderOlcu();return}
   if(d.expimg){exportDrawing();return}
   if(d.expjson){exportJSON(d.expjson);return}
   if(d.closesheet){closeSheet();return}
