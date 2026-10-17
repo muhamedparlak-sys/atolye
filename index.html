@@ -416,7 +416,7 @@ function computeAll(mods){
     if(m.role==="ust")addHw("Asma dolap askı aparatı (çift)",1);
     const avail=W-2*t-(n-1)*t,fixW=m.cols.reduce((q,c)=>q+(c.w>0?c.w:0),0),nAuto=m.cols.filter(c=>!(c.w>0)).length;
     const sws=m.cols.map(c=>c.w>0?c.w:(nAuto?(avail-fixW)/nAuto:0));if(!nAuto)sws[n-1]+=avail-fixW;
-    if(sws.some(v=>v<150))err.push({m:m.label,txt:"Bir sütun 15 cm'den dar kaldı; sütun genişliklerini kontrol edin."});
+    if(sws.some(v=>v<150))err.push({m:m.label,txt:"Bir bölme 15 cm'den dar kaldı; bölme genişliklerini kontrol edin."});
     const xs=[];sws.reduce((q,v,i)=>{xs.push(q);return q+v+t},t);
     const railL=Math.max(250,Math.floor((Di-40)/50)*50);
     m.cols.forEach((c,i)=>{
@@ -1221,7 +1221,7 @@ function swingAnalysis(mods,R,inp=S.inp){
   mods.forEach(m=>{const w=walls[m.wall];if(!w||m.gap)return;const G=R.geo[m.id];if(!G)return;const row=m.role==="ust"?"ust":"alt";
     G.cols.forEach(c=>c.doors.forEach(d=>{const hingeLeft=d.hand==="r";const hx=m.x+(hingeLeft?d.x:d.x+d.w),dir=hingeLeft?1:-1,dp=m.D+20;
       const hit=test(w,hx,dir,d.w,dp,[row],m.id,m);arcs.push({w,hx,dir,len:d.w,dp,hit,row,label:m.label});
-      if(hit)clashes.push({txt:m.label+" kapağı açılırken "+hit.label+" ile çarpışıyor.",why:"Kapağın süpürdüğü alanda başka bir dolap ya da cihaz var. Hücreye dokunup menteşeyi diğer tarafa alın ya da araya 5 cm dolgu koyun."})}))});
+      if(hit)clashes.push({txt:m.label+" kapağı açılırken "+hit.label+" ile çarpışıyor.",why:"Kapağın süpürdüğü alanda başka bir dolap ya da cihaz var. O göze dokunup menteşeyi diğer tarafa alın ya da araya 5 cm dolgu koyun."})}))});
   mods.filter(m=>m.gap==="Buzdolabı").forEach(m=>{const w=walls[m.wall];if(!w)return;const hl=(m.hinge||"r")==="l",hx=hl?m.x+40:m.x+m.W-40,dir=hl?1:-1,len=Math.min(m.W,700)-80;
     const hit=test(w,hx,dir,len,650,["alt","ust"],m.id,m);arcs.push({w,hx,dir,len,dp:650,hit,row:"alt",label:"Buzdolabı"});
     const run=kitchenRange(inp,m.wall);const atWall=hl?(m.x<=run.a+20&&run.a===0):(m.x+m.W>=run.e-20&&run.e===Math.round(inp[m.wall]*10));
@@ -1427,7 +1427,7 @@ function renderDuzen(){
       <button class="sumbtn" data-sheet="back">Arkalık ${BACKS[backOf()].short}</button>
       ${kitchen?`<button class="sumbtn" data-sheet="plan">Plan</button>`:""}
     </div>
-    <p class="hint">${S.grid?"Bir hücreye dokunun; ölçüleri ve ayarları açılır.":"Değiştirmek istediğiniz dolaba dokunun."}</p>`;
+    <p class="hint">${S.grid?"Bir göze dokunun; ölçüleri ve ayarları açılır.":"Değiştirmek istediğiniz dolaba dokunun."}</p>`;
   $("#view").innerHTML=`
   <div class="dz-top">${kitchen?wallsList.map(w=>`<button class="chip" data-wall="${w}" aria-pressed="${S.wall===w}">${w} · ${S.inp[w]}</button>`).join(""):""}
     <span class="sp"></span><button class="chip" data-grid="1" aria-pressed="${S.grid}">Ölçülü</button><button class="chip" data-grid="0" aria-pressed="${!S.grid}">Kapaklı</button>
@@ -1488,19 +1488,19 @@ function cellEditorHTML(m){
   const kinds=[["raf","Raf alanı"],["aski","Askı"],["cekmece","Çekmece"],["nis","Açık niş"]];
   const inH=Math.round((BG.ib-BG.it)/10);
   return `<div class="editor">
-   <div class="ed-head"><div><b>${esc(name)}</b> <span>${esc(m.label)} · sütun ${col+1}, satır ${k+1}</span></div><button class="icobtn" data-close="1" aria-label="Kapat">✕</button></div>
+   <div class="ed-head"><div><b>${esc(name)}</b> <span>${esc(m.label)} · ${col+1}. bölme, alttan ${k+1}. göz</span></div><button class="icobtn" data-close="1" aria-label="Kapat">✕</button></div>
    <div class="grid3">
-    <label class="field"><span class="k">Genişlik cm</span><input type="number" inputmode="decimal" id="cw-${m.id}-${col}" data-cw="1" value="${nv((CG.sw)/10)}"><span class="h">${m.cols.length>1?(c.w>0?"sabit":"otomatik")+" · tüm sütun":"gövdenin içi"}</span></label>
+    <label class="field"><span class="k">Genişlik cm</span><input type="number" inputmode="decimal" id="cw-${m.id}-${col}" data-cw="1" value="${nv((CG.sw)/10)}"><span class="h">${m.cols.length>1?(c.w>0?"sabit":"otomatik")+" · tüm bölme":"gövdenin içi"}</span></label>
     <label class="field"><span class="k">Yükseklik cm</span><input type="number" inputmode="decimal" id="bh-${m.id}-${col}-${k}" data-bh="${k}" value="${nv((BG.h)/10)}"><span class="h">${b.h>0?"sabit":"otomatik (kalan)"} · iç ${inH}</span></label>
     <label class="field"><span class="k">Derinlik cm</span><input type="number" inputmode="decimal" id="md-${m.id}" data-md="1" value="${nv((m.D)/10)}"><span class="h">tüm gövde</span></label>
    </div>
-   <span class="lbl">Bu hücrede ne var?</span>
+   <span class="lbl">Bu gözde ne var?</span>
    <div class="chips" style="flex-wrap:wrap">${kinds.map(([kk,l])=>`<button class="chip" data-kind="${kk}" aria-pressed="${b.kind===kk}">${l}</button>`).join("")}</div>
    ${b.kind!=="cekmece"?`<div class="row"><span>Kapak</span><label class="toggle"><input type="checkbox" data-bdoor="${k}" ${b.door?"checked":""}> ${b.door?"var":"yok"}</label></div>`:""}
    ${(()=>{if(!b.door||b.kind==="cekmece")return"";let st=k;while(st>0&&c.bands[st].join&&c.bands[st-1].door&&c.bands[st-1].kind!=="cekmece")st--;
      const dr=CG.doors.find(x=>x.k===st);if(!dr)return `<div class="note">Bu bölme 60 cm'den geniş: çift kapak, iki yana açılır.</div>`;
      return `<div class="row"><span>Kapak menteşesi</span><div class="chips"><button class="chip" data-hinge="${st}:l" aria-pressed="${dr.hand==="r"}">Solda</button><button class="chip" data-hinge="${st}:r" aria-pressed="${dr.hand==="l"}">Sağda</button></div></div>`})()}
-   ${b.door&&k>0&&c.bands[k-1].door&&c.bands[k-1].kind!=="cekmece"?`<div class="row"><span>Alttaki satırla tek kapak</span><label class="toggle"><input type="checkbox" data-bjoin="${k}" ${b.join?"checked":""}> ${b.join?"birleşik":"ayrı"}</label></div>`:""}
+   ${b.door&&k>0&&c.bands[k-1].door&&c.bands[k-1].kind!=="cekmece"?`<div class="row"><span>Alttaki gözle tek kapak</span><label class="toggle"><input type="checkbox" data-bjoin="${k}" ${b.join?"checked":""}> ${b.join?"birleşik":"ayrı"}</label></div>`:""}
    ${b.kind==="raf"||b.kind==="nis"?(()=>{const ck=bandCheck(m,col,k,BG),uk=useOf(m,col,k);
      return `<span class="lbl">Ne konacak?</span><div class="chips" style="flex-wrap:wrap">${Object.entries(USES).map(([kk,u])=>`<button class="chip" data-use="${kk}" aria-pressed="${uk===kk}">${u.l}</button>`).join("")}</div>
       <div class="note" style="${ck.st!=="ok"?"color:var(--warn)":""}">${uk==="serbest"?"Standart yok":`Standart raf arası ${ck.u.min/10}–${ck.u.max/10} cm`} · şu an ${cm(BG.space)} cm ${ck.st==="ok"?"✓":ck.st==="low"?"(dar)":"(fazla)"}</div>
@@ -1508,8 +1508,9 @@ function cellEditorHTML(m){
    ${b.kind==="raf"||b.kind==="nis"?`<div class="row"><span>Raf adedi${BG.space!=null&&b.shelves?` <small class="note">· aralık ${cm(BG.space)} cm</small>`:""}</span><div class="step"><button data-bs="${k}:-1">−</button><output>${b.shelves}</output><button data-bs="${k}:1">+</button></div></div>`:""}
    ${b.kind==="cekmece"?`<div class="row"><span>Çekmece adedi <small class="note">· ön ${cm(BG.h/Math.max(1,b.n))} cm</small></span><div class="step"><button data-bn="${k}:-1">−</button><output>${b.n}</output><button data-bn="${k}:1">+</button></div></div>`:""}
    ${b.kind==="aski"?`<div class="row"><span>Askı tipi <small class="note">· askı altı ${cm(BG.clear)} cm</small></span><div class="chips"><button class="chip" data-hook="0" aria-pressed="${!b.hook}">Boru</button><button class="chip" data-hook="1" aria-pressed="${b.hook}">Kanca</button></div></div>`:""}
-   <div class="btns"><button class="btn small ghost" data-addrow="1">Üstüne satır ekle</button>${c.bands.length>1?`<button class="btn small danger" data-delrow="1">Satırı sil</button>`:""}${!m.blind?`<button class="btn small ghost" data-cols="1">Sütun ekle</button>`:""}${m.cols.length>1?`<button class="btn small danger" data-delcol="1">Sütunu sil</button>`:""}</div>
-   <details class="more"><summary>Bu sütuna hazır düzen uygula</summary><div class="presets" style="margin-top:10px">${presetsFor(m).map(kk=>`<button class="pre" data-pre="${kk}" aria-pressed="${c.p===kk}">${colIcon(kk,m.role)}${esc(COLP[kk].label)}</button>`).join("")}</div></details>
+   <div class="btns"><button class="btn small ghost" data-addrow="1">Üstüne ara tabla ekle</button>${c.bands.length>1?`<button class="btn small danger" data-delrow="1">Bu gözü kaldır</button>`:""}${!m.blind?`<button class="btn small ghost" data-cols="1">Ara dikme ekle</button>`:""}${m.cols.length>1?`<button class="btn small danger" data-delcol="1">Ara dikmeyi kaldır</button>`:""}</div>
+   <div class="note">Ara tabla: gözü sabit tablayla ikiye böler. Ara dikme: yanına yeni bölme açar. Raf: pimli, yeri sonradan değişebilir.</div>
+   <details class="more"><summary>Bu bölmeye hazır düzen uygula</summary><div class="presets" style="margin-top:10px">${presetsFor(m).map(kk=>`<button class="pre" data-pre="${kk}" aria-pressed="${c.p===kk}">${colIcon(kk,m.role)}${esc(COLP[kk].label)}</button>`).join("")}</div></details>
   </div>`}
 function partRows(mat){return R.parts.filter(p=>p.mat===mat).map(p=>`<tr><td class="id">${p.id}</td><td>${esc(p.name)}<small>${esc(p.mods.join(", "))}</small></td><td class="num">${p.qty}</td><td class="num">${p.a} × ${p.b}</td><td>${bandHTML(p)}</td></tr>`).join("")}
 function bandHTML(p){const on=k=>`<i class="${k?"on":""}"></i>`;return `<span class="bnd">${on(p.bl>0)}${on(p.bl>1)}<span style="width:4px"></span>${on(p.bs>0)}${on(p.bs>1)}</span>`}
@@ -1606,7 +1607,7 @@ async function drawingPNG(){
   let y=head;imgs.forEach(i=>{if(i.cap){x.fillStyle=col("ink");x.font="700 32px 'Barlow Condensed', sans-serif";x.fillText(i.cap.toLocaleUpperCase("tr"),40,y+30)}
     x.drawImage(i.img,(W-i.w)/2,y+44,i.w,i.h);y+=i.h+gapH});
   x.fillStyle=col("muted");x.font="400 22px 'IBM Plex Sans', sans-serif";
-  x.fillText((S.grid?"Ölçüler cm · hücre: genişlik × yükseklik":"Ölçüler cm")+" · "+new Date().toLocaleDateString("tr-TR"),40,H-24);
+  x.fillText((S.grid?"Ölçüler cm · her göz: genişlik × yükseklik":"Ölçüler cm")+" · "+new Date().toLocaleDateString("tr-TR"),40,H-24);
   return new Promise(r=>c.toBlob(b=>r(b),"image/png"))}
 function tryDownload(blob,name){try{const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}catch(e){}}
 async function saveFile(blob,name){
@@ -1699,8 +1700,8 @@ document.addEventListener("click",e=>{
     if(d.fixsh!==undefined&&bb0){bb0.shelves=+d.fixsh;renderDuzen();toast("Raf sayısı standarda ayarlandı");return}
     if(d.hook!==undefined&&bb0){bb0.hook=d.hook==="1";renderDuzen();return}
     if(d.addrow&&cc){cc.bands.splice(S.band+1,0,B("raf",300,{shelves:0,door:bb0?bb0.door:false}));S.band++;cc.p=null;renderDuzen();return}
-    if(d.delrow&&cc){if(b.dataset.armed){cc.bands.splice(S.band,1);S.band=Math.max(0,S.band-1);if(cc.bands[0])cc.bands[0].join=false;cc.p=null;renderDuzen()}else{b.dataset.armed=1;b.textContent="Silmek için tekrar dokun"}return}
-    if(d.delcol&&cc){if(b.dataset.armed){m.cols.splice(S.col,1);S.col=Math.max(0,S.col-1);S.band=0;renderDuzen()}else{b.dataset.armed=1;b.textContent="Silmek için tekrar dokun"}return}
+    if(d.delrow&&cc){if(b.dataset.armed){cc.bands.splice(S.band,1);S.band=Math.max(0,S.band-1);if(cc.bands[0])cc.bands[0].join=false;cc.p=null;renderDuzen()}else{b.dataset.armed=1;b.textContent="Kaldırmak için tekrar dokun"}return}
+    if(d.delcol&&cc){if(b.dataset.armed){m.cols.splice(S.col,1);S.col=Math.max(0,S.col-1);S.band=0;renderDuzen()}else{b.dataset.armed=1;b.textContent="Kaldırmak için tekrar dokun"}return}
     if(d.pre){const c=m.cols[Math.min(S.col,m.cols.length-1)];c.p=d.pre;c.bands=COLP[d.pre].make(m.H-m.baza);if(S.band!=null)S.band=0;renderDuzen();return}
     if(d.bs){const[k,v]=d.bs.split(":");const bb=m.cols[S.col].bands[+k];bb.shelves=Math.max(0,Math.min(12,bb.shelves+ +v));renderDuzen();return}
     if(d.bn){const[k,v]=d.bn.split(":");const bb=m.cols[S.col].bands[+k];bb.n=Math.max(1,Math.min(6,bb.n+ +v));renderDuzen();return}
