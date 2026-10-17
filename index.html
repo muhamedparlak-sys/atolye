@@ -245,6 +245,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
     <div class="brand">Atölye</div>
     <input id="projName" aria-label="Proje adı" value="">
     <button class="icobtn" data-view="proj" aria-label="Projeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
+    <button class="icobtn" data-view="lib" aria-label="Fiyat kütüphanesi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4v15M6 9l9-3M6 13l9-3M9 19c4 0 7-2 8-6"/></svg></button>
     <button class="icobtn" data-view="ayar" aria-label="Ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
   </div>
   <nav class="steps" id="steps"></nav>
@@ -979,7 +980,7 @@ function hardware(mods,R){
   const sel=S.hwSel||{},qo=S.hwQty||{};items.forEach(i=>{i.auto=i.qty;if(qo[i.name]!=null)i.qty=qo[i.name];i.off=sel[i.name]===false||(i.opt&&sel[i.name]!==true)});
   return items;
 }
-function hwCost(items){return items.filter(i=>!i.off).reduce((q,i)=>q+(+(SET.hwPrice||{})[i.name]||0)*i.qty,0)}
+function hwCost(items){return items.filter(i=>!i.off&&!/^PVC/.test(i.name)).reduce((q,i)=>q+(hwPriceOf(i.name)||0)*i.qty,0)}
 function hwText(items){const L=[`${S.name} — hırdavat listesi`];let cat="";
   items.filter(i=>!i.off).forEach(i=>{if(i.cat!==cat){cat=i.cat;L.push("",cat.toUpperCase())}L.push(`- ${i.name}: ${fmt(i.qty,i.unit==="m"?1:0)} ${i.unit}`)});return L.join("\n")}
 
@@ -989,8 +990,13 @@ function qset(){SET.quote=Object.assign({},QDEF,SET.quote||{});return SET.quote}
 function quote(){const q=qset();R=R||computeAll(S.mods);
   const used=matsUsed(R.parts),rows=[],miss=[];
   used.forEach(k=>{const P=pack(R.parts,k),pr=+SET.mats[k].price||0;rows.push({l:matLabel(k)+" · "+P.sheets.length+" plaka",v:P.sheets.length*pr});if(!pr)miss.push(SET.mats[k].name+" plaka fiyatı")});
-  rows.push({l:"PVC bant · "+fmt(R.band,1)+" m",v:R.band*(+SET.bandPrice||0)});if(!+SET.bandPrice)miss.push("bant fiyatı");
-  const items=hardware(S.mods,R),hw=hwCost(items),hwMiss=items.filter(i=>!(+(SET.hwPrice||{})[i.name])).length;
+  {const bm=k=>R.parts.filter(p=>p.mat===k).reduce((q,p)=>q+p.qty*(p.bl*p.a0+p.bs*p.b0),0)/1000;
+    if(frontSep()){const g=bm("sunta"),k=bm("kapak");rows.push({l:"PVC bant · gövde "+fmt(g,1)+" m",v:g*(+SET.bandPrice||0)});rows.push({l:"PVC bant · kapak "+fmt(k,1)+" m",v:k*(+(SET.bandPriceK||SET.bandPrice)||0)})}
+    else rows.push({l:"PVC bant · "+fmt(R.band,1)+" m",v:R.band*(+SET.bandPrice||0)})}
+  if(!+SET.bandPrice)miss.push("bant fiyatı");
+  {const sv=svcOf(),nSh=used.reduce((q,k)=>q+pack(R.parts,k).sheets.length,0),nD=Object.values(R.geo).reduce((s,G)=>s+(G.gap||!G.cols?0:G.cols.reduce((q,c)=>q+c.doors.length,0)),0);
+    if(+sv.ebat)rows.push({l:"Ebatlama · "+nSh+" plaka",v:nSh*sv.ebat});if(+sv.bant)rows.push({l:"Bantlama işçiliği · "+fmt(R.band,1)+" m",v:R.band*sv.bant});if(+sv.delik)rows.push({l:"Menteşe deliği · "+nD+" kapak",v:nD*sv.delik})}
+  const items=hardware(S.mods,R),hw=hwCost(items),hwMiss=items.filter(i=>!i.off&&!/^PVC/.test(i.name)&&!hwPriceOf(i.name)).length;
   rows.push({l:"Hırdavat ("+items.length+" kalem)",v:hw});if(hwMiss)miss.push(hwMiss+" hırdavat kaleminin fiyatı");
   const mat=rows.reduce((a,r)=>a+r.v,0);
   const nMod=S.mods.filter(m=>!m.gap).length;
@@ -1014,7 +1020,7 @@ function quoteHTML(){const Q=quote(),q=Q.q;
   const inp=(k,l,unit,hint)=>`<label class="field"><span class="k">${l}</span><input type="number" inputmode="decimal" id="q-${k}" data-q="${k}" value="${q[k]}"><span class="h">${unit}${hint?" · "+hint:""}</span></label>`;
   const row=(l,v,id,b)=>`<tr${b?' style="font-weight:600"':""}><td>${l}</td><td class="num" ${id?`id="${id}"`:""}>${fmt(v)} ₺</td></tr>`;
   return `<div class="stat" style="padding:14px"><span>Müşteriye fiyat (KDV dahil${+q.round?", "+fmt(+q.round)+" ₺'ye yuvarlı":""})</span><b id="qTot" style="font-size:40px">${fmt(Q.rounded)} ₺</b><span id="qSub">KDV hariç ${fmt(Q.net)} ₺ · kâr ${fmt(Q.profit)} ₺</span></div>
-   ${Q.miss.length?`<div class="note" style="color:var(--warn)">Eksik fiyat: ${esc(Q.miss.join(", "))}. Plaka ve bant fiyatlarını Ayarlar'dan, hırdavat fiyatlarını Hırdavat sekmesinden girin; eksikler 0 sayılır.</div>`:""}
+   ${Q.miss.length?`<div class="note" style="color:var(--warn)">Eksik fiyat: ${esc(Q.miss.join(", "))}. Fiyatları üstteki ₺ düğmesinden fiyat kütüphanesine bir kez girin; tüm projelerde kullanılır. Eksikler 0 sayılır.</div>`:""}
    <div class="tablewrap"><table><tbody>
     ${Q.rows.map(r=>row(esc(r.l),r.v)).join("")}
     ${row("Malzeme toplamı",Q.mat,"qMat",1)}
@@ -1438,7 +1444,7 @@ function renderSteps(){const ci=stepIdx();
 function render(){
   renderSteps();$("#projName").value=S.name;closeSheet&&document.getElementById("sheet")?.remove();
   const main=document.querySelector("main");main.className="";main.scrollTop=0;
-  if(S.view==="ayar")return renderAyar();if(S.view==="proj")return renderProj();
+  if(S.view==="ayar")return renderAyar();if(S.view==="lib")return renderLib();if(S.view==="proj")return renderProj();
   if(S.step!=="montaj"&&S.step!=="d3"&&T3){T3.dispose();T3=null}
   ({tur:renderTur,olcu:renderOlcu,oneri:renderOneri,duzen:renderDuzen,sonuc:renderSonuc,montaj:renderMontaj,d3:render3D})[S.step]();
   persist();
@@ -1713,11 +1719,11 @@ function renderSonuc(){
   if(S.resTab==="hw"){const items=hardware(S.mods,R);const op=S.opener||"kulp";let cat="";const tot=hwCost(items);
     h+=`<div class="panel"><span class="lbl">Kapak ve çekmece nasıl açılsın?</span><div class="chips"><button class="chip" data-opener="kulp" aria-pressed="${op==="kulp"}">Kulplu</button><button class="chip" data-opener="cekbas" aria-pressed="${op==="cekbas"}">Çekbas (bas-aç)</button></div>
       <div class="note">${op==="cekbas"?"Çekbasta kulp kullanılmaz. Menteşeler frensiz, raylar bas-aç tipi seçilir; frenli menteşe çekbası geri iter ve kapak açılmaz.":"Kulp boyu kapak ve çekmece ölçüsüne göre seçildi. Frenli menteşe kapağı yavaş kapatır."}</div></div>
-     <p class="note">Menteşe tipi otomatik seçilir: kapak dış yan dikmeye bağlanıyorsa düz, ara dikmeye bağlanıyorsa yarım bükük. Birim fiyat girerseniz toplam hesaplanır; fiyatlar sonraki projeler için de hatırlanır.</p>
+     <p class="note">Menteşe tipi otomatik seçilir: kapak dış yan dikmeye bağlanıyorsa düz, ara dikmeye bağlanıyorsa yarım bükük. Fiyatlar üstteki ₺ düğmesindeki fiyat kütüphanesinden gelir (soluk rakam); buraya yazılan fiyat yalnız o boyutu değiştirir.</p>
      <p class="note">Kutucukla kalemi listeye alın ya da çıkarın; soluk olanlar isteğe bağlı aksesuarlar. Miktarı değiştirebilirsiniz (↺ ile hesaplanana döner).</p>
      <div class="tablewrap"><table><thead><tr><th></th><th>Malzeme</th><th style="text-align:right">Miktar</th><th style="text-align:right">Birim ₺</th></tr></thead><tbody>
      ${items.map((i,ix)=>{let r="";if(i.cat!==cat){cat=i.cat;r+=`<tr><td colspan="4" class="lbl" style="background:var(--bg)">${esc(cat)}</td></tr>`}
-       return r+`<tr style="${i.off?"opacity:.45":""}"><td><input type="checkbox" aria-label="${esc(i.name)} listede" data-hwsel="${esc(i.name)}" ${i.off?"":"checked"} style="width:20px;height:20px;accent-color:var(--accent)"></td><td>${esc(i.name)}${i.note?`<small>${esc(i.note)}</small>`:""}${i.custom?` <button class="btn small danger" data-hwdel="${esc(i.name)}" style="padding:2px 8px">Sil</button>`:""}</td><td class="num"><input type="number" inputmode="decimal" aria-label="${esc(i.name)} miktar" data-hwq="${esc(i.name)}" value="${nv(i.qty)}" style="width:62px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:6px;font:500 14px var(--f-mono);text-align:right"> ${i.unit}${i.qty!==i.auto&&!i.custom?` <button class="btn small ghost" data-hwqr="${esc(i.name)}" style="padding:2px 7px" aria-label="hesaplanan miktara dön">↺</button>`:""}</td><td class="num"><input type="number" inputmode="decimal" aria-label="${esc(i.name)} birim fiyat" data-hwp="${esc(i.name)}" value="${(SET.hwPrice||{})[i.name]??""}" placeholder="—" style="width:76px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:6px;font:500 14px var(--f-mono);text-align:right"></td></tr>`}).join("")}
+       return r+`<tr style="${i.off?"opacity:.45":""}"><td><input type="checkbox" aria-label="${esc(i.name)} listede" data-hwsel="${esc(i.name)}" ${i.off?"":"checked"} style="width:20px;height:20px;accent-color:var(--accent)"></td><td>${esc(i.name)}${i.note?`<small>${esc(i.note)}</small>`:""}${i.custom?` <button class="btn small danger" data-hwdel="${esc(i.name)}" style="padding:2px 8px">Sil</button>`:""}</td><td class="num"><input type="number" inputmode="decimal" aria-label="${esc(i.name)} miktar" data-hwq="${esc(i.name)}" value="${nv(i.qty)}" style="width:62px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:6px;font:500 14px var(--f-mono);text-align:right"> ${i.unit}${i.qty!==i.auto&&!i.custom?` <button class="btn small ghost" data-hwqr="${esc(i.name)}" style="padding:2px 7px" aria-label="hesaplanan miktara dön">↺</button>`:""}</td><td class="num"><input type="number" inputmode="decimal" aria-label="${esc(i.name)} birim fiyat" data-hwp="${esc(i.name)}" value="${(SET.hwPrice||{})[i.name]??""}" placeholder="${hwPriceOf(famOf(i.name))!=null&&(SET.hwPrice||{})[i.name]==null?fmt(hwPriceOf(famOf(i.name))):"—"}" style="width:76px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:6px;font:500 14px var(--f-mono);text-align:right"></td></tr>`}).join("")}
      </tbody></table></div>
      <div class="panel"><span class="lbl">Kalem ekle</span><div class="grid3"><label class="field"><span class="k">Ad</span><input id="hwn-name" placeholder="ör. Cam raf 6 mm" style="font-family:var(--f-body);font-size:15px"></label><label class="field"><span class="k">Miktar</span><input type="number" inputmode="decimal" id="hwn-qty" value="1"></label><label class="field"><span class="k">Birim</span><input id="hwn-unit" value="ad" style="font-family:var(--f-body);font-size:15px"></label></div><div class="btns"><button class="btn small" data-hwadd="1">Listeye ekle</button></div></div>
      <div class="stat"><b id="hwTot">${tot>0?fmt(tot)+" ₺":"—"}</b><span>hırdavat toplamı (fiyat girilen kalemler)</span></div>
@@ -1818,6 +1824,46 @@ function importText(txt){let d;try{d=JSON.parse(txt)}catch(e){toast("Dosya okuna
     if(d.set){SET=Object.assign(clone(DEFAULT_SET),d.set);SET.mats=Object.assign(clone(DEFAULT_SET.mats),d.set.mats||{})}
     persist();renderProj();toast((d.projects||[]).length+" proje ve fiyatlar yüklendi");return}
   toast("Dosyada proje bulunamadı.")}
+
+/* ====================== FİYAT KÜTÜPHANESİ ====================== */
+const famOf=n=>n.replace(/\d+(?:[.,]\d+)?/g,"#");
+function hwPriceOf(n){const P=SET.hwPrice||{};if(P[n]!=null)return +P[n];const f=famOf(n);if(P[f]!=null)return +P[f];return null}
+function svcOf(){SET.svc=Object.assign({ebat:0,bant:0,delik:0},SET.svc||{});return SET.svc}
+const CATALOG=[
+ ["Menteşe & kapak","Menteşe 110° frenli — düz","ad"],["Menteşe & kapak","Menteşe 110° frenli — yarım bükük","ad"],
+ ["Menteşe & kapak","Menteşe 110° frensiz (çekbas için) — düz","ad"],["Menteşe & kapak","Menteşe 110° frensiz (çekbas için) — yarım bükük","ad"],
+ ["Menteşe & kapak","Menteşe 110° frenli paslanmaz — düz","ad"],["Menteşe & kapak","Menteşe 110° frenli paslanmaz — yarım bükük","ad"],
+ ["Menteşe & kapak","Çekbas (bas-aç mandal)","ad"],["Menteşe & kapak","Kapak tamponu (silikon)","ad"],
+ ["Kulp","Kulp # mm (delik arası)","ad"],
+ ["Çekmece","Teleskopik ray # mm (takım)","takım"],["Çekmece","Bas-aç teleskopik ray # mm (takım)","takım"],
+ ["Raf & askı","Askı borusu (oval)","m"],["Raf & askı","Askı borusu yuvası","ad"],["Raf & askı","Askı borusu orta taşıyıcı","ad"],["Raf & askı","Elbise kancası","ad"],["Raf & askı","Raf pimi (# mm)","ad"],
+ ["Aksesuar","Asansörlü askı (pantograf) # cm","ad"],["Aksesuar","Pantolon askılığı (sürgülü)","ad"],["Aksesuar","Kravat / kemer askılığı","ad"],["Aksesuar","Metal ayakkabı rafı (eğimli)","ad"],
+ ["Aksesuar","Ayna # mm #×# mm","ad"],["Aksesuar","Ayna yapıştırıcısı (nötr silikon)","tüp"],["Aksesuar","Çöp kovası (kapağa monte)","ad"],["Aksesuar","Kaşıklık # cm modül","ad"],["Aksesuar","Tabaklık (süzgeçli) # cm","ad"],["Aksesuar","Üst dolap altı LED şerit + profil","m"],
+ ["Bağlantı","Minifix (eksantrik) takımı","ad"],["Bağlantı","Kavela #×#","ad"],["Bağlantı","Kuşak bağlantısı (minifix)","ad"],["Bağlantı","Masa bağlantı köşebendi","ad"],["Bağlantı","Başlık duvar askı aparatı (Z ray)","ad"],
+ ["Montaj","Ayar ayağı (gizli, baza arkası)","ad"],["Montaj","Plastik ayarlı ayak # cm","ad"],["Montaj","Metal ayak # cm","ad"],["Montaj","Baza klipsi","ad"],["Montaj","Asma dolap askı aparatı (sağ+sol takım)","takım"],["Montaj","Duvara sabitleme gönyesi","ad"],["Montaj","Kablo geçiş kapağı (Ø# mm)","ad"],
+ ["Vida & çivi","Sunta vidası #×# (menteşe, ray)","ad"],["Vida & çivi","Sunta vidası #×# (montaj)","ad"],["Vida & çivi","Arkalık zımbası / çivisi","ad"],
+ ["Mutfak","Tezgah (# cm derinlik)","m"],["Mutfak","Tezgah süpürgeliği","m"],["Mutfak","Tezgah köşe birleştirme cıvatası","ad"]];
+function libFamilies(){const seen=new Set(CATALOG.map(c=>c[1]));const out=CATALOG.map(c=>({cat:c[0],f:c[1],u:c[2]}));
+  const add=(n,cat,u)=>{const f=famOf(n);if(!seen.has(f)&&!/PVC/.test(n)){seen.add(f);out.push({cat:cat||"Diğer",f,u:u||"ad"})}};
+  if(S.mods&&S.mods.length){try{R=computeAll(S.mods);hardware(S.mods,R).forEach(i=>{if(!i.custom)add(i.name,i.cat,i.unit)})}catch(e){}}
+  Object.keys(SET.hwPrice||{}).forEach(k=>add(k,"Diğer"));(S.hwCustom||[]).forEach(c=>add(c.name,"Ek kalemler",c.unit));
+  return out}
+function renderLib(){const sv=svcOf();const P=SET.hwPrice||{};document.querySelector("main").className="";
+  const fin=(id,attr,val,l,u)=>`<label class="field"><span class="k">${l}</span><input type="number" inputmode="decimal" id="${id}" ${attr} value="${val??""}" placeholder="—"><span class="h">${u}</span></label>`;
+  const fams=libFamilies();let cat="";
+  const filled=fams.filter(f=>P[f.f]!=null).length;
+  $("#view").innerHTML=`<h1 class="c">Fiyat kütüphanesi</h1><p class="lead">Fiyatları bir kez girin; tüm projelerde teklif buradan hesaplanır. "…" olan kalemlerde fiyat her boyuta uygulanır (ör. tüm ray boyları).</p>
+   <div class="panel"><span class="lbl">Plakalar · ₺/plaka</span><div class="grid3">
+    ${["sunta","kapak","arka8","arka3"].map(k=>fin("lp-"+k,`data-mat="${k}:price"`,SET.mats[k].price||"",esc(SET.mats[k].name),SET.mats[k].L+"×"+SET.mats[k].W)).join("")}</div>
+    <div class="note">Plaka adı ve ölçüsü Ayarlar'dan değişir.</div></div>
+   <div class="panel"><span class="lbl">PVC bant · ₺/m</span><div class="grid3">${fin("lb-g",'data-set="bandPrice"',SET.bandPrice||"","Gövde rengi","₺/m")}${fin("lb-k",'data-set="bandPriceK"',SET.bandPriceK||"","Kapak rengi","₺/m · farklıysa")}</div></div>
+   <div class="panel"><span class="lbl">Hizmetler</span><div class="grid3">${fin("ls-e",'data-svc="ebat"',sv.ebat||"","Ebatlama (kesim)","₺/plaka")}${fin("ls-b",'data-svc="bant"',sv.bant||"","Bantlama işçiliği","₺/m")}${fin("ls-d",'data-svc="delik"',sv.delik||"","Menteşe deliği","₺/kapak")}</div>
+    <div class="note">Kesimhane ebatlama ve bantlamayı ayrıca fiyatlıyorsa buraya girin; teklifte ayrı satır olur.</div></div>
+   <div class="panel"><div class="prow"><span class="lbl">Hırdavat · ${filled}/${fams.length} fiyatlı</span></div>
+    <div class="tablewrap"><table><tbody>${fams.map(f=>{let r="";if(f.cat!==cat){cat=f.cat;r+=`<tr><td colspan="2" class="lbl" style="background:var(--bg)">${esc(cat)}</td></tr>`}
+      return r+`<tr><td>${esc(f.f.replace(/#/g,"…"))}<small>${f.u}</small></td><td class="num"><input type="number" inputmode="decimal" aria-label="${esc(f.f)} fiyat" data-hwp="${esc(f.f)}" value="${P[f.f]??""}" placeholder="—" style="width:84px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:6px;font:500 14px var(--f-mono);text-align:right"></td></tr>`}).join("")}</tbody></table></div>
+    <div class="note">Projedeki Hırdavat sekmesinde bir kaleme özel fiyat girerseniz o boyut için bu fiyatın önüne geçer.</div></div>`;
+  $("#bar").innerHTML=`<button class="btn" data-back="1">Tamam</button>`}
 /* ====================== OLAYLAR ====================== */
 function curMod(){return S.mods.find(x=>x.id===S.sel)}
 function reflow(m,dw){ // mutfakta aynı sıradaki sağdaki modülleri kaydır
@@ -1932,6 +1978,7 @@ document.addEventListener("input",e=>{const x=e.target,d=x.dataset;
   if(d.mat){const[m,k]=d.mat.split(":");SET.mats[m][k]=k==="name"?x.value:(parseFloat(x.value)||0);persist();return}
   if(d.set){SET[d.set]=parseFloat(x.value)||0;persist();return}
   if(d.q!==undefined){const v=parseFloat(String(x.value).replace(",","."));qset()[d.q]=isNaN(v)?0:v;persist();updateQuote();return}
+  if(d.svc!==undefined){const v=parseFloat(String(x.value).replace(",","."));svcOf()[d.svc]=isNaN(v)?0:v;persist();return}
   if(d.hwp!==undefined){SET.hwPrice=SET.hwPrice||{};const v=parseFloat(String(x.value).replace(",","."));if(isNaN(v))delete SET.hwPrice[d.hwp];else SET.hwPrice[d.hwp]=v;persist();
     const el=$("#hwTot");if(el){const t=hwCost(hardware(S.mods,R));el.textContent=t>0?fmt(t)+" ₺":"—"}return}
 });
