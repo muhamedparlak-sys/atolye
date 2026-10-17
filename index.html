@@ -86,7 +86,8 @@ h2{font-family:var(--f-display);font-weight:700;font-size:19px;text-transform:up
 .lead{color:var(--muted);margin:-6px 0 0;max-width:60ch}
 .lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
-.types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.tcard span{display:none}.tcard b{font-size:15px!important}.tcard{padding:9px 8px}.tcard svg{width:34px;height:34px}}
 .tcard{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:10px 12px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-height:0}
 .tcard svg{width:42px;height:42px;color:var(--accent)}
 .tcard b{font-size:18px!important}
@@ -246,7 +247,7 @@ const DEFAULT_SET={t:18,gap:3,kerf:4,trim:10,grain:true,drawerMin:120,bandPrice:
 const BACKS={"3":{label:"3 mm duralit",short:"3 mm",mat:"arka3",desc:"Dıştan çivili. En ucuz ve hafif; arkası görünmeyen dolaplar için yeterli."},
   "8":{label:"8 mm arkalık",short:"8 mm",mat:"arka8",desc:"Dıştan vidalı. Gövdeyi rijitleştirir; açık niş, vestiyer, çocuk dolabı için iyi."},
   "18":{label:"18 mm aynı malzeme",short:"18 mm",mat:"sunta",desc:"Yan dikmelerin arasına içten geçer. En sağlam; arkası görünen mobilya için. İç derinlik 18 mm azalır."}};
-const BACK_DEF={gardirop:"3",mutfak:"3",vestiyer:"8",kahve:"8",cocuk:"8",kitaplik:"8",tv:"8"};
+const BACK_DEF={gardirop:"3",mutfak:"3",vestiyer:"8",kahve:"8",cocuk:"8",kitaplik:"8",tv:"8",banyo:"8",masa:"3",yatak:"8",balkon:"8"};
 const MAT_ORDER=["sunta","arka8","arka3"];
 const matsUsed=parts=>MAT_ORDER.filter(k=>parts.some(p=>p.mat===k));
 const backOf=()=>BACKS[S.back]?S.back:(BACK_DEF[S.type]||"3");
@@ -257,6 +258,10 @@ const TYPES={
   cocuk:{label:"Çocuk dolabı",desc:"Alçak askı, oyuncak rafı",D:500,W:100,H:160},
   kitaplik:{label:"Kitaplık",desc:"Açık raf, alt dolap",D:330,W:120,H:200},
   tv:{label:"TV ünitesi",desc:"Konsol, yan kule, asma raf",D:420,W:240,H:200},
+  banyo:{label:"Banyo dolabı",desc:"Lavabo altı, ayna, boy dolabı",D:450,W:120,H:220},
+  masa:{label:"Çalışma masası",desc:"Keson, tabla, üst raf",D:600,W:140,H:75,hL:"Masa yüksekliği"},
+  yatak:{label:"Komodin + başlık",desc:"Yatak başlığı, iki komodin",D:400,W:260,H:120,hL:"Başlık yüksekliği"},
+  balkon:{label:"Balkon dolabı",desc:"Raf, süpürge, makine üstü",D:450,W:100,H:220},
   mutfak:{label:"Mutfak",desc:"I, L, U plan · alt ve üst dolap"}
 };
 const ICONS={
@@ -266,6 +271,10 @@ const ICONS={
   cocuk:'<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2"><rect x="10" y="14" width="36" height="36" rx="1"/><path d="M28 14v36M10 38h18M16 22h6M33 32v4M28 8l4-4 4 4"/></svg>',
   kitaplik:'<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="5" width="38" height="46" rx="1"/><path d="M9 16h38M9 27h38M9 38h38M14 7v8M17 8v7M21 7v8M33 18v8M36 19v7M40 29v8M44 30v7M14 40v9M18 41v8"/></svg>',
   tv:'<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2"><rect x="14" y="8" width="28" height="17" rx="1"/><path d="M4 36h48v12H4zM4 42h48M20 36v12M36 36v12M4 6v42M52 6v42"/></svg>',
+  banyo:'<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2"><rect x="10" y="6" width="22" height="16" rx="1"/><path d="M14 10l6 6M8 30h30v18H8zM8 30q15 6 30 0M23 30v-4M42 6h8v42h-8z"/></svg>',
+  masa:'<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 26h48M6 28h14v22H6zM6 35h14M6 42h14M48 28v22"/><rect x="26" y="10" width="18" height="12" rx="1"/><path d="M35 22v4"/></svg>',
+  yatak:'<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2"><rect x="14" y="10" width="28" height="22" rx="2"/><path d="M14 34h28v10H14zM2 34h10v14H2zM44 34h10v14H44zM2 41h10M44 41h10"/></svg>',
+  balkon:'<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="4" width="40" height="48" rx="1"/><path d="M28 4v48M8 20h20M28 28h20M33 34v8a4 4 0 0 0 8 0v-8"/><circle cx="18" cy="38" r="6"/></svg>',
   mutfak:'<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 30h48M4 33h48v18H4zM8 6h40v14H8zM22 33v18M38 33v18M22 6v14M38 6v14M27 26h6"/></svg>'
 };
 const STEPS=[["tur","Ne?"],["olcu","Ölçü"],["oneri","Öneri"],["duzen","Düzenle"],["sonuc","Kesim"]];
@@ -325,7 +334,24 @@ const COLP={
   tvnis:{label:"Cihaz nişi",make:Z=>[B("nis",0,{use:"serbest"})]},
   tvcek:{label:"Çekmece",make:Z=>[B("cekmece",0,{n:Z>=300?2:1})]},
   tvkule:{label:"Yan kule",make:Z=>[B("raf",450,{door:true,use:"genel"}),B("raf",0,{shelves:autoShelves(Z-450,300),use:"kitap"})]},
-  tvasma:{label:"Asma raf",make:Z=>[B("raf",0,{use:"genel"})]}
+  tvasma:{label:"Asma raf",make:Z=>[B("raf",0,{use:"genel"})]},
+  /* banyo */
+  lavabo:{label:"Lavabo altı kapaklı",make:Z=>[B("raf",0,{door:true,use:"serbest"})]},
+  lavabocek:{label:"Lavabo altı çekmece",make:Z=>[B("cekmece",0,{n:2})]},
+  ayna:{label:"Ayna dolabı",make:Z=>[B("raf",0,{door:true,shelves:Math.max(1,autoShelves(Z,190)),use:"kozmetik"})]},
+  banyoboy:{label:"Boy dolabı",make:Z=>[B("raf",0,{door:true,shelves:autoShelves(Z,350),use:"genel"})]},
+  /* masa */
+  keson:{label:"Çekmeceli keson",make:Z=>[B("cekmece",0,{n:3})]},
+  kesonkap:{label:"Kapaklı keson",make:Z=>[B("raf",0,{door:true,use:"serbest"}),B("cekmece",160,{n:1})]},
+  /* yatak */
+  komodin:{label:"2 çekmeceli",make:Z=>[B("cekmece",0,{n:2})]},
+  komodin3:{label:"3 çekmeceli",make:Z=>[B("cekmece",0,{n:3})]},
+  komodinnis:{label:"Niş + çekmece",make:Z=>[B("nis",0,{use:"serbest"}),B("cekmece",170,{n:1})]},
+  komodinasma:{label:"Asma çekmece",make:Z=>[B("cekmece",0,{n:1})]},
+  /* balkon */
+  balkonraf:{label:"Raflı",make:Z=>[B("raf",0,{door:true,shelves:autoShelves(Z,350),use:"genel"})]},
+  supurge:{label:"Süpürge bölmesi",make:Z=>[B("raf",0,{door:true,use:"serbest"}),B("raf",350,{door:true,use:"genel"})]},
+  makine:{label:"Makine üstü",make:Z=>[B("nis",Math.min(900,Z-300),{use:"serbest",topName:"Makine üstü tabla"}),B("raf",0,{door:true,shelves:autoShelves(Math.max(300,Z-900),350),use:"genel"})]}
 };
 const COLSETS={gardirop:["aski","uzunaski","ciftaski","cekmeceaski","raf","cekmeceraf","ayakkabi","acik"],
   vestiyer:["vaski","oturak","vkapali","ayakkabi","raf","acik"],
@@ -333,6 +359,10 @@ const COLSETS={gardirop:["aski","uzunaski","ciftaski","cekmeceaski","raf","cekme
   cocuk:["caski","oyuncak","cekmeceraf","raf","acik"],
   kitaplik:["kitapacik","kitapalt","kitapcek","raf","acik"],
   tv:["tvkapak","tvnis","tvcek","tvkule","kitapacik"],asma:["tvasma","raf"],
+  banyo:["lavabo","lavabocek","banyoboy","raf"],banyo_asma:["ayna","lavabocek","raf"],
+  masa:["keson","kesonkap","kitapacik","raf"],masa_asma:["kitapacik","tvasma","raf"],
+  yatak:["komodin","komodin3","komodinnis"],yatak_asma:["komodinasma","tvasma"],
+  balkon:["balkonraf","supurge","makine","raf"],
   alt:["kapakli","cekmeceli","cekkap","eviye","mkacik"],ust:["ustkapakli","mkacik"],tavan:["raf"]};
 let UID=1;const nid=()=>"m"+Date.now().toString(36)+(UID++);
 function mkMod(o){const m=Object.assign({id:nid(),role:"govde",wall:"A",x:0,mount:0,W:600,H:2000,D:580,baza:0,rails:false,blind:null,gap:null,label:"",preset:[]},o);
@@ -353,6 +383,8 @@ function computeAll(mods){
   const fits=(a,b,m)=>(a<=m.L&&b<=m.W)||(a<=m.W&&b<=m.L);
   mods.forEach(m=>{
     if(m.gap){geo[m.id]={gap:true};return}
+    if(m.panel){const pn=m.panel;if(pn.o==="h")add(m,pn.name,1,m.W,m.D,1,2);else if(pn.o==="v")add(m,pn.name,1,m.H,m.D,1,1);else add(m,pn.name,1,m.W,m.H,2,2);
+      geo[m.id]={cols:[],W:m.W,H:m.H,bz:0,panel:true};return}
     const {W,H}=m,bz=m.baza||0,n=m.cols.length,Z=H-bz,G={cols:[],W,H,bz};
     const bk=backOf(),inset=bk==="18",D=m.D,Di=inset?m.D-t:m.D;
     add(m,"Yan dikme",2,H,D,1,0);
@@ -489,8 +521,45 @@ function tvVariants(inp){const W=Math.round(inp.W*10),H=Math.round(inp.H*10),D=M
   // 3) çekmeceli konsol
   {const mods=[cons(0,W,500,"tvcek")];out.push({name:"Çekmeceli konsol",desc:"Tek parça alçak konsol, çekmeceli; en az iş, en sade görünüm.",mods,notes:[]})}
   return out}
+function panel(o,name,x,mount,W,H,D,label){return mkMod({role:"panel",label,x,mount,W,H,D,baza:0,preset:[],panel:{o,name}})}
+function banyoVariants(inp){const W=Math.round(inp.W*10),H=Math.round(inp.H*10),D=Math.round(inp.D*10);const out=[];
+  const lw=W-1000<350?Math.min(W,1300):1000,rest=W-lw,tall=rest>=350?Math.min(rest,500):0;
+  const mk=(name,desc,lav,hung)=>{const mods=[];
+    const nc=lw>1000?2:lw>800&&lav==="lavabo"?1:lw>800?2:1;
+    mods.push(hung?mkMod({role:"asma",label:"L",x:0,mount:350,W:lw,H:500,D,baza:0,preset:Array(nc).fill(lav)})
+               :mkMod({role:"govde",label:"L",x:0,mount:0,W:lw,H:850,D,baza:100,preset:Array(nc).fill(lav)}));
+    mods.push(mkMod({role:"asma",label:"AY",x:0,mount:1200,W:lw,H:700,D:150,baza:0,preset:Array(lw>700?2:1).fill("ayna")}));
+    if(tall)mods.push(mkMod({role:"govde",label:"BY",x:lw,mount:0,W:tall,H:Math.min(H,2000),D:Math.min(D,350),baza:100,preset:["banyoboy"]}));
+    out.push({name,desc,mods,notes:rest>0&&!tall?["Lavabo dolabı 130 cm'yi geçmesin diye "+cm(rest)+" cm boş bırakıldı."]:[]})};
+  mk("Kapaklı lavabo dolabı","Yerde duran, kapaklı lavabo dolabı; üstte aynalı dolap"+(tall?", yanında boy dolabı.":"."),"lavabo",false);
+  mk("Çekmeceli lavabo dolabı","Çekmeceli lavabo dolabı; üst çekmece sifon için U kesimli.","lavabocek",false);
+  mk("Asma lavabo dolabı","Duvara asılı, altı açık; zemin kolay temizlenir.","lavabocek",true);
+  return out}
+function masaVariants(inp){const W=Math.round(inp.W*10),dh=Math.round(inp.H*10),D=Math.round(inp.D*10),t=+SET.t;const out=[];const kw=Math.min(450,Math.max(350,Math.round(W*.3/10)*10));
+  const kes=(x,lb,pre)=>mkMod({role:"govde",label:lb,x,mount:0,W:kw,H:dh-t,D:D-50,baza:50,preset:[pre]});
+  {const mods=[kes(0,"K1","keson"),panel("h","Masa tablası",0,dh-t,W,t,D,"T"),panel("v","Masa yan ayağı",W-t,0,t,dh-t,D,"Y")];
+    out.push({name:"Tek kesonlu",desc:"Solda çekmeceli keson, sağda yan ayak; diz boşluğu geniş.",mods,notes:[]})}
+  {const two=W>=2*kw+600;const mods=two?[kes(0,"K1","keson"),kes(W-kw,"K2","kesonkap"),panel("h","Masa tablası",0,dh-t,W,t,D,"T")]:[kes(0,"K1","keson"),panel("h","Masa tablası",0,dh-t,W,t,D,"T"),panel("v","Masa yan ayağı",W-t,0,t,dh-t,D,"Y")];
+    out.push({name:"Çift kesonlu",desc:"İki yanda keson: biri çekmeceli, biri kapaklı.",mods,notes:two?[]:["Ortada 60 cm diz boşluğu kalmadığı için ikinci keson konmadı; masa en az "+cm(2*kw+600)+" cm olmalı."]})}
+  {const nc=Math.max(1,Math.round(W/700));const mods=[kes(0,"K1","keson"),panel("h","Masa tablası",0,dh-t,W,t,D,"T"),panel("v","Masa yan ayağı",W-t,0,t,dh-t,D,"Y"),
+      mkMod({role:"asma",label:"R",x:0,mount:dh+450,W,H:700,D:300,baza:0,preset:Array(nc).fill("kitapacik")})];
+    out.push({name:"Üst raflı",desc:"Tek kesonlu masa, üstünde duvara asılı kitaplık rafı.",mods,notes:[]})}
+  return out}
+function yatakVariants(inp){const W=Math.round(inp.W*10),H=Math.round(inp.H*10),D=Math.round(inp.D*10),t=+SET.t,bw=Math.round((inp.bedW||160)*10),bh=Math.round((inp.bedH||50)*10);const out=[];
+  const kw=Math.min(600,Math.floor((W-bw)/2));const kh=bh+30;
+  const mk=(name,desc,pre,hung,wide)=>{const mods=[],notes=[];
+    const bx=wide?0:Math.max(0,kw),bW=wide?W:bw;
+    mods.push(panel("f","Yatak başlığı paneli",bx,0,bW,H,t,"B"));
+    if(kw>=350){mods.push(hung?mkMod({role:"asma",label:"N1",x:0,mount:kh-250,W:kw,H:250,D,baza:0,preset:[pre]}):mkMod({role:"govde",label:"N1",x:0,mount:0,W:kw,H:kh,D,baza:60,preset:[pre]}));
+      mods.push(hung?mkMod({role:"asma",label:"N2",x:W-kw,mount:kh-250,W:kw,H:250,D,baza:0,preset:[pre]}):mkMod({role:"govde",label:"N2",x:W-kw,mount:0,W:kw,H:kh,D,baza:60,preset:[pre]}))}
+    else notes.push("Duvar yatağın iki yanına komodin için yetmiyor (her yana en az 35 cm gerekir).");
+    out.push({name,desc,mods,notes})};
+  mk("İki komodin + başlık","Yatak eninde başlık paneli, iki yanda 2 çekmeceli komodin.","komodin",false,false);
+  mk("Niş + çekmece","Üstte çekmece, altında açık niş; hafif görünür.","komodinnis",false,false);
+  mk("Asma komodin + geniş başlık","Duvar boyu başlık paneli, komodinler panele asılı; altı açık.","komodinasma",true,true);
+  return out}
 function furnitureVariants(type,inp){
-  if(type==="tv")return tvVariants(inp);
+  if(type==="tv")return tvVariants(inp);if(type==="banyo")return banyoVariants(inp);if(type==="masa")return masaVariants(inp);if(type==="yatak")return yatakVariants(inp);
   const W=Math.round(inp.W*10),H=Math.round(inp.H*10),D=Math.round(inp.D*10);
   const out=[];
   const kol=kolonRanges(inp,"A",W),segs=cutRange(0,W,kol);
@@ -527,6 +596,11 @@ function furnitureVariants(type,inp){
     build("Klasik","Altta kapaklı dolap, 85 cm'de tezgah ve açık niş, üstte kapaklı dolap.",["kahve"],{maxBody:1000});
     build("Çekmeceli","Tezgah altında kaşık-kapsül çekmecesi, altında dolap.",["kahvecek"],{maxBody:1000});
     build("Açık üst","Üst bölüm açık raf; fincan ve kavanozlar görünür.",["kahveacik"],{maxBody:1000});
+  }else if(type==="balkon"){
+    build("Raflı","Kapaklı raflı bölmeler; deterjan, alet, kavanoz.",["balkonraf"]);
+    build("Süpürge bölmeli","Bir bölme süpürge, ütü masası, paspas için boş; yanında raflar.",["supurge","balkonraf"]);
+    build("Makine üstü","Altta çamaşır makinesi boşluğu, üstünde kapaklı dolap.",["makine","balkonraf"]);
+    {const v=out[out.length-1];v.mods.forEach(m=>{if(m.D<600){m.D=600;v.notes.push("Makine için derinlik 60 cm'ye çıkarıldı.")}if(m.cols&&m.cols.length>1)m.cols.forEach(c=>{if(c.p==="makine")c.w=640})})}
   }else if(type==="kitaplik"){
     build("Açık raflı","Tamamı açık raf; kitap için 30 cm aralık.",["kitapacik"]);
     build("Alt dolaplı","Altta 80 cm kapaklı dolap, üstü açık raf. Toz tutan eşyalar dolapta.",["kitapalt"]);
@@ -677,6 +751,7 @@ const USES={
   tencere:{l:"Tencere",min:250,max:400,ideal:330,why:"Alt dolapta tencere ve tava için 25–40 cm."},
   makine:{l:"Kahve makinesi",min:450,max:650,ideal:520,why:"Kahve makinesi, kettle ve öğütücü için niş 45–65 cm olmalı; üstten su doldurulan makinede üst sınıra yakın tutun."},
   genel:{l:"Genel eşya",min:250,max:450,ideal:330,why:"Genel eşya için 25–45 cm verimli aralık."},
+  kozmetik:{l:"Kozmetik / ilaç",min:120,max:250,ideal:180,why:"Şişe, krem ve ilaç için 12–25 cm aralık yeterli; daha fazlası boşa gider."},
   serbest:{l:"Serbest (eviye, çöp)",min:0,max:99999,ideal:330,why:"Bu alan için standart raf aralığı yok."}};
 Object.keys(USES).forEach(k=>USES[k].key=k);
 function useOf(m,ci,k){const c=m.cols[ci],b=c.bands[k];if(b.use&&USES[b.use])return b.use;if(b.shoe)return"ayakkabi";
@@ -684,7 +759,7 @@ function useOf(m,ci,k){const c=m.cols[ci],b=c.bands[k];if(b.use&&USES[b.use])ret
   if(m.role==="ust")return"tabak";if(m.role==="tavan")return"genel";if(m.role==="alt")return"tencere";
   if(S.type==="kahve")return k===c.bands.length-1?"tabak":"genel";
   if(S.type==="cocuk"&&c.p==="oyuncak"&&k===0)return"oyuncak";
-  if(S.type==="kitaplik")return"kitap";
+  if(S.type==="kitaplik")return"kitap";if(S.type==="banyo"&&m.role==="asma")return"kozmetik";
   if(S.type==="gardirop"||S.type==="cocuk")return"giysi";return"genel"}
 function bestShelves(inner,u){const t=+SET.t;let best=null;
   for(let n=0;n<=14;n++){const sp=(inner-n*t)/(n+1);if(sp<60)break;const d=Math.abs(sp-u.ideal);if(!best||d<best.d)best={n,sp,d}}return best}
@@ -737,6 +812,26 @@ function advise(mods,R){
         if(sink&&sill-tz<300)add("warn","Eviye pencerenin altında; batarya kanada çarpabilir ("+cm(sill-tz)+" cm).","İçe açılan pencerenin altında batarya için tezgahtan denizliğe yaklaşık 30 cm gerekir. Yatırılabilir (pencere önü) ya da kısa batarya seçin, veya bataryayı pencere kenarına alın.");
         else if(sink)add("ok","Eviye pencere altında, batarya kanada çarpmaz.","Denizlik tezgahtan "+cm(sill-tz)+" cm yukarıda.")}
       if(k==="ic")add("info",(o.wall||"A")+" duvarı: pencere içe açılıyor.","Kanadın süpürdüğü alana (planda mavi yay) yüksek eşya, davlumbaz ya da üst dolap konmaz.")})}
+  if(S.type==="banyo"){const L=mods.find(m=>m.label==="L"),A=mods.find(m=>m.label==="AY");
+    if(L){const top=L.mount+L.H+20;if(top<800||top>900)add("warn","Lavabo üstü "+cm(top)+" cm.","Lavabo üst kenarı yerden 80–90 cm olmalı (lavabo kalınlığı ~2 cm dahil). Yetişkin için 85 cm yaygın.");else add("ok","Lavabo üstü "+cm(top)+" cm.","80–90 cm aralığı rahat kullanım sağlar.");
+      add("info","Lavabo dolabında sifon payı.","Lavabo altı dolabın arkası sifon ve gider için açık ya da delikli bırakılır; çekmeceliyse üst çekmece U kesimli olur, rafı yoktur.")}
+    if(A&&L){const gap=A.mount-(L.mount+L.H+20);if(gap<300)add("warn","Ayna dolabı lavaboya çok yakın ("+cm(gap)+" cm).","Batarya ve el yıkama için lavabo ile ayna dolabı arasında en az 30 cm, tercihen 40 cm olsun.");
+      if(A.mount+A.H>1950)add("info","Ayna dolabının üstü "+cm(A.mount+A.H)+" cm.","Üst raflara rahat uzanmak için ayna dolabı üst kenarı 190–200 cm'yi geçmesin.")}
+    add("info","Banyo nemli bir ortam.","Gövdede su yalıtımlı (yeşil) suntalam ya da MDF-LAM, kenarlarda ABS bant ve paslanmaz menteşe kullanın; alt kenarları silikonlayın.")}
+  if(S.type==="masa"){const T=mods.find(m=>m.label==="T");if(T){const h=T.mount+T.H;
+      if(h<720||h>760)add("warn","Masa yüksekliği "+cm(h)+" cm.","Çalışma masası 72–76 cm olmalı; ayarlı sandalyeyle 73 cm iyi bir başlangıç.");else add("ok","Masa yüksekliği "+cm(h)+" cm.","72–76 cm aralığı oturarak çalışmaya uygun.");
+      const occ=mods.filter(m=>m.mount===0&&m!==T).reduce((q,m)=>q+m.W,0),knee=T.W-occ;
+      if(knee<600)add("warn","Diz boşluğu "+cm(knee)+" cm.","Sandalyeyle rahat oturmak için kesonlar arasında en az 60 cm, tercihen 80 cm boşluk kalmalı.");
+      if(T.D<600)add("info","Masa derinliği "+cm(T.D)+" cm.","Monitör ile göz arası en az 50 cm olsun diye 60 cm ve üstü derinlik önerilir.");
+      if(T.W>1600)add("info","Tabla "+cm(T.W)+" cm uzun.","18 mm tablada 160 cm'den uzun açıklık sehim yapar; ortaya bir ayak ya da altına kuşak koyun.")}}
+  if(S.type==="yatak"){const bh=Math.round((S.inp.bedH||50)*10);mods.filter(m=>/^N/.test(m.label||"")).slice(0,1).forEach(n=>{const top=n.mount+n.H;const d=top-bh;
+      if(Math.abs(d)>100)add("warn","Komodin üstü "+cm(top)+" cm, yatak üstü "+cm(bh)+" cm.","Komodin üstü yatak üst seviyesiyle aynı ya da en fazla 10 cm farklı olmalı; uzanırken telefona, lambaya rahat ulaşılır.");
+      else add("ok","Komodin yatakla aynı seviyede.","Komodin üstü yatak üstüne göre "+cm(d)+" cm.")});
+    const B=mods.find(m=>m.label==="B");if(B&&B.H<bh+400)add("info","Başlık yatak üstünden "+cm(B.H-bh)+" cm yüksek.","Oturup sırtını dayamak için başlık yatak üstünden en az 40 cm, tercihen 60 cm yüksek olsun.")}
+  if(S.type==="balkon"){mods.forEach(m=>m.cols&&m.cols.forEach((c,i)=>{if(c.p==="makine"){const G=R.geo[m.id],sw=G.cols[i].sw;
+      if(sw<620)add("warn",m.label+": makine bölmesi "+cm(sw)+" cm dar.","Çamaşır makinesi için iç genişlik en az 62 cm, derinlik 60 cm, yükseklik 87 cm olmalı.");
+      if(m.D<600)add("warn",m.label+": derinlik "+cm(m.D)+" cm, makine sığmaz.","Çamaşır makinesi için dolap derinliği en az 60 cm olmalı; arkası hortum için açık bırakılır.")}}));
+    add("info","Balkon dış ortama yakın.","Su yalıtımlı malzeme, paslanmaz menteşe kullanın; güneş alan balkonda kapak rengi solabilir, nem için alt tarafta havalandırma bırakın.")}
   if(S.type==="tv"){const tv=tvSize(S.inp),K=mods.find(m=>m.label==="K");
     if(K){if(K.W<tv.w+200)add("warn","Konsol ("+cm(K.W)+" cm) TV'den ("+cm(tv.w)+" cm) yeterince geniş değil.","Konsol TV'den her yanda en az 10 cm geniş olmalı; TV ayaklıysa devrilme riski olur.");
       else add("ok","Konsol TV'den "+cm(K.W-tv.w)+" cm geniş.","Konsolun TV'den her yanda en az 10 cm taşması önerilir.");
@@ -764,7 +859,9 @@ function hardware(mods,R){
   const items=[];const add=(cat,name,qty,unit="ad",note="")=>{if(qty<=0)return;const ex=items.find(i=>i.name===name);if(ex)ex.qty+=qty;else items.push({cat,name,qty,unit,note})};
   const hingeN=h=>h<=900?2:h<=1600?3:h<=2000?4:5;
   let screws16=0,zimba=0;const boruL=[];
-  mods.forEach(m=>{if(m.gap)return;const G=R.geo[m.id];if(!G)return;const n=G.cols.length;
+  mods.forEach(m=>{if(m.panel){add("Bağlantı",m.panel.o==="f"?"Başlık duvar askı aparatı (Z ray)":"Masa bağlantı köşebendi",m.panel.o==="f"?1:4);return}});
+  if(S.type==="masa")add("Montaj","Masa kablo geçiş kapağı (Ø60 mm)",1);
+  mods.forEach(m=>{if(m.gap||m.panel)return;const G=R.geo[m.id];if(!G)return;const n=G.cols.length;
     let mf=4+(m.rails?0:4)+(n-1)*4;if(m.rails)add("Bağlantı","Kuşak bağlantısı (minifix)",4);
     G.cols.forEach(c=>{mf+=c.seps.length*4});
     add("Bağlantı","Minifix (eksantrik) takımı",mf);add("Bağlantı","Kavela 8×35",mf);
@@ -782,7 +879,7 @@ function hardware(mods,R){
     G.cols.forEach((c,i)=>{
       c.doors.forEach(d=>{const hingeLeft=d.hand==="r";
         const onAra=hingeLeft?i>0:i<n-1;const type=onAra?"yarım bükük":"düz";
-        const k=hingeN(d.h);add("Menteşe & kapak",`Menteşe 110° ${push?"frensiz (çekbas için)":"frenli"} — ${type}`,k);screws16+=k*4;
+        const k=hingeN(d.h);add("Menteşe & kapak",`Menteşe 110° ${push?"frensiz (çekbas için)":"frenli"}${S.type==="banyo"||S.type==="balkon"?" paslanmaz":""} — ${type}`,k);screws16+=k*4;
         if(push)add("Menteşe & kapak","Çekbas (bas-aç mandal)",d.h>1500?2:1);
         else{const kl=d.h>=1500?"320":"128";add("Kulp",`Kulp ${kl} mm (delik arası)`,1);add("Menteşe & kapak","Kapak tamponu (silikon)",2)}});
       c.drawers.forEach(d=>{add("Çekmece",`${push?"Bas-aç teleskopik ray":"Teleskopik ray"} ${railL} mm (takım)`,1);screws16+=12;
@@ -970,6 +1067,9 @@ function roomCandsHTML(){const C=roomCands(),rm=roomOf();
 function modDraw(m,G,ox,oy,o){
   const t=+SET.t,fs=o.fs;let s=`<g class="mod" data-mod="${m.id}" transform="translate(${ox} ${oy})">`;
   const st=`stroke="var(--wood-edge)" stroke-width="${fs/8}"`;
+  if(G&&G.panel){s+=`<rect x="0" y="0" width="${m.W}" height="${m.H}" fill="var(--wood)" stroke="${o.sel?"var(--accent)":"var(--wood-edge)"}" stroke-width="${o.sel?fs/2.5:fs/6}"/>`;
+    if(!o.small&&m.W>fs*4&&m.H>fs*1.4)s+=`<text x="${m.W/2}" y="${Math.min(m.H/2+fs*.35,fs*1.6)}" font-size="${Math.min(fs*.75,m.H*.6)}" text-anchor="middle" fill="var(--ink)" font-family="IBM Plex Sans,sans-serif">${esc(m.panel.name)} ${cm(m.panel.o==="v"?m.H:m.W)}</text>`;
+    return s+"</g>"}
   if(m.gap){const isApp=/Bulaşık|Fırın|Buzdolabı/.test(m.gap);
     if(m.gap==="Kapı"){s+=`<rect x="0" y="0" width="${m.W}" height="${m.H}" fill="var(--surface)" stroke="var(--ink)" stroke-width="${fs/6}"/><rect x="${m.W*.08}" y="${m.H*.04}" width="${m.W*.84}" height="${m.H*.96}" fill="none" stroke="var(--muted)" stroke-width="${fs/10}"/><circle cx="${m.W*.82}" cy="${m.H*.52}" r="${fs*.35}" fill="var(--ink)"/>`;
       if(!o.small)s+=`<text x="${m.W/2}" y="${m.H*.3}" font-size="${fs*.8}" text-anchor="middle" fill="var(--ink)" font-family="IBM Plex Sans,sans-serif">Kapı ${cm(m.W)}</text>`;return s+"</g>"}
@@ -1052,6 +1152,9 @@ function wallSVG(mods,R,wall,o={}){
     s+=`<rect x="${cx-tv.w/2}" y="${cy-tv.h/2}" width="${tv.w}" height="${tv.h}" rx="${fs*.3}" fill="var(--ink)" opacity=".85"/>`;
     if(!o.small)s+=`<text x="${cx}" y="${cy+fs*.35}" font-size="${fs}" text-anchor="middle" fill="var(--surface)" font-family="IBM Plex Sans,sans-serif">TV ${S.inp.tvInch||55}″ · ${cm(tv.w)} cm</text>`}}
   ms.forEach(m=>{s+=modDraw(m,R.geo[m.id],m.x,top-(m.mount+m.H),{fs,doors:!grid&&o.doors!==false&&S.showDoors,small:o.small,sel:o.sel===m.id,labels:!o.small,grid,names,hueIdx,selCell:o.selCell})});
+  if(S.type==="yatak"){const B=ms.find(m=>m.label==="B");if(B){const bw=Math.round((S.inp.bedW||160)*10),bh=Math.round((S.inp.bedH||50)*10),cx=B.x+B.W/2;
+    s+=`<rect x="${cx-bw/2}" y="${top-bh}" width="${bw}" height="${bh}" rx="${fs*.6}" fill="var(--line)" stroke="var(--muted)" stroke-width="${fs/8}" opacity=".9"/>`;
+    if(!o.small)s+=`<text x="${cx}" y="${top-bh/2+fs*.35}" font-size="${fs}" text-anchor="middle" fill="var(--ink)" font-family="IBM Plex Sans,sans-serif">Yatak ${cm(bw)}</text>`}}
   s+=`<line x1="${-pad*.5}" x2="${Lw+pad*.5}" y1="${top}" y2="${top}" stroke="var(--ink)" stroke-width="${fs/5}"/>`;
   if(!o.small){const tk=`stroke="var(--ink)" stroke-width="${fs/10}"`;const y=o.grid?-pad*.8:-pad*.45;
     s+=`<line x1="0" x2="${Lw}" y1="${y}" y2="${y}" ${tk}/><line x1="0" x2="0" y1="${y-fs*.5}" y2="${y+fs*.5}" ${tk}/><line x1="${Lw}" x2="${Lw}" y1="${y-fs*.5}" y2="${y+fs*.5}" ${tk}/>`;
@@ -1188,9 +1291,10 @@ function renderOlcu(){
     return}
   h=`<h1 class="c">${T.label} ölçüleri</h1>
     <div class="grid3"><label class="field big"><span class="k">En · cm</span><input type="number" inputmode="decimal" id="in-W" data-inp="W" value="${i.W}"></label>
-    <label class="field big"><span class="k">Boy · cm</span><input type="number" inputmode="decimal" id="in-H" data-inp="H" value="${i.H}"></label>
+    <label class="field big"><span class="k">${T.hL||"Boy"} · cm</span><input type="number" inputmode="decimal" id="in-H" data-inp="H" value="${i.H}"></label>
     <label class="field big"><span class="k">Derinlik</span><input type="number" inputmode="decimal" id="in-D" data-inp="D" value="${i.D}"></label></div>
     <div class="note" id="dhint">${depthHint()}</div>
+    ${S.type==="yatak"?`<div class="grid3"><label class="field"><span class="k">Yatak eni · cm</span><input type="number" inputmode="decimal" id="in-bw" data-inp="bedW" value="${i.bedW||160}"></label><label class="field"><span class="k">Yatak yüksekliği</span><input type="number" inputmode="decimal" id="in-bh" data-inp="bedH" value="${i.bedH||50}"><span class="h">baza + şilte üstü</span></label></div>`:""}
     ${S.type==="tv"?`<label class="field"><span class="k">TV ekranı · inç</span><input type="number" inputmode="decimal" id="in-tv" data-inp="tvInch" value="${i.tvInch||55}"><span class="h">Konsol genişliği ve kule aralığı buna göre denetlenir</span></label>`:""}
     <div class="note" id="sizehint">${sizeHint()}</div>
     <details class="panel" ${(i.obs||[]).length?"open":""}><summary style="cursor:pointer;font-weight:600">Kolon ya da kiriş var mı? ${(i.obs||[]).length?"("+i.obs.length+")":""}</summary>${obsPanel().replace(/^<div class="panel">/,'<div style="display:flex;flex-direction:column;gap:12px;margin-top:10px">')}</details>`;
@@ -1246,7 +1350,7 @@ function obsPanel(){const obs=S.inp.obs||[],kitchen=S.type==="mutfak";
      <div class="grid3">${o.type==="kapi"||o.type==="bos"?f(i,"x","Soldan cm",o.x)+f(i,"w","Genişlik cm",o.w):o.type==="pencere"?f(i,"x","Soldan cm",o.x)+f(i,"w","Genişlik cm",o.w)+f(i,"h","Denizlik cm",o.h,"yerden")+f(i,"wh","Yükseklik cm",o.wh):o.type==="kolon"?f(i,"x","Soldan cm",o.x)+f(i,"w","Genişlik cm",o.w)+f(i,"d","Duvardan çıkıntı cm",o.d)
        :f(i,"h","Alt yüksekliği cm",o.h,"yerden kirişin altına")+f(i,"d","Duvardan çıkıntı cm",o.d)+f(i,"x","Soldan cm",o.x,"0 = baştan")+f(i,"w","Genişlik cm",o.w,"0 = tüm duvar")}</div>${openChips(o,(k,v)=>`data-obsset="${i}:${k}:${v}"`)}</div>`).join("")}
    <div class="btns"><button class="btn small ghost" data-obsadd="kolon">+ Kolon ekle</button><button class="btn small ghost" data-obsadd="kiris">+ Kiriş ekle</button>${kitchen?`<button class="btn small ghost" data-obsadd="kapi">+ Kapı</button><button class="btn small ghost" data-obsadd="pencere">+ Pencere</button>`:""}</div></div>`}
-function depthHint(){return{kitaplik:"Kitaplık 30–35 cm; A4 klasör için en az 33 cm.",tv:"TV konsolu 40–45 cm; yan kuleler 35 cm'ye otomatik iner.",gardirop:"Askılı gardırop için 58–60 cm standart. 56 cm altında askı sığmaz.",vestiyer:"Vestiyer 35–40 cm; bu derinlikte askı yerine kanca kullanılır.",kahve:"Kahve köşesi 40–50 cm; makineye göre ayarlayın.",cocuk:"Çocuk dolabı 50–55 cm."}[S.type]||""}
+function depthHint(){return{banyo:"Lavabo dolabı 45–50 cm; ayna dolabı 15 cm, boy dolabı 35 cm'ye otomatik iner.",masa:"Masa derinliği 60–80 cm; monitör için en az 60.",yatak:"Komodin derinliği 35–45 cm.",balkon:"Balkon dolabı 40–60 cm; çamaşır makinesi için 60 cm gerekir.",kitaplik:"Kitaplık 30–35 cm; A4 klasör için en az 33 cm.",tv:"TV konsolu 40–45 cm; yan kuleler 35 cm'ye otomatik iner.",gardirop:"Askılı gardırop için 58–60 cm standart. 56 cm altında askı sığmaz.",vestiyer:"Vestiyer 35–40 cm; bu derinlikte askı yerine kanca kullanılır.",kahve:"Kahve köşesi 40–50 cm; makineye göre ayarlayın.",cocuk:"Çocuk dolabı 50–55 cm."}[S.type]||""}
 function sizeHint(){const i=S.inp;const W=i.W*10,H=i.H*10;const tips=[];
   if(S.type==="gardirop"&&H>2350)tips.push("Boy 235 cm'yi geçtiği için üstü ayrı tavan dolabı olarak önerilecek.");
   if(W>1200)tips.push("En "+i.W+" cm; taşıma ve plaka boyu için "+Math.ceil(W/1200)+" ayrı gövde olarak bölünecek.");
@@ -1265,7 +1369,7 @@ function renderOneri(){
     <button class="btn" data-pick="${k}">Bunu seç</button></div></div>`}).join("")}</div>`;
   setBar("olcu",S.mods.length?"duzen":null,"Mevcut tasarıma dön");
 }
-function presetsFor(m){if(m.role==="asma")return COLSETS.asma;if(m.role==="alt")return COLSETS.alt;if(m.role==="ust")return COLSETS.ust;if(m.role==="tavan")return COLSETS.tavan;return COLSETS[S.type]||COLSETS.gardirop}
+function presetsFor(m){if(m.role==="asma")return COLSETS[S.type+"_asma"]||COLSETS.asma;if(m.role==="alt")return COLSETS.alt;if(m.role==="ust")return COLSETS.ust;if(m.role==="tavan")return COLSETS.tavan;return COLSETS[S.type]||COLSETS.gardirop}
 function renderDuzen(){
   relabel();R=computeAll(S.mods);document.querySelector("main").className="fill";
   const kitchen=S.type==="mutfak";const wallsList=kitchen?(S.inp.plan==="I"?["A"]:S.inp.plan==="L"?["A","B"]:["A","B","C"]):["A"];
@@ -1300,6 +1404,11 @@ function backSheet(){openSheet(`<div class="ed-head"><b>Arkalık</b><button clas
    <div class="note">${esc(BACKS[backOf()].desc)}${backOf()===(BACK_DEF[S.type]||"3")?" Bu mobilya için önerilen seçim.":" Bu mobilya için önerilen: "+BACKS[BACK_DEF[S.type]||"3"].label+"."}</div>`)}
 function planSheet(){openSheet(`<div class="ed-head"><b>Plan</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>${planSVG(S.mods,false)}`)}
 function editorHTML(m){
+  if(m.panel)return `<div class="editor"><div class="ed-head"><div><b>${esc(m.label)}</b> <span>${esc(m.panel.name)}</span></div><button class="icobtn" data-close="1" aria-label="Kapat">✕</button></div>
+   <div class="grid3"><label class="field"><span class="k">Genişlik cm</span><input type="number" inputmode="decimal" id="pn-w" data-pnw="1" value="${nv(m.W/10)}"></label>
+    <label class="field"><span class="k">${m.panel.o==="h"?"Kalınlık":"Yükseklik"} cm</span><input type="number" inputmode="decimal" id="pn-h" data-pnh="1" value="${nv(m.H/10)}"></label>
+    <label class="field"><span class="k">Derinlik cm</span><input type="number" inputmode="decimal" id="pn-d" data-md="1" value="${nv(m.D/10)}"></label></div>
+   <div class="note">${m.panel.o==="h"?"Tabla gövdeyle aynı malzemeden kesilir; 25–30 mm isteniyorsa iki kat yapıştırılabilir.":"Tek parça panel; uzun kenarlara bant."}</div></div>`;
   if(m.gap)return `<div class="editor"><div class="ed-head"><b>${esc(m.label)}</b><span>${cm(m.W)} cm boşluk</span></div>
    <div class="row"><span>Genişlik (cm)</span><div class="step"><button data-mw="-5">−</button><input id="ed-w" data-modw value="${nv((m.W)/10)}" inputmode="decimal"><button data-mw="5">+</button></div></div>
    ${m.role!=="ust"||m.gap!=="Davlumbaz"?`<div class="btns"><button class="btn small ghost" data-togap="1">Dolaba çevir</button></div>`:""}</div>`;
@@ -1488,7 +1597,7 @@ function importText(txt){let d;try{d=JSON.parse(txt)}catch(e){toast("Dosya okuna
 /* ====================== OLAYLAR ====================== */
 function curMod(){return S.mods.find(x=>x.id===S.sel)}
 function reflow(m,dw){ // mutfakta aynı sıradaki sağdaki modülleri kaydır
-  if(S.type!=="mutfak"){let x=0;S.mods.filter(q=>q.role!=="tavan"&&!(q.mount>0)).sort((a,b)=>a.x-b.x).forEach(q=>{q.x=x;x+=q.W});S.mods.filter(q=>q.role==="tavan").forEach(t=>{const g=S.mods.filter(q=>q.role==="govde");const i=S.mods.filter(q=>q.role==="tavan").indexOf(t);if(g[i]){t.x=g[i].x;t.W=g[i].W}});return}
+  if(S.type!=="mutfak"){S.mods.filter(q=>q!==m&&q.mount===m.mount&&q.role!=="tavan"&&q.x>=m.x+m.W-dw-1).forEach(q=>q.x+=dw);S.mods.filter(q=>q.role==="tavan").forEach(t=>{const g=S.mods.filter(q=>q.role==="govde");const i=S.mods.filter(q=>q.role==="tavan").indexOf(t);if(g[i]){t.x=g[i].x;t.W=g[i].W}});return}
   S.mods.filter(q=>q!==m&&q.wall===m.wall&&q.role===m.role&&q.x>m.x).forEach(q=>q.x+=dw)}
 document.addEventListener("click",e=>{
   if(e.target.id==="sheet"){closeSheet();return}
@@ -1500,7 +1609,7 @@ document.addEventListener("click",e=>{
     if(d.go==="duzen"&&!S.mods.length)return;S.step=d.go;S.view=null;render();window.scrollTo(0,0);return}
   if(d.view){S.view=S.view===d.view?null:d.view;render();window.scrollTo(0,0);return}
   if(d.back){S.view=null;render();return}
-  if(d.type){const changed=S.type!==d.type;S.type=d.type;if(changed&&d.type!=="mutfak"){const T=TYPES[d.type];Object.assign(S.inp,{W:T.W,H:T.H,D:T.D/10});if(d.type==="tv"&&!S.inp.tvInch)S.inp.tvInch=55}
+  if(d.type){const changed=S.type!==d.type;S.type=d.type;if(changed&&d.type!=="mutfak"){const T=TYPES[d.type];Object.assign(S.inp,{W:T.W,H:T.H,D:T.D/10});if(d.type==="tv"&&!S.inp.tvInch)S.inp.tvInch=55;if(d.type==="yatak"){S.inp.bedW=S.inp.bedW||160;S.inp.bedH=S.inp.bedH||50}}
     if(changed){S.mods=[];S.sel=null;S.back=BACK_DEF[d.type]||"3";if(S.name==="Yeni proje"||Object.values(TYPES).some(t=>t.label===S.name))S.name=TYPES[d.type].label}
     S.step="olcu";render();window.scrollTo(0,0);return}
   if(d.ropset){const[i,k,v]=d.ropset.split(":");roomOf().open[+i][k]=v;persist();renderOlcu();return}
@@ -1600,6 +1709,8 @@ document.addEventListener("change",e=>{const x=e.target,d=x.dataset;const m=curM
   if(m&&d.modw!==undefined){const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)&&v>=15){const old=m.W;m.W=Math.round(v*10);reflow(m,m.W-old)}renderDuzen();return}
   if(m&&d.bh!==undefined){const v=parseFloat(String(x.value).replace(",","."));const bb=m.cols[S.col].bands[+d.bh];bb.h=isNaN(v)||v<=0?0:Math.round(v*10);m.cols[S.col].p=null;renderDuzen();return}
   if(m&&d.bjoin!==undefined){m.cols[S.col].bands[+d.bjoin].join=x.checked;renderDuzen();return}
+  if(m&&d.pnw!==undefined){const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)&&v>=1){const old=m.W;m.W=Math.round(v*10);reflow(m,m.W-old)}renderDuzen();return}
+  if(m&&d.pnh!==undefined){const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)&&v>=1)m.H=Math.round(v*10);renderDuzen();return}
   if(m&&d.md!==undefined){const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)&&v>=20)m.D=Math.round(v*10);renderDuzen();return}
   if(m&&d.cw!==undefined){const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)&&v>=15){const mm=Math.round(v*10);
       if(m.cols.length===1){const old=m.W;m.W=mm+2*+SET.t;reflow(m,m.W-old)}else m.cols[S.col].w=mm}renderDuzen();return}

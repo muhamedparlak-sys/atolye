@@ -4,7 +4,7 @@ Mobilya ustası için telefondan çalışan tasarım ve kesim uygulaması. Tek b
 
 ## Ne yapar
 
-1. **Ne?** Gardırop, vestiyer, kahve köşesi, çocuk dolabı, kitaplık, TV ünitesi veya mutfak (I / L / U plan).
+1. **Ne?** Gardırop, vestiyer, kahve köşesi, çocuk dolabı, kitaplık, TV ünitesi, banyo dolabı, çalışma masası, komodin + yatak başlığı, balkon dolabı veya mutfak (I / L / U plan; oda, kapı ve pencereden plan önerisi).
 2. **Ölçü** En ve boy (mutfakta duvar uzunlukları, tezgah yüksekliği; buzdolabı, eviye/pis su gideri, bulaşık makinesi ve fırın şerit üzerinde kaydırılarak yerleştirilir).
 3. **Öneri** Girilen ölçüye göre 3 hazır düzen; her birinde kapak, çekmece, plaka sayısı ve uyarılar.
 4. **Düzenle** Satranç tahtası gibi ızgara: her sütun ayrı renk ve harf, satırlar numaralı (B2 gibi). Hücreye dokununca ölçüleri ve ayarları açılır.
