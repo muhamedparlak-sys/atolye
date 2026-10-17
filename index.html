@@ -734,6 +734,63 @@ function hardware(mods,R){
 function hwCost(items){return items.reduce((q,i)=>q+(+(SET.hwPrice||{})[i.name]||0)*i.qty,0)}
 function hwText(items){const L=[`${S.name} — hırdavat listesi`];let cat="";
   items.forEach(i=>{if(i.cat!==cat){cat=i.cat;L.push("",cat.toUpperCase())}L.push(`- ${i.name}: ${fmt(i.qty,i.unit==="m"?1:0)} ${i.unit}`)});return L.join("\n")}
+
+/* ====================== HIZLI TEKLİF ====================== */
+const QDEF={laborMode:"pct",laborPct:100,laborFix:0,laborMod:0,transport:0,install:0,extra:0,profit:25,vat:20,round:100,valid:15};
+function qset(){SET.quote=Object.assign({},QDEF,SET.quote||{});return SET.quote}
+function quote(){const q=qset();R=R||computeAll(S.mods);
+  const used=matsUsed(R.parts),rows=[],miss=[];
+  used.forEach(k=>{const P=pack(R.parts,k),pr=+SET.mats[k].price||0;rows.push({l:SET.mats[k].name+" · "+P.sheets.length+" plaka",v:P.sheets.length*pr});if(!pr)miss.push(SET.mats[k].name+" plaka fiyatı")});
+  rows.push({l:"PVC bant · "+fmt(R.band,1)+" m",v:R.band*(+SET.bandPrice||0)});if(!+SET.bandPrice)miss.push("bant fiyatı");
+  const items=hardware(S.mods,R),hw=hwCost(items),hwMiss=items.filter(i=>!(+(SET.hwPrice||{})[i.name])).length;
+  rows.push({l:"Hırdavat ("+items.length+" kalem)",v:hw});if(hwMiss)miss.push(hwMiss+" hırdavat kaleminin fiyatı");
+  const mat=rows.reduce((a,r)=>a+r.v,0);
+  const nMod=S.mods.filter(m=>!m.gap).length;
+  const labor=q.laborMode==="pct"?mat*(+q.laborPct||0)/100:q.laborMode==="mod"?nMod*(+q.laborMod||0):(+q.laborFix||0);
+  const cost=mat+labor+(+q.transport||0)+(+q.install||0)+(+q.extra||0);
+  const profit=cost*(+q.profit||0)/100,net=cost+profit,vat=net*(+q.vat||0)/100;
+  let total=net+vat;const rnd=+q.round||0;const rounded=rnd?Math.ceil(total/rnd)*rnd:total;
+  const vr=(+q.vat||0)/100,netR=rounded/(1+vr),vatR=rounded-netR;
+  return{q,rows,mat,labor,nMod,cost,profit,net,vat,total,rounded,netR,vatR,miss}}
+function quoteText(){const Q=quote(),q=Q.q;const T=TYPES[S.type];
+  const dims=S.type==="mutfak"?`${S.inp.plan} plan mutfak (${["A","B","C"].slice(0,{I:1,L:2,U:3}[S.inp.plan]).map(w=>w+" "+S.inp[w]+" cm").join(", ")})`:`${T.label} ${S.inp.W} × ${S.inp.H} × ${S.inp.D} cm`;
+  let doors=0,drw=0;Object.values(R.geo).forEach(G=>{if(!G.gap)G.cols.forEach(c=>{doors+=c.doors.length;drw+=c.drawers.length})});
+  const L=[`TEKLİF — ${S.name}`,new Date().toLocaleDateString("tr-TR"),"",dims,
+    `Gövde: ${SET.mats.sunta.name} · Arkalık: ${BACKS[backOf()].label}`,
+    `${Q.nMod} gövde, ${doors} kapak, ${drw} çekmece · ${S.opener==="cekbas"?"çekbas (kulpsuz)":"kulplu"}`,
+    (+q.transport?"Nakliye dahil":"Nakliye hariç")+" · "+(+q.install?"Montaj dahil":"Montaj hariç"),"",
+    `Tutar: ${fmt(Q.netR)} ₺`,`KDV (%${q.vat}): ${fmt(Q.vatR)} ₺`,`TOPLAM (KDV dahil): ${fmt(Q.rounded)} ₺`,"",
+    `Teklif ${q.valid} gün geçerlidir.`];
+  return L.join("\n")}
+function quoteHTML(){const Q=quote(),q=Q.q;
+  const inp=(k,l,unit,hint)=>`<label class="field"><span class="k">${l}</span><input type="number" inputmode="decimal" id="q-${k}" data-q="${k}" value="${q[k]}"><span class="h">${unit}${hint?" · "+hint:""}</span></label>`;
+  const row=(l,v,id,b)=>`<tr${b?' style="font-weight:600"':""}><td>${l}</td><td class="num" ${id?`id="${id}"`:""}>${fmt(v)} ₺</td></tr>`;
+  return `<div class="stat" style="padding:14px"><span>Müşteriye fiyat (KDV dahil${+q.round?", "+fmt(+q.round)+" ₺'ye yuvarlı":""})</span><b id="qTot" style="font-size:40px">${fmt(Q.rounded)} ₺</b><span id="qSub">KDV hariç ${fmt(Q.net)} ₺ · kâr ${fmt(Q.profit)} ₺</span></div>
+   ${Q.miss.length?`<div class="note" style="color:var(--warn)">Eksik fiyat: ${esc(Q.miss.join(", "))}. Plaka ve bant fiyatlarını Ayarlar'dan, hırdavat fiyatlarını Hırdavat sekmesinden girin; eksikler 0 sayılır.</div>`:""}
+   <div class="tablewrap"><table><tbody>
+    ${Q.rows.map(r=>row(esc(r.l),r.v)).join("")}
+    ${row("Malzeme toplamı",Q.mat,"qMat",1)}
+    ${row("İşçilik",Q.labor,"qLab")}
+    ${row("Nakliye + montaj + ek",(+q.transport||0)+(+q.install||0)+(+q.extra||0),"qOth")}
+    ${row("Maliyet",Q.cost,"qCost",1)}
+    ${row("Kâr %"+q.profit,Q.profit,"qPro")}
+    ${row("KDV %"+q.vat,Q.vat,"qVat")}
+    ${row("Toplam",Q.total,"qRaw",1)}
+   </tbody></table></div>
+   <div class="panel"><span class="lbl">İşçilik nasıl hesaplansın?</span>
+    <div class="chips"><button class="chip" data-qmode="pct" aria-pressed="${q.laborMode==="pct"}">Malzemenin %'si</button><button class="chip" data-qmode="mod" aria-pressed="${q.laborMode==="mod"}">Gövde başına</button><button class="chip" data-qmode="fix" aria-pressed="${q.laborMode==="fix"}">Sabit tutar</button></div>
+    <div class="grid3">${q.laborMode==="pct"?inp("laborPct","İşçilik","% malzeme"):q.laborMode==="mod"?inp("laborMod","Gövde başına","₺",Q.nMod+" gövde"):inp("laborFix","İşçilik","₺")}
+     ${inp("transport","Nakliye","₺")}${inp("install","Montaj","₺")}${inp("extra","Ek gider","₺","boya, cam, LED…")}
+     ${inp("profit","Kâr","%")}${inp("vat","KDV","%","varsayılan 20")}</div>
+    <span class="lbl">Yuvarlama</span><div class="chips">${[0,100,500,1000].map(r=>`<button class="chip" data-qround="${r}" aria-pressed="${+q.round===r}">${r?fmt(r)+" ₺":"Yok"}</button>`).join("")}</div>
+    <div class="grid3">${inp("valid","Geçerlilik","gün")}</div>
+    <div class="note">Oranlar ve tutarlar hatırlanır; sonraki tekliflerde aynı gelir. Kâr maliyetin üstüne, KDV kârlı tutarın üstüne eklenir.</div></div>
+   <h2>Müşteriye</h2><div class="panel"><textarea id="qText" readonly>${esc(quoteText())}</textarea>
+    <div class="btns"><button class="btn" data-copyq="1">Teklifi kopyala</button><button class="btn ghost" data-expimg="1">Çizimi resim olarak al</button></div>
+    <div class="note">Metinde maliyet ve kâr görünmez; yalnızca kapsam ve fiyat yazar. Çizim resmini metinle birlikte gönderebilirsiniz.</div></div>`}
+function updateQuote(){const Q=quote();const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=fmt(v)+" ₺"};
+  set("qTot",Q.rounded);set("qMat",Q.mat);set("qLab",Q.labor);set("qOth",(+Q.q.transport||0)+(+Q.q.install||0)+(+Q.q.extra||0));set("qCost",Q.cost);set("qPro",Q.profit);set("qVat",Q.vat);set("qRaw",Q.total);
+  const sub=document.getElementById("qSub");if(sub)sub.textContent="KDV hariç "+fmt(Q.net)+" ₺ · kâr "+fmt(Q.profit)+" ₺";const ta=document.getElementById("qText");if(ta)ta.value=quoteText()}
 /* ====================== ÇİZİM ====================== */
 function modDraw(m,G,ox,oy,o){
   const t=+SET.t,fs=o.fs;let s=`<g class="mod" data-mod="${m.id}" transform="translate(${ox} ${oy})">`;
@@ -990,7 +1047,7 @@ function renderDuzen(){
   <div class="stats">
    ${packs.slice(0,2).map((P,i)=>`<div class="stat"><b>${P.sheets.length}</b><span>${esc(SET.mats[used[i]].name)} plaka</span></div>`).join("")}${packs.length<2?`<div class="stat"><b>${R.parts.filter(p=>p.mat==="sunta").reduce((q,p)=>q+p.qty,0)}</b><span>parça</span></div>`:""}
    <div class="stat"><b>${fmt(R.band,1)} m</b><span>PVC bant</span></div>
-   <div class="stat"><b>${cost>0?fmt(cost)+" ₺":"—"}</b><span>${cost>0?"malzeme tahmini":"fiyat Ayarlar'da"}</span></div></div>
+   <div class="stat"><b>${cost>0?fmt(quote().rounded)+" ₺":"—"}</b><span>${cost>0?"teklif (KDV dahil)":"fiyat Ayarlar'da"}</span></div></div>
   <div class="panel"><span class="lbl">Arkalık</span><div class="chips" style="flex-wrap:wrap">${Object.entries(BACKS).map(([k,v])=>`<button class="chip" data-backtype="${k}" aria-pressed="${backOf()===k}">${v.label}</button>`).join("")}</div>
    <div class="note">${esc(BACKS[backOf()].desc)}${backOf()===(BACK_DEF[S.type]||"3")?" Bu mobilya için önerilen seçim.":" Bu mobilya için önerilen: "+BACKS[BACK_DEF[S.type]||"3"].label+"."}</div></div>
   <div class="panel"><div class="prow"><span class="lbl">Usta notları</span><span class="note">${nw?nw+" uyarı":"uyarı yok"}</span></div>
@@ -1066,7 +1123,7 @@ function cutText(){
   return L.join("\n")}
 function tezgahLen(){if(S.type!=="mutfak")return 0;return S.mods.filter(m=>m.role==="alt"&&m.gap!=="Buzdolabı").reduce((s,m)=>s+m.W,0)/1000}
 function renderSonuc(){
-  relabel();R=computeAll(S.mods);const tabs=[["parca","Parçalar"],["plaka","Plakalar"],["hw","Hırdavat"],["gonder","Gönder"]];if(!S.opener)S.opener="kulp";
+  relabel();R=computeAll(S.mods);const tabs=[["parca","Parçalar"],["plaka","Plakalar"],["hw","Hırdavat"],["teklif","Teklif"],["gonder","Gönder"]];if(!S.opener)S.opener="kulp";
   let h=`<div class="chips">${tabs.map(([k,l])=>`<button class="chip" data-rt="${k}" aria-pressed="${S.resTab===k}">${l}</button>`).join("")}</div>`;
   if(S.resTab==="parca"){h+=`<p class="note">Ölçüler mm. Bant: ilk iki çizgi uzun kenarlar, son ikisi kısa kenarlar; turuncu = bant var. Parça adının altında hangi dolaplarda kullanıldığı yazar.</p>`;
     matsUsed(R.parts).forEach(mt=>{h+=`<div class="matbar"><span class="sw ${mt!=="sunta"?"back":""}"></span>${esc(SET.mats[mt].name)}</div><div class="tablewrap"><table><thead><tr><th>No</th><th>Parça</th><th style="text-align:right">Adet</th><th style="text-align:right">Boy × En</th><th>Bant</th></tr></thead><tbody>${partRows(mt)}</tbody></table></div>`})}
@@ -1085,7 +1142,8 @@ function renderSonuc(){
      </tbody></table></div>
      <div class="stat"><b id="hwTot">${tot>0?fmt(tot)+" ₺":"—"}</b><span>hırdavat toplamı (fiyat girilen kalemler)</span></div>
      <div class="btns"><button class="btn" data-copyhw="1">Hırdavat listesini kopyala</button></div>`}
-  if(S.resTab==="gonder")h+=`<h2>Kesimhaneye</h2><div class="panel"><textarea id="cutText" readonly>${esc(cutText())}</textarea><div class="btns"><button class="btn" data-copy="1">Kesim listesini kopyala</button></div></div>
+  if(S.resTab==="teklif")h+=quoteHTML();
+  if(S.resTab==="gonder")h+=`<h2>Müşteriye</h2><div class="panel"><textarea id="qText" readonly style="min-height:150px">${esc(quoteText())}</textarea><div class="btns"><button class="btn" data-copyq="1">Teklifi kopyala</button></div></div><h2>Kesimhaneye</h2><div class="panel"><textarea id="cutText" readonly>${esc(cutText())}</textarea><div class="btns"><button class="btn" data-copy="1">Kesim listesini kopyala</button></div></div>
     <h2>Hırdavatçıya</h2><div class="panel"><textarea id="hwText" readonly>${esc(hwText(hardware(S.mods,R)))}</textarea><div class="btns"><button class="btn" data-copyhw="1">Hırdavat listesini kopyala</button></div><div class="note">Kopyalayıp WhatsApp ya da mesajla yapıştırın.</div></div>`;
   $("#view").innerHTML=h;setBar("duzen",null);
 }
@@ -1233,6 +1291,9 @@ document.addEventListener("click",e=>{
     if(d.togap){const pre=m.role==="ust"?"ustkapakli":"kapakli";m.gap=null;m.H=m.role==="ust"?720:Math.round(S.inp.tezgah*10)-40;m.mount=m.role==="ust"?Math.round(S.inp.tezgah*10)+550:0;m.D=m.role==="ust"?320:560;m.baza=m.role==="ust"?0:100;m.rails=m.role==="alt";m.cols=[{p:pre,bands:COLP[pre].make(m.H-m.baza)}];renderDuzen();return}
   }
   if(d.rt){S.resTab=d.rt;renderSonuc();persist();return}
+  if(d.qmode){qset().laborMode=d.qmode;persist();renderSonuc();return}
+  if(d.qround!==undefined){qset().round=+d.qround;persist();renderSonuc();return}
+  if(d.copyq){const t=quoteText(),ta=$("#qText");try{navigator.clipboard.writeText(t).then(()=>toast("Teklif kopyalandı"),()=>{ta.focus();ta.select();toast("Metni seçtim; uzun basıp kopyalayın")})}catch(err){ta.focus();ta.select()}return}
   if(d.backtype&&BACKS[d.backtype]){S.back=d.backtype;renderDuzen();persist();toast("Arkalık: "+BACKS[d.backtype].label);return}
   if(d.expimg){exportDrawing();return}
   if(d.expjson){exportJSON(d.expjson);return}
@@ -1259,6 +1320,7 @@ document.addEventListener("input",e=>{const x=e.target,d=x.dataset;
     if(S.type==="mutfak"){const el=document.querySelector(".panel .elev");if(el)el.innerHTML=planSVG(null,false)}else{const h=$("#sizehint");if(h)h.textContent=sizeHint()}}return}
   if(d.mat){const[m,k]=d.mat.split(":");SET.mats[m][k]=k==="name"?x.value:(parseFloat(x.value)||0);persist();return}
   if(d.set){SET[d.set]=parseFloat(x.value)||0;persist();return}
+  if(d.q!==undefined){const v=parseFloat(String(x.value).replace(",","."));qset()[d.q]=isNaN(v)?0:v;persist();updateQuote();return}
   if(d.hwp!==undefined){SET.hwPrice=SET.hwPrice||{};const v=parseFloat(String(x.value).replace(",","."));if(isNaN(v))delete SET.hwPrice[d.hwp];else SET.hwPrice[d.hwp]=v;persist();
     const el=$("#hwTot");if(el){const t=hwCost(hardware(S.mods,R));el.textContent=t>0?fmt(t)+" ₺":"—"}return}
 });
