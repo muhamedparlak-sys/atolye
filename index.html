@@ -44,7 +44,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 #projName:focus{color:var(--ink);background:var(--bg);border-radius:6px}
 .icobtn{width:38px;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none}
 .icobtn svg{width:20px;height:20px}
-.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px}
+.steps{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:6px}
 .steps button{border:0;background:none;padding:6px 0 9px;color:var(--muted);font:600 11.5px var(--f-body);letter-spacing:.02em;cursor:pointer;border-bottom:3px solid transparent;text-align:center}
 .steps button.done{color:var(--ink);border-bottom-color:var(--line)}
 .steps button.cur{color:var(--accent);border-bottom-color:var(--accent)}
@@ -297,7 +297,7 @@ const ICONS={
   balkon:'<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="4" width="40" height="48" rx="1"/><path d="M28 4v48M8 20h20M28 28h20M33 34v8a4 4 0 0 0 8 0v-8"/><circle cx="18" cy="38" r="6"/></svg>',
   mutfak:'<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 30h48M4 33h48v18H4zM8 6h40v14H8zM22 33v18M38 33v18M22 6v14M38 6v14M27 26h6"/></svg>'
 };
-const STEPS=[["tur","Ne?"],["olcu","Ölçü"],["oneri","Öneri"],["duzen","Düzenle"],["sonuc","Kesim"]];
+const STEPS=[["tur","Ne?"],["olcu","Ölçü"],["oneri","Öneri"],["duzen","Düzen"],["sonuc","Kesim"],["montaj","Montaj"],["d3","3D"]];
 const LS={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const clone=o=>JSON.parse(JSON.stringify(o));
 let SET=Object.assign(clone(DEFAULT_SET),LS.get("atolye2_set")||{});
@@ -1312,19 +1312,135 @@ function colIcon(key,role){
   return `<svg viewBox="-20 -20 540 ${Z+40}">${modDraw(m,R.geo[m.id],0,0,{fs:40,doors:false,small:true})}</svg>`;
 }
 
+
+/* ====================== 3D SAHNE ve MONTAJ ====================== */
+const MSTEPS=[
+  {t:"Gövde iskeleti",k:["side","bottom","top","mid"]},
+  {t:"Arkalık",k:["back"]},
+  {t:"Baza ve ayaklar",k:["base"]},
+  {t:"Ara tablalar ve raflar",k:["sep","shelf"]},
+  {t:"Askı ve çekmeceler",k:["rod","drawer"]},
+  {t:"Kapaklar",k:["door"]},
+  {t:"Yerleştirme",k:["fix"]}];
+function hexOf(c,f){return c&&c[0]==="#"?c:f}
+function sceneBoxes(mods,R,o={}){
+  const kitchen=S.type==="mutfak",t=+SET.t;const out=[];
+  const walls=kitchen?planWalls(S.inp.plan,S.inp).walls:{A:{dir:"h",x:0,y:0,L:Math.max(1,...mods.map(m=>m.x+m.W))}};
+  const BFc=hexOf(bodyFill(),"#E4D2AE"),FFc=hexOf(frontFill(),BFc),BKc="#D3CCBE",PFc=colorsOf().panels?FFc:BFc;
+  const bt={"3":3,"8":8,"18":18}[backOf()];
+  const EX={side:[-1,0,0],sideR:[1,0,0],bottom:[0,-.15,1],top:[0,1,0],mid:[0,.3,.6],back:[0,0,-1],base:[0,-.1,1],sep:[0,0,1],shelf:[0,0,1],rod:[0,0,1],drawer:[0,0,1],door:[0,0,1],fix:[0,0,0]};
+  const tw=(w,x0,x1,z0,z1)=>{const a=toPlan(w,x0,z0),b=toPlan(w,x1,z1);return[Math.min(a[0],b[0]),Math.max(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[1],b[1])]};
+  const dirV=(w,v)=>{const al=w.dir==="h"?[1,0]:w.dir==="v"?[0,1]:[0,-1],dp=w.dir==="h"?[0,1]:w.dir==="v"?[-1,0]:[1,0];return[v[0]*al[0]+v[2]*dp[0],v[1],v[0]*al[1]+v[2]*dp[1]]};
+  const push=(m,w,x0,x1,y0,y1,z0,z1,col,kind,name,extra={})=>{if(x1-x0<=0||y1-y0<=0||z1-z0<=0)return;const r=tw(w,x0,x1,z0,z1);
+    const st=MSTEPS.findIndex(s=>s.k.includes(kind==="sideR"?"side":kind));
+    out.push({x0:r[0],x1:r[1],y0,y1,z0:r[2],z1:r[3],col,kind,name,mod:m?m.id:null,label:m?m.label:"",step:st,ex:dirV(w,EX[kind]||[0,0,0]),...extra})};
+  mods.forEach(m=>{const w=walls[m.wall||"A"];if(!w)return;if(o.only&&m.id!==o.only)return;const G=R.geo[m.id];const X=m.x,Y0=m.mount,H=m.H;
+    if(m.gap){if(["Kapı","Pencere","Kapı payı","Davlumbaz"].includes(m.gap)||/Dolgu/.test(m.gap))return;
+      const app={"Buzdolabı":["#F4F5F6",650],"Bulaşık mak.":["#C9CDD0",580],"Fırın + ocak":["#3A3D40",580],"Kolon":["#BDB8AE",m.D||300]}[m.gap];
+      if(app)push(m,w,X+3,X+m.W-3,Y0,Y0+H,0,app[1],app[0],"fix",m.gap,{app:1});return}
+    if(!G)return;
+    if(G.panel){const pn=m.panel;if(pn.o==="f")push(m,w,X,X+m.W,Y0,Y0+H,0,t,PFc,"side",pn.name);else push(m,w,X,X+m.W,Y0,Y0+H,0,m.D,PFc,pn.o==="h"?"top":"side",pn.name);return}
+    const D=m.D,bz=G.bz,Di=backOf()==="18"?D-t:D,dz=D-20;
+    push(m,w,X,X+t,Y0,Y0+H,0,D,BFc,"side","Yan dikme");push(m,w,X+m.W-t,X+m.W,Y0,Y0+H,0,D,BFc,"sideR","Yan dikme");
+    push(m,w,X+t,X+m.W-t,Y0+bz,Y0+bz+t,0,D,BFc,"bottom","Alt tabla");
+    if(m.rails){push(m,w,X+t,X+m.W-t,Y0+H-t,Y0+H,D-100,D,BFc,"top","Üst kuşak");push(m,w,X+t,X+m.W-t,Y0+H-t,Y0+H,0,100,BFc,"top","Üst kuşak")}
+    else push(m,w,X+t,X+m.W-t,Y0+H-t,Y0+H,0,D,BFc,"top","Üst tabla");
+    if(backOf()==="18")push(m,w,X+t,X+m.W-t,Y0+bz+t,Y0+H-(m.rails?0:t),0,t,BFc,"back","Arkalık");else push(m,w,X+2,X+m.W-2,Y0+bz+2,Y0+H-2,-bt,0,BKc,"back","Arkalık");
+    if(bz>0){if(G.foot==="metal")[[X+30,30],[X+m.W-60,30],[X+30,D-60],[X+m.W-60,D-60]].forEach(([lx,lz])=>push(m,w,lx,lx+30,Y0,Y0+bz,lz,lz+30,"#6B6F72","base","Metal ayak"));
+      else{push(m,w,X+t,X+m.W-t,Y0,Y0+bz,D-70,D-52,BFc,"base",G.foot==="plastik"?"Baza kapama":"Baza");if(G.foot==="plastik")[[X+60,60],[X+m.W-90,60],[X+60,D-120],[X+m.W-90,D-120]].forEach(([lx,lz])=>push(m,w,lx,lx+30,Y0,Y0+bz-5,lz,lz+30,"#2C2C2C","base","Plastik ayak"))}}
+    G.cols.forEach((c,i)=>{
+      if(i>0)push(m,w,X+c.x-t,X+c.x,Y0+bz+t,Y0+H-t,0,Di,BFc,"mid","Ara dikme");
+      c.seps.forEach(sp=>push(m,w,X+c.x,X+c.x+c.sw,Y0+H-sp.y-t/2,Y0+H-sp.y+t/2,0,Di,BFc,"sep",sp.name||"Ara tabla"));
+      c.bands.forEach(b=>{b.shelvesY.forEach(y=>push(m,w,X+c.x+1,X+c.x+c.sw-1,Y0+H-y-t,Y0+H-y,20,Di-2,BFc,"shelf","Raf"));
+        if(b.rod!=null&&!b.hook)push(m,w,X+c.x+10,X+c.x+c.sw-10,Y0+H-b.rod-12,Y0+H-b.rod+12,Di/2-15,Di/2+15,"#A7ADB2","rod","Askı borusu")});
+      c.drawers.forEach(d=>{const oz=o.open?380:0;push(m,w,X+d.x,X+d.x+d.w,Y0+H-d.y-d.h,Y0+H-d.y,D+2+oz,D+20+oz,FFc,"drawer","Çekmece ön");
+        if(o.open)push(m,w,X+c.x+13,X+c.x+c.sw-13,Y0+H-d.y-d.h+40,Y0+H-d.y-60,40+oz,D+2+oz,BFc,"drawer","Çekmece kutusu")});
+      c.doors.forEach(d=>{const hl=d.hand==="r";
+        if(o.open){const x0=hl?X+d.x:X+d.x+d.w-18;push(m,w,x0,x0+18,Y0+H-d.y-d.h,Y0+H-d.y,D+20,D+20+d.w,FFc,"door","Kapak",{op:.92})}
+        else push(m,w,X+d.x,X+d.x+d.w,Y0+H-d.y-d.h,Y0+H-d.y,D+2,D+20,FFc,"door","Kapak",{op:o.ghost?.35:1})})});
+  });
+  if(kitchen&&!o.only){const tz=Math.round(S.inp.tezgah*10);mods.filter(m=>m.role==="alt"&&m.gap!=="Buzdolabı"&&!["Kapı","Kapı payı","Kolon"].includes(m.gap)&&!/Dolgu/.test(m.gap||"")||(m.role==="alt"&&/Dolgu/.test(m.gap||""))).forEach(m=>{const w=walls[m.wall];if(w)push(m,w,m.x,m.x+m.W,tz-40,tz,0,(S.inp.altD||56)*10+40,"#8E7B62","fix","Tezgah")});
+    if(o.walls)Object.entries(walls).forEach(([k,w])=>{const th=Math.round(S.inp.tavan*10);const r=tw(w,-100,w.L+100,-120,-20);out.push({x0:r[0],x1:r[1],y0:0,y1:th,z0:r[2],z1:r[3],col:"#E9E6DF",kind:"wall",name:"Duvar",step:-1,ex:[0,0,0],op:.55})})}
+  return out}
+let T3=null;
+function load3D(){return new Promise((res,rej)=>{if(window.THREE&&THREE.OrbitControls)return res();
+  const add=(src,cb)=>{const e=document.createElement("script");e.src=src;e.onload=cb;e.onerror=()=>rej(new Error("yüklenemedi"));document.head.appendChild(e)};
+  const ctl=()=>add("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js",res);
+  if(window.THREE)ctl();else add("https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js",ctl)})}
+function show3D(el,boxes,o={}){
+  if(T3&&T3.el!==el){T3.dispose();T3=null}
+  const cs=getComputedStyle(document.documentElement),bg=cs.getPropertyValue("--surface").trim()||"#ffffff",acc=cs.getPropertyValue("--accent").trim()||"#2747A6";
+  if(!T3){const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));el.innerHTML="";el.appendChild(renderer.domElement);
+    renderer.domElement.style.cssText="width:100%;height:100%;display:block;touch-action:none;border-radius:10px";
+    const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(38,1,20,200000),controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.52;
+    scene.add(new THREE.HemisphereLight(0xffffff,0x8a8172,.85));const dl=new THREE.DirectionalLight(0xffffff,.55);dl.position.set(3000,6000,5000);scene.add(dl);
+    const floor=new THREE.Mesh(new THREE.PlaneGeometry(40000,40000),new THREE.MeshLambertMaterial({color:0xDCD7CC}));floor.rotation.x=-Math.PI/2;floor.position.y=-1;scene.add(floor);
+    let raf=0,alive=true;const loop=()=>{if(!alive)return;controls.update();renderer.render(scene,camera);raf=requestAnimationFrame(loop)};
+    const size=()=>{const w=el.clientWidth||300,h=el.clientHeight||300;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};
+    const ro=new ResizeObserver(size);ro.observe(el);size();loop();
+    T3={el,renderer,scene,camera,controls,group:null,floor,dispose(){alive=false;cancelAnimationFrame(raf);ro.disconnect();renderer.dispose();renderer.domElement.remove()}}}
+  T3.scene.background=new THREE.Color(bg);
+  if(T3.group){T3.scene.remove(T3.group);T3.group.traverse(x=>{x.geometry&&x.geometry.dispose()})}
+  const g=new THREE.Group(),mats={};const mat=(c,op)=>{const k=c+op;return mats[k]||(mats[k]=new THREE.MeshLambertMaterial({color:new THREE.Color(c),transparent:op<1,opacity:op}))};
+  const edgeM=new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true,opacity:.28});
+  boxes.forEach(b=>{if(o.upTo!=null&&b.step>o.upTo)return;const cur=o.upTo!=null&&b.step===o.upTo;
+    const w=b.x1-b.x0,h=b.y1-b.y0,d=b.z1-b.z0;const geo=new THREE.BoxGeometry(w,h,d);
+    const c=cur&&b.kind!=="fix"?acc:b.col;const op=b.op!=null?b.op:(o.upTo!=null&&!cur&&b.step>=0?.55:1);
+    const mesh=new THREE.Mesh(geo,mat(c,op));const k=cur?140:0;mesh.position.set((b.x0+b.x1)/2+b.ex[0]*k,(b.y0+b.y1)/2+b.ex[1]*k,(b.z0+b.z1)/2+b.ex[2]*k);g.add(mesh);
+    if(b.kind!=="wall"){const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),edgeM);e.position.copy(mesh.position);g.add(e)}});
+  T3.scene.add(g);T3.group=g;
+  if(o.fit||!T3.fitted){const bb=new THREE.Box3().setFromObject(g);if(!bb.isEmpty()){const c=bb.getCenter(new THREE.Vector3()),sz=bb.getSize(new THREE.Vector3());const r=Math.max(sz.x,sz.y,sz.z)*1.25+600;
+    T3.camera.position.set(c.x+r*.55,c.y+r*.38,c.z+r*.95);T3.controls.target.copy(c);T3.controls.update();T3.fitted=true}}}
+function partIds(mod,names){if(!R)return[];return R.parts.filter(p=>names.some(n=>p.name.startsWith(n))&&(!mod||p.mods.includes(mod.label))).map(p=>p.id+" "+p.name+" ×"+p.qty)}
+function montajText(st,m){const hw=m?hardware([m],R):hardware(S.mods,R),q=n=>{const i=hw.find(i=>i.name.startsWith(n)&&!i.off);return i?fmt(i.qty,i.unit==="m"?1:0)+" "+i.unit:null};const F=floorOf(),bk=backOf();
+  return [
+   `Yan dikmelere minifix ve kavela deliklerini açın. Alt tablayı${m&&m.rails?", üst kuşakları":", üst tablayı"} ve ${m&&m.cols&&m.cols.length>1?"ara dikmeleri ":""}minifixle bağlayın. Gövdeyi sırtı üstüne yatırarak kurun.${q("Minifix")?" Minifix: "+q("Minifix")+", kavela: "+q("Kavela")+".":""}`,
+   `Gövdenin iki köşegenini ölçün; eşit olunca gönyededir. ${bk==="3"?"3 mm arkalığı 8 cm arayla zımbalayın.":bk==="8"?"8 mm arkalığı 15 cm arayla 3,5×25 vidayla tutturun.":"18 mm arkalığı yan dikmeler arasına içten minifixle bağlayın."} Gönye arkalıkla sabitlenir, bu adımı atlamayın.`,
+   F.foot==="metal"?`Gövdeyi ters çevirip metal ayakları köşelere vidalayın${q("Metal ayak")?" ("+q("Metal ayak")+")":""}.`:F.foot==="plastik"?`Plastik ayakları alt tablaya vidalayın${q("Plastik")?" ("+q("Plastik")+")":""}; baza kapamasını yerleştirdikten sonra klipslerle takacaksınız.`:F.foot==="asma"?"Ayak yok; askı aparatlarını yan dikmelerin üst iç köşesine takın, duvara rayı terazide vidalayın.":`Bazayı alt tablanın altına, önden 5 cm içeride vidalayın; ayar ayaklarını takın${q("Ayar ayağı")?" ("+q("Ayar ayağı")+")":""}.`,
+   `Gövdeyi ayağa kaldırın. Ara tablaları minifixle sabitleyin; raf pimlerini takıp rafları yerleştirin (her rafa 4 pim${q("Raf pimi")?", toplam "+q("Raf pimi"):""}).`,
+   `${q("Askı borusu yuvası")?"Askı borusu yuvalarını üstteki tablanın 8 cm altına vidalayın, boruyu kesip takın. ":""}${q("Teleskopik")||q("Bas-aç")?"Çekmece raylarını gövdeye ve kutulara vidalayın, kutuları takıp önleri hizalayın. ":""}Bu adımda iş yoksa geçin.`,
+   `Kapaklara 35 mm menteşe çanaklarını kenardan 4 mm içeride açın${q("Menteşe")?" (menteşe: "+hw.filter(i=>i.name.startsWith("Menteşe")&&!i.off).map(i=>i.qty).reduce((a,b)=>a+b,0)+" ad)":""}. Kapakları takıp menteşe vidalarıyla yan, derinlik ve yükseklik ayarını yapın; kulpları takın.`,
+   S.type==="mutfak"?"Alt dolapları terazide hizalayıp yan yana birleştirme vidasıyla bağlayın, tezgahı yerleştirin; üst dolapları askı aparatıyla duvara asın, kapak aralarını son kez ayarlayın.":"Dolabı yerine itin, terazileyin; 150 cm'den uzun gövdeleri devrilme gönyesiyle duvara sabitleyin, yan yana gövdeleri birleştirme vidasıyla bağlayın."][st]}
+function renderMontaj(){relabel();R=computeAll(S.mods);document.querySelector("main").className="fill";
+  const ms=S.mods.filter(m=>!m.gap);if(!ms.length){$("#view").innerHTML=`<div class="panel note">Önce bir düzen seçin.</div>`;setBar("sonuc",null);return}
+  if(!ms.some(m=>m.id===S.mSel))S.mSel=ms[0].id;S.mStep=S.mStep||0;const st=S.mStep,whole=st===6,m=whole?null:ms.find(x=>x.id===S.mSel);
+  const parts=whole?[]:partIds(m,{0:["Yan dikme","Alt tabla","Üst","Ara dikme"],1:["Arkalık"],2:["Baza"],3:["Ara tabla","Raf","Tezgah tablası","Oturak","Makine"],4:["Çekmece"],5:["Kapak"]}[st]||[]);
+  $("#view").innerHTML=`
+   <div class="dz-top">${whole?`<span class="chip" aria-pressed="true">Tüm dolaplar</span>`:ms.map(x=>`<button class="chip" data-msel="${x.id}" aria-pressed="${x.id===S.mSel}">${esc(x.label||"G")}</button>`).join("")}</div>
+   <div class="dz-draw" id="v3d"><div class="hint" style="margin:auto">3D yükleniyor…</div></div>
+   <div class="dz-bottom"><div class="editor">
+     <div class="ed-head"><div><b>${st+1}/7 · ${MSTEPS[st].t}</b></div></div>
+     <div class="otabs">${MSTEPS.map((x,i)=>`<button data-mstep="${i}" aria-pressed="${i===st}">${i+1}</button>`).join("")}</div>
+     <p style="margin:0;font-size:14.5px">${esc(montajText(st,m))}</p>
+     ${parts.length?`<div class="tags">${parts.map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</div>`:""}
+     <div class="btns"><button class="btn small ghost" data-mstep="${Math.max(0,st-1)}" ${st?"":"disabled"}>Önceki adım</button><button class="btn small" data-mstep="${Math.min(6,st+1)}" ${st<6?"":"disabled"}>Sonraki adım</button></div>
+   </div></div>`;
+  setBar("sonuc","d3","3D görünüm");
+  load3D().then(()=>{const el=document.getElementById("v3d");if(!el)return;show3D(el,sceneBoxes(S.mods,R,{only:whole?null:S.mSel,walls:whole}),{upTo:st,fit:true})}).catch(()=>{const el=document.getElementById("v3d");if(el)el.innerHTML=`<div class="hint" style="margin:auto">3D için internet bağlantısı gerekiyor.</div>`})}
+function render3D(){relabel();R=computeAll(S.mods);document.querySelector("main").className="fill";S.v3=S.v3||{open:false,walls:true};
+  const used=matsUsed(R.parts),packs=used.map(k=>pack(R.parts,k));
+  $("#view").innerHTML=`
+   <div class="dz-top"><button class="chip" data-v3="open" aria-pressed="${S.v3.open}">Kapaklar ${S.v3.open?"açık":"kapalı"}</button>${S.type==="mutfak"?`<button class="chip" data-v3="walls" aria-pressed="${S.v3.walls}">Duvarlar</button>`:""}<span class="sp"></span>
+    <button class="icobtn" data-v3shot="1" aria-label="Görüntüyü resim olarak al"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M7 10l5 5 5-5M5 19h14"/></svg></button></div>
+   <div class="dz-draw" id="v3d"><div class="hint" style="margin:auto">3D yükleniyor…</div></div>
+   <div class="dz-bottom"><div class="sumrow"><span class="sumbtn">${S.mods.filter(m=>!m.gap).length} gövde</span><span class="sumbtn">${packs.map((P,i)=>P.sheets.length+" "+({sunta:"gövde",kapak:"kapak"}[used[i]]||"arkalık")).join(" · ")} plaka</span><button class="sumbtn" data-rtgo="teklif">${quote().rounded>0?fmt(quote().rounded)+" ₺":"Teklif"}</button></div>
+   <p class="hint">Döndürmek için sürükleyin, yakınlaştırmak için iki parmakla açın.</p></div>`;
+  setBar("montaj",null);
+  load3D().then(()=>{const el=document.getElementById("v3d");if(!el)return;show3D(el,sceneBoxes(S.mods,R,{open:S.v3.open,walls:S.v3.walls}),{fit:!T3})}).catch(()=>{const el=document.getElementById("v3d");if(el)el.innerHTML=`<div class="hint" style="margin:auto">3D için internet bağlantısı gerekiyor.</div>`})}
 /* ====================== GÖRÜNÜMLER ====================== */
 const $=s=>document.querySelector(s);
 let R=null,VARS=null;
 function relabel(){if(S.type!=="mutfak")return;["A","B","C"].forEach(w=>{let a=0,u=0;S.mods.filter(m=>m.wall===w).sort((p,q)=>p.x-q.x).forEach(m=>{if(m.gap)m.label=m.gap;else if(m.role==="alt")m.label=w+(++a);else m.label=w+"Ü"+(++u)})})}
 function stepIdx(){return STEPS.findIndex(s=>s[0]===S.step)}
 function renderSteps(){const ci=stepIdx();
-  $("#steps").innerHTML=STEPS.map(([k,l],i)=>{const reach=i<=ci||(i<=3&&S.mods.length&&i<=4)||(i===4&&S.mods.length);
-    return `<button data-go="${k}" class="${i===ci&&!S.view?"cur":i<ci?"done":""}" ${reach||i<ci?"":"disabled"}>${i+1}. ${l}</button>`}).join("")}
+  $("#steps").innerHTML=STEPS.map(([k,l],i)=>{const reach=i<=ci||(i>=3&&S.mods.length);
+    return `<button data-go="${k}" class="${i===ci&&!S.view?"cur":i<ci?"done":""}" ${reach||i<ci?"":"disabled"}>${l}</button>`}).join("")}
 function render(){
   renderSteps();$("#projName").value=S.name;closeSheet&&document.getElementById("sheet")?.remove();
   const main=document.querySelector("main");main.className="";main.scrollTop=0;
   if(S.view==="ayar")return renderAyar();if(S.view==="proj")return renderProj();
-  ({tur:renderTur,olcu:renderOlcu,oneri:renderOneri,duzen:renderDuzen,sonuc:renderSonuc})[S.step]();
+  if(S.step!=="montaj"&&S.step!=="d3"&&T3){T3.dispose();T3=null}
+  ({tur:renderTur,olcu:renderOlcu,oneri:renderOneri,duzen:renderDuzen,sonuc:renderSonuc,montaj:renderMontaj,d3:render3D})[S.step]();
   persist();
 }
 function setBar(back,next,nextLabel,nextDisabled){
@@ -1609,7 +1725,7 @@ function renderSonuc(){
   if(S.resTab==="teklif")h+=quoteHTML();
   if(S.resTab==="gonder")h+=`<h2>Müşteriye</h2><div class="panel"><textarea id="qText" readonly style="min-height:150px">${esc(quoteText())}</textarea><div class="btns"><button class="btn" data-copyq="1">Teklifi kopyala</button></div></div><h2>Kesimhaneye</h2><div class="panel"><textarea id="cutText" readonly>${esc(cutText())}</textarea><div class="btns"><button class="btn" data-copy="1">Kesim listesini kopyala</button></div></div>
     <h2>Hırdavatçıya</h2><div class="panel"><textarea id="hwText" readonly>${esc(hwText(hardware(S.mods,R)))}</textarea><div class="btns"><button class="btn" data-copyhw="1">Hırdavat listesini kopyala</button></div><div class="note">Kopyalayıp WhatsApp ya da mesajla yapıştırın.</div></div>`;
-  $("#view").innerHTML=h;setBar("duzen",null);
+  $("#view").innerHTML=h;setBar("duzen","montaj","Montaj şeması");
 }
 function renderAyar(){
   const mf=m=>`<div class="panel"><div class="matbar"><span class="sw ${m!=="sunta"?"back":""}"></span>${{sunta:"Gövde (ve kapak aynı renkse kapak)",kapak:"Kapak ve çekmece önü (farklı renk)",arka8:"8 mm arkalık ve çekmece tabanı",arka3:"3 mm arkalık (duralit)"}[m]}</div>
@@ -1778,6 +1894,10 @@ document.addEventListener("click",e=>{
   if(d.qround!==undefined){qset().round=+d.qround;persist();renderSonuc();return}
   if(d.copyq){const t=quoteText(),ta=$("#qText");try{navigator.clipboard.writeText(t).then(()=>toast("Teklif kopyalandı"),()=>{ta.focus();ta.select();toast("Metni seçtim; uzun basıp kopyalayın")})}catch(err){ta.focus();ta.select()}return}
   if(d.backtype&&BACKS[d.backtype]){S.back=d.backtype;renderDuzen();persist();backSheet();toast("Arkalık: "+BACKS[d.backtype].label);return}
+  if(d.mstep!==undefined){S.mStep=+d.mstep;persist();renderMontaj();return}
+  if(d.msel){S.mSel=d.msel;if(T3)T3.fitted=false;persist();renderMontaj();return}
+  if(d.v3){S.v3[d.v3]=!S.v3[d.v3];persist();render3D();return}
+  if(d.v3shot&&T3){T3.renderer.domElement.toBlob(b=>{if(b)saveFile(b,slug(S.name)+"-3d.png")},"image/png");return}
   if(d.sheet){({notes:notesSheet,back:backSheet,plan:planSheet,color:colorSheet})[d.sheet]();return}
   if(d.cbody){const c=colorsOf();c.body=d.cbody;if(c.front===c.body)c.front=null;renderDuzen();colorSheet();persist();return}
   if(d.cfront){const c=colorsOf();if(d.cfront==="same")c.front=null;else {if(!c.body)c.body="beyaz";c.front=c.body==="antrasit"?"beyaz":"antrasit"}renderDuzen();colorSheet();persist();return}
