@@ -219,6 +219,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .anc-oven{border-color:hsl(15 70% 48%);background:hsl(15 80% 55% / .2)}
 .anc .drain{position:absolute;bottom:3px;left:50%;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:hsl(205 80% 45%)}
 .vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px}
+.swatch{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--ink);font:500 11px var(--f-body)}
+.swatch i{display:block;width:100%;height:26px;border-radius:6px;border:1px solid var(--line)}
+.swatch.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .overlay{position:fixed;inset:0;z-index:30;background:rgb(0 0 0 / .45);display:flex;align-items:flex-end;justify-content:center;
   padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
 .sheet-in{background:var(--surface);color:var(--ink);width:100%;max-width:720px;max-height:88vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
@@ -243,12 +247,20 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 <script>
 /* ====================== AYARLAR & DURUM ====================== */
 const DEFAULT_SET={t:18,gap:3,kerf:4,trim:10,grain:true,drawerMin:120,bandPrice:0,
-  mats:{sunta:{name:"Suntalam 18 mm",L:2800,W:2100,price:0},arka8:{name:"Arkalık 8 mm",L:2800,W:2100,price:0},arka3:{name:"Duralit 3 mm",L:2800,W:2100,price:0}}};
+  mats:{sunta:{name:"Suntalam 18 mm",L:2800,W:2100,price:0},kapak:{name:"Kapak suntalamı 18 mm",L:2800,W:2100,price:0},arka8:{name:"Arkalık 8 mm",L:2800,W:2100,price:0},arka3:{name:"Duralit 3 mm",L:2800,W:2100,price:0}}};
 const BACKS={"3":{label:"3 mm duralit",short:"3 mm",mat:"arka3",desc:"Dıştan çivili. En ucuz ve hafif; arkası görünmeyen dolaplar için yeterli."},
   "8":{label:"8 mm arkalık",short:"8 mm",mat:"arka8",desc:"Dıştan vidalı. Gövdeyi rijitleştirir; açık niş, vestiyer, çocuk dolabı için iyi."},
   "18":{label:"18 mm aynı malzeme",short:"18 mm",mat:"sunta",desc:"Yan dikmelerin arasına içten geçer. En sağlam; arkası görünen mobilya için. İç derinlik 18 mm azalır."}};
 const BACK_DEF={gardirop:"3",mutfak:"3",vestiyer:"8",kahve:"8",cocuk:"8",kitaplik:"8",tv:"8",banyo:"8",masa:"3",yatak:"8",balkon:"8"};
-const MAT_ORDER=["sunta","arka8","arka3"];
+const MAT_ORDER=["sunta","kapak","arka8","arka3"];
+const COLORS={beyaz:{l:"Beyaz",c:"#F1F0EB"},kasmir:{l:"Kaşmir",c:"#D8CCB6"},krem:{l:"Krem",c:"#EAE2CC"},gri:{l:"Açık gri",c:"#C3C6C4"},antrasit:{l:"Antrasit",c:"#45494C"},siyah:{l:"Siyah",c:"#252525"},
+  sonoma:{l:"Sonoma meşe",c:"#C9A57C"},mese:{l:"Doğal meşe",c:"#B98F5E"},ceviz:{l:"Ceviz",c:"#7B5539"},yesil:{l:"Haki yeşil",c:"#7F8B6E"},mavi:{l:"Gece mavisi",c:"#2F3E55"},lake:{l:"Parlak lake beyaz",c:"#FAFAF7"}};
+function colorsOf(){S.colors=S.colors||{body:null,front:null,panels:false};return S.colors}
+function frontSep(){const c=colorsOf();return !!(c.front&&c.front!==c.body)}
+function frontMat(){return frontSep()?"kapak":"sunta"}
+function matLabel(k){const c=colorsOf();const cn=x=>x&&COLORS[x]?" · "+COLORS[x].l:"";return SET.mats[k].name+(k==="sunta"?cn(c.body):k==="kapak"?cn(c.front):"")}
+function bodyFill(){const c=colorsOf();return c.body&&COLORS[c.body]?COLORS[c.body].c:"var(--wood)"}
+function frontFill(){const c=colorsOf();return c.front&&COLORS[c.front]?COLORS[c.front].c:bodyFill()}
 const matsUsed=parts=>MAT_ORDER.filter(k=>parts.some(p=>p.mat===k));
 const backOf=()=>BACKS[S.back]?S.back:(BACK_DEF[S.type]||"3");
 const TYPES={
@@ -383,7 +395,7 @@ function computeAll(mods){
   const fits=(a,b,m)=>(a<=m.L&&b<=m.W)||(a<=m.W&&b<=m.L);
   mods.forEach(m=>{
     if(m.gap){geo[m.id]={gap:true};return}
-    if(m.panel){const pn=m.panel;if(pn.o==="h")add(m,pn.name,1,m.W,m.D,1,2);else if(pn.o==="v")add(m,pn.name,1,m.H,m.D,1,1);else add(m,pn.name,1,m.W,m.H,2,2);
+    if(m.panel){const pn=m.panel,pm=colorsOf().panels?frontMat():"sunta";if(pn.o==="h")add(m,pn.name,1,m.W,m.D,1,2,pm);else if(pn.o==="v")add(m,pn.name,1,m.H,m.D,1,1,pm);else add(m,pn.name,1,m.W,m.H,2,2,pm);
       geo[m.id]={cols:[],W:m.W,H:m.H,bz:0,panel:true};return}
     const {W,H}=m,bz=m.baza||0,n=m.cols.length,Z=H-bz,G={cols:[],W,H,bz};
     const bk=backOf(),inset=bk==="18",D=m.D,Di=inset?m.D-t:m.D;
@@ -432,7 +444,7 @@ function computeAll(mods){
         if(b.kind==="cekmece"){const nn=Math.max(1,b.n|0),fh=h/nn;
           if(fh<+SET.drawerMin)err.push({m:m.label,txt:"Bölme "+(i+1)+": çekmece önü "+cm(fh)+" cm, çok alçak."});
           const boxH=Math.max(60,Math.min(fh-60,250));
-          add(m,"Çekmece ön",nn,cw,fh-g,2,2);
+          add(m,"Çekmece ön",nn,cw,fh-g,2,2,frontMat());
           add(m,"Çekmece yanı",2*nn,railL,boxH,1,0);
           add(m,"Çekmece arka/iç ön",2*nn,sw-26-2*t,boxH,1,0);
           add(m,"Çekmece tabanı",nn,sw-26,railL,0,0,bk==="3"?"arka3":"arka8");
@@ -443,19 +455,19 @@ function computeAll(mods){
       const segs=[];let cur=null;
       bs.forEach((b,k)=>{if(b.door&&b.kind!=="cekmece"){if(cur&&b.join&&cur.end===k-1){cur.end=k;cur.h+=hs[k]}else{cur={end:k,start:k,yb:ybs[k],h:hs[k]};segs.push(cur)}}else cur=null});
       segs.forEach(sg=>{const top=Z-(sg.yb+sg.h),dh=sg.h-g,two=cw>600,dw=two?(cw-g)/2:cw;
-        add(m,"Kapak",two?2:1,dh,dw,2,2);addHw("Menteşe",hinge(dh)*(two?2:1));addHw("Kulp",two?2:1);
+        add(m,"Kapak",two?2:1,dh,dw,2,2,frontMat());addHw("Menteşe",hinge(dh)*(two?2:1));addHw("Kulp",two?2:1);
         if(two)CG.doors.push({x:left+g/2,y:top+g/2,w:dw,h:dh,hand:"r"},{x:left+g/2+dw+g,y:top+g/2,w:dw,h:dh,hand:"l"});
         else{const hg=bs[sg.start].hinge;const hand=hg?(hg==="l"?"r":"l"):m.blind?m.blind.side:(i%2?"l":"r");CG.doors.push({x:left+g/2,y:top+g/2,w:dw,h:dh,hand,k:sg.start})}});
       G.cols.push(CG)});
     geo[m.id]=G});
   parts.forEach((p,i)=>{p.id="P"+(i+1);const mt=SET.mats[p.mat],L=mt.L-2*SET.trim,Wd=mt.W-2*SET.trim;
-    const ok=SET.grain&&p.mat==="sunta"?(p.a<=L&&p.b<=Wd):fits(p.a,p.b,{L,W:Wd});
+    const ok=SET.grain&&(p.mat==="sunta"||p.mat==="kapak")?(p.a<=L&&p.b<=Wd):fits(p.a,p.b,{L,W:Wd});
     if(!ok)err.push({m:p.mods.join(","),txt:p.name+" ("+p.a+"×"+p.b+") plakaya sığmıyor."})});
   const band=parts.reduce((s,p)=>s+p.qty*(p.bl*p.a+p.bs*p.b),0)/1000;
   return{parts,hw,err,geo,band};
 }
 function pack(parts,mat){
-  const m=SET.mats[mat],kerf=+SET.kerf,trim=+SET.trim,rot=!(SET.grain&&mat==="sunta");
+  const m=SET.mats[mat],kerf=+SET.kerf,trim=+SET.trim,rot=!(SET.grain&&(mat==="sunta"||mat==="kapak"));
   const UW=m.L-2*trim+kerf,UH=m.W-2*trim+kerf;
   const items=[];parts.filter(p=>p.mat===mat).forEach(p=>{for(let q=0;q<p.qty;q++)items.push({id:p.id,a:p.a,b:p.b})});
   items.sort((x,y)=>y.a*y.b-x.a*x.b||y.a-x.a);
@@ -842,6 +854,8 @@ function advise(mods,R){
         if(ov&&m.mount===0&&m.H>K.H+50)add("warn",m.label+" TV'nin önüne giriyor.","Yan kuleler arasındaki boşluk TV'den en az 10 cm geniş olmalı. Duvar enini artırın ya da kuleleri daraltın.");
         if(ov&&m.mount>0&&m.mount<topTV+100)add("warn",m.label+" asma rafı TV'ye çok yakın.","Asma raf TV'nin üst kenarından en az 10 cm yukarıda olmalı.")});
       add("info","TV merkezi yerden 105 cm kabul edildi.","Oturan kişinin göz hizası 100–110 cm. Ekran üst kenarı göz hizasının çok üstüne çıkarsa boyun yorulur.")}}
+  if(frontSep()&&R.parts.some(p=>p.mat==="kapak")){const P=pack(R.parts,"kapak"),used=R.parts.filter(p=>p.mat==="kapak").reduce((q,p)=>q+p.qty*p.a*p.b,0)/1e6;
+    add(P.fire>.45?"warn":"info","Kapak rengi farklı: kapaklar "+P.sheets.length+" ayrı plakadan, fire %"+fmt(P.fire*100)+".","Kapaklar "+fmt(used,1)+" m² tutuyor. Fire yüksekse son plakanın artanı başka işte değerlendirilebilir; ya da kapaklar gövdeyle aynı renk seçilirse plaka ortak kullanılır.")}
   const doors=Object.values(R.geo).flatMap(G=>G.gap?[]:G.cols.flatMap(c=>c.doors));
   if(doors.length){const h=Math.max(...doors.map(d=>d.h));const n=h<=900?2:h<=1600?3:h<=2000?4:5;
     add("info","En uzun kapak "+cm(h)+" cm → kapak başına "+n+" menteşe.","Kapak boyuna göre: 90 cm'ye kadar 2, 160'a kadar 3, 200'e kadar 4, üstü 5 menteşe. 60 cm'den geniş bölmelere uygulama otomatik çift kapak koyar.")}
@@ -894,7 +908,9 @@ function hardware(mods,R){
   add("Vida & çivi","Sunta vidası 4×40 (montaj)",Math.max(50,Math.ceil(mods.filter(m=>!m.gap).length*8/50)*50),"ad","50'lik paket");
   if(zimba)add("Vida & çivi","Arkalık zımbası / çivisi",Math.max(100,Math.ceil(zimba/100)*100),"ad","yaklaşık, 8 cm arayla");
   items.filter(i=>/3,5×25|4×50/.test(i.name)).forEach(i=>{i.qty=Math.max(50,Math.ceil(i.qty/50)*50);i.note="50'lik paket"});
-  add("Kenar","PVC kenar bandı",Math.ceil(R.band*1.1),"m","%10 fire payıyla");
+  {const bm=k=>R.parts.filter(p=>p.mat===k).reduce((q,p)=>q+p.qty*(p.bl*p.a+p.bs*p.b),0)/1000,c=colorsOf();
+    if(frontSep()){add("Kenar","PVC kenar bandı · gövde"+(c.body?" ("+COLORS[c.body].l+")":""),Math.ceil(bm("sunta")*1.1),"m","%10 fire payıyla");add("Kenar","PVC kenar bandı · kapak ("+COLORS[c.front].l+")",Math.ceil(bm("kapak")*1.1),"m","%10 fire payıyla; kapak rengine uygun")}
+    else add("Kenar","PVC kenar bandı"+(c.body?" ("+COLORS[c.body].l+")":""),Math.ceil(R.band*1.1),"m","%10 fire payıyla")}
   if(S.type==="mutfak"){const tl=tezgahLen();add("Mutfak","Tezgah (60 cm derinlik)",Math.round(tl*100)/100,"m");
     const j={I:0,L:1,U:2}[S.inp.plan];if(j)add("Mutfak","Tezgah köşe birleştirme cıvatası",j*3);
     add("Mutfak","Tezgah süpürgeliği",Math.round(tl*100)/100,"m");
@@ -912,7 +928,7 @@ const QDEF={laborMode:"pct",laborPct:100,laborFix:0,laborMod:0,transport:0,insta
 function qset(){SET.quote=Object.assign({},QDEF,SET.quote||{});return SET.quote}
 function quote(){const q=qset();R=R||computeAll(S.mods);
   const used=matsUsed(R.parts),rows=[],miss=[];
-  used.forEach(k=>{const P=pack(R.parts,k),pr=+SET.mats[k].price||0;rows.push({l:SET.mats[k].name+" · "+P.sheets.length+" plaka",v:P.sheets.length*pr});if(!pr)miss.push(SET.mats[k].name+" plaka fiyatı")});
+  used.forEach(k=>{const P=pack(R.parts,k),pr=+SET.mats[k].price||0;rows.push({l:matLabel(k)+" · "+P.sheets.length+" plaka",v:P.sheets.length*pr});if(!pr)miss.push(SET.mats[k].name+" plaka fiyatı")});
   rows.push({l:"PVC bant · "+fmt(R.band,1)+" m",v:R.band*(+SET.bandPrice||0)});if(!+SET.bandPrice)miss.push("bant fiyatı");
   const items=hardware(S.mods,R),hw=hwCost(items),hwMiss=items.filter(i=>!(+(SET.hwPrice||{})[i.name])).length;
   rows.push({l:"Hırdavat ("+items.length+" kalem)",v:hw});if(hwMiss)miss.push(hwMiss+" hırdavat kaleminin fiyatı");
@@ -928,7 +944,7 @@ function quoteText(){const Q=quote(),q=Q.q;const T=TYPES[S.type];
   const dims=S.type==="mutfak"?`${S.inp.plan} plan mutfak (${["A","B","C"].slice(0,{I:1,L:2,U:3}[S.inp.plan]).map(w=>w+" "+S.inp[w]+" cm").join(", ")})`:`${T.label} ${S.inp.W} × ${S.inp.H} × ${S.inp.D} cm`;
   let doors=0,drw=0;Object.values(R.geo).forEach(G=>{if(!G.gap)G.cols.forEach(c=>{doors+=c.doors.length;drw+=c.drawers.length})});
   const L=[`TEKLİF — ${S.name}`,new Date().toLocaleDateString("tr-TR"),"",dims,
-    `Gövde: ${SET.mats.sunta.name} · Arkalık: ${BACKS[backOf()].label}`,
+    `Gövde: ${matLabel("sunta")}`+(frontSep()?` · Kapak: ${matLabel("kapak")}`:"")+` · Arkalık: ${BACKS[backOf()].label}`,
     `${Q.nMod} gövde, ${doors} kapak, ${drw} çekmece · ${S.opener==="cekbas"?"çekbas (kulpsuz)":"kulplu"}`,
     (+q.transport?"Nakliye dahil":"Nakliye hariç")+" · "+(+q.install?"Montaj dahil":"Montaj hariç"),"",
     `Tutar: ${fmt(Q.netR)} ₺`,`KDV (%${q.vat}): ${fmt(Q.vatR)} ₺`,`TOPLAM (KDV dahil): ${fmt(Q.rounded)} ₺`,"",
@@ -1064,10 +1080,11 @@ function roomCandsHTML(){const C=roomCands(),rm=roomOf();
      <button class="btn" data-pickroom="${k}">Bu planı seç</button></div></div>`}).join("")}</div>
    <div class="hint">Üçgen: buzdolabı–eviye–ocak arası toplam 3,6–7,9 m, her kenar 1,2–2,7 m.</div>`}
 /* ====================== ÇİZİM ====================== */
+function isDark(c){if(!c||c[0]!=="#")return false;const n=parseInt(c.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;return (r*299+g*587+b*114)/1000<110}
 function modDraw(m,G,ox,oy,o){
-  const t=+SET.t,fs=o.fs;let s=`<g class="mod" data-mod="${m.id}" transform="translate(${ox} ${oy})">`;
+  const t=+SET.t,fs=o.fs,BF=bodyFill(),FF=frontFill(),PF=colorsOf().panels?FF:BF;let s=`<g class="mod" data-mod="${m.id}" transform="translate(${ox} ${oy})">`;
   const st=`stroke="var(--wood-edge)" stroke-width="${fs/8}"`;
-  if(G&&G.panel){s+=`<rect x="0" y="0" width="${m.W}" height="${m.H}" fill="var(--wood)" stroke="${o.sel?"var(--accent)":"var(--wood-edge)"}" stroke-width="${o.sel?fs/2.5:fs/6}"/>`;
+  if(G&&G.panel){s+=`<rect x="0" y="0" width="${m.W}" height="${m.H}" fill="${PF}" stroke="${o.sel?"var(--accent)":"var(--wood-edge)"}" stroke-width="${o.sel?fs/2.5:fs/6}"/>`;
     if(!o.small&&m.W>fs*4&&m.H>fs*1.4)s+=`<text x="${m.W/2}" y="${Math.min(m.H/2+fs*.35,fs*1.6)}" font-size="${Math.min(fs*.75,m.H*.6)}" text-anchor="middle" fill="var(--ink)" font-family="IBM Plex Sans,sans-serif">${esc(m.panel.name)} ${cm(m.panel.o==="v"?m.H:m.W)}</text>`;
     return s+"</g>"}
   if(m.gap){const isApp=/Bulaşık|Fırın|Buzdolabı/.test(m.gap);
@@ -1084,21 +1101,21 @@ function modDraw(m,G,ox,oy,o){
     return s+"</g>"}
   const {W,H,bz}=G;
   s+=`<rect x="0" y="0" width="${W}" height="${H-bz}" fill="var(--back)" opacity=".55"/>`;
-  s+=`<rect x="0" y="0" width="${t}" height="${H}" fill="var(--wood)" ${st}/><rect x="${W-t}" y="0" width="${t}" height="${H}" fill="var(--wood)" ${st}/>`;
-  s+=`<rect x="${t}" y="0" width="${W-2*t}" height="${t}" fill="var(--wood)" ${st}/><rect x="${t}" y="${H-bz-t}" width="${W-2*t}" height="${t}" fill="var(--wood)" ${st}/>`;
-  if(bz>0)s+=`<rect x="${t}" y="${H-bz}" width="${W-2*t}" height="${bz}" fill="var(--wood)" ${st} opacity=".75"/>`;
+  s+=`<rect x="0" y="0" width="${t}" height="${H}" fill="${BF}" ${st}/><rect x="${W-t}" y="0" width="${t}" height="${H}" fill="${BF}" ${st}/>`;
+  s+=`<rect x="${t}" y="0" width="${W-2*t}" height="${t}" fill="${BF}" ${st}/><rect x="${t}" y="${H-bz-t}" width="${W-2*t}" height="${t}" fill="${BF}" ${st}/>`;
+  if(bz>0)s+=`<rect x="${t}" y="${H-bz}" width="${W-2*t}" height="${bz}" fill="${BF}" ${st} opacity=".75"/>`;
   G.cols.forEach((c,i)=>{
-    if(i>0)s+=`<rect x="${c.x-t}" y="${t}" width="${t}" height="${H-bz-2*t}" fill="var(--wood)" ${st}/>`;
-    c.seps.forEach(sp=>s+=`<rect x="${c.x}" y="${sp.y-t/2}" width="${c.sw}" height="${t}" fill="var(--wood)" ${st}/>`);
-    c.bands.forEach(b=>{b.shelvesY.forEach(y=>s+=`<rect x="${c.x}" y="${y}" width="${c.sw}" height="${t}" fill="var(--wood)" ${st}/>`);
+    if(i>0)s+=`<rect x="${c.x-t}" y="${t}" width="${t}" height="${H-bz-2*t}" fill="${BF}" ${st}/>`;
+    c.seps.forEach(sp=>s+=`<rect x="${c.x}" y="${sp.y-t/2}" width="${c.sw}" height="${t}" fill="${BF}" ${st}/>`);
+    c.bands.forEach(b=>{b.shelvesY.forEach(y=>s+=`<rect x="${c.x}" y="${y}" width="${c.sw}" height="${t}" fill="${BF}" ${st}/>`);
       if(b.rod!=null){if(b.hook){for(let k=1;k<=Math.max(2,Math.round(c.sw/150));k++){const hx=c.x+c.sw*k/(Math.max(2,Math.round(c.sw/150))+1);s+=`<path d="M${hx} ${b.rod-fs*.6} v${fs*.9} q0 ${fs*.6} ${fs*.6} ${fs*.6}" fill="none" stroke="var(--muted)" stroke-width="${fs/4}" stroke-linecap="round"/>`}}
         else{s+=`<line x1="${c.x+15}" x2="${c.x+c.sw-15}" y1="${b.rod}" y2="${b.rod}" stroke="var(--muted)" stroke-width="${fs/3}" stroke-linecap="round"/>`;
           if(!o.small)for(let k=0;k<3;k++){const cx=c.x+c.sw*(k+1)/4;s+=`<path d="M${cx} ${b.rod} l${-fs*1.5} ${fs*1.3} h${fs*3}z" fill="none" stroke="var(--muted)" stroke-width="${fs/9}" opacity=".7"/>`}}}});
     if(o.doors){
-      c.drawers.forEach(d=>{s+=`<rect x="${d.x}" y="${d.y}" width="${d.w}" height="${d.h}" fill="var(--wood)" stroke="var(--accent)" stroke-width="${fs/7}"/><line x1="${d.x+d.w/2-fs*1.4}" x2="${d.x+d.w/2+fs*1.4}" y1="${d.y+Math.min(d.h/2,fs*2)}" y2="${d.y+Math.min(d.h/2,fs*2)}" stroke="var(--ink)" stroke-width="${fs/3}" stroke-linecap="round"/>`});
+      c.drawers.forEach(d=>{s+=`<rect x="${d.x}" y="${d.y}" width="${d.w}" height="${d.h}" fill="${FF}" stroke="var(--accent)" stroke-width="${fs/7}"/><line x1="${d.x+d.w/2-fs*1.4}" x2="${d.x+d.w/2+fs*1.4}" y1="${d.y+Math.min(d.h/2,fs*2)}" y2="${d.y+Math.min(d.h/2,fs*2)}" stroke="${isDark(FF)?"#E8E8E8":"var(--ink)"}" stroke-width="${fs/3}" stroke-linecap="round"/>`});
       c.doors.forEach(d=>{const hx=d.hand==="r"?d.x+d.w-fs*1.3:d.x+fs*1.3;const hy=m.role==="ust"||m.role==="tavan"||m.role==="asma"?d.y+d.h-fs*3.6:m.role==="alt"?d.y+fs*.6:d.y+d.h*.45;
         const hingeX=d.hand==="r"?d.x:d.x+d.w,latchX=d.hand==="r"?d.x+d.w:d.x;
-        s+=`<rect x="${d.x}" y="${d.y}" width="${d.w}" height="${d.h}" fill="var(--wood)" fill-opacity=".92" stroke="var(--accent)" stroke-width="${fs/7}"/><path d="M${latchX} ${d.y} L${hingeX} ${d.y+d.h/2} L${latchX} ${d.y+d.h}" fill="none" stroke="var(--accent)" stroke-width="${fs/10}" stroke-dasharray="${fs/2} ${fs/3}" opacity=".7"/><line x1="${hx}" x2="${hx}" y1="${hy}" y2="${hy+fs*3}" stroke="var(--ink)" stroke-width="${fs/3}" stroke-linecap="round"/>`});
+        s+=`<rect x="${d.x}" y="${d.y}" width="${d.w}" height="${d.h}" fill="${FF}" fill-opacity=".96" stroke="var(--accent)" stroke-width="${fs/7}"/><path d="M${latchX} ${d.y} L${hingeX} ${d.y+d.h/2} L${latchX} ${d.y+d.h}" fill="none" stroke="var(--accent)" stroke-width="${fs/10}" stroke-dasharray="${fs/2} ${fs/3}" opacity=".7"/><line x1="${hx}" x2="${hx}" y1="${hy}" y2="${hy+fs*3}" stroke="${isDark(FF)?"#E8E8E8":"var(--ink)"}" stroke-width="${fs/3}" stroke-linecap="round"/>`});
       if(m.blind){const bx=m.blind.side==="l"?0:W-m.blind.w;s+=`<rect x="${bx}" y="0" width="${m.blind.w}" height="${H-bz}" fill="var(--line)" opacity=".7"/>`;
         if(!o.small)s+=`<text x="${bx+m.blind.w/2}" y="${(H-bz)/2}" font-size="${fs*.7}" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Sans,sans-serif">kör</text>`}
     }});
@@ -1380,9 +1397,10 @@ function renderDuzen(){
   const cost=packs.reduce((q,P,i)=>q+P.sheets.length*SET.mats[used[i]].price,0)+R.band*SET.bandPrice+hwCost(hardware(S.mods,R));
   const bottom=m?(S.band!=null&&!m.gap?cellEditorHTML(m):editorHTML(m)):`
     <div class="sumrow">
-      <button class="sumbtn" data-go="sonuc">${packs.map((P,i)=>P.sheets.length+" "+(used[i]==="sunta"?"plaka":"arkalık")).join(" · ")} · ${fmt(R.band,0)} m bant</button>
+      <button class="sumbtn" data-go="sonuc">${packs.map((P,i)=>P.sheets.length+" "+({sunta:"gövde",kapak:"kapak"}[used[i]]||"arkalık")).join(" · ")} · ${fmt(R.band,0)} m bant</button>
       <button class="sumbtn" data-rtgo="teklif">${cost>0?fmt(quote().rounded)+" ₺":"Fiyat yok"}</button>
       <button class="sumbtn ${nw?"w":"ok"}" data-sheet="notes">${nw?"⚠ "+nw+" uyarı":"✓ Usta notları"}</button>
+      <button class="sumbtn" data-sheet="color"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--line);background:${bodyFill()}"></span>${frontSep()?`<span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--line);background:${frontFill()}"></span>`:""}Renk</button>
       <button class="sumbtn" data-sheet="back">Arkalık ${BACKS[backOf()].short}</button>
       ${kitchen?`<button class="sumbtn" data-sheet="plan">Plan</button>`:""}
     </div>
@@ -1399,6 +1417,17 @@ function notesSheet(){const adv=advise(S.mods,R);
   openSheet(`<div class="ed-head"><b>Usta notları</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
    ${R.err.map(e=>`<ul class="adv"><li class="warn"><span class="ic">!</span><span>${esc(e.m+": "+e.txt)}</span></li></ul>`).join("")}
    <ul class="adv">${adv.map(x=>`<li class="${x.lvl}"><span class="ic">${{ok:"✓",warn:"!",info:"i"}[x.lvl]}</span><details><summary>${esc(x.txt)}</summary><p>${esc(x.why)}</p></details></li>`).join("")}</ul>`)}
+function colorSheet(){const c=colorsOf();R=computeAll(S.mods);
+  const sw=(k,sel,attr)=>`<button class="swatch ${sel===k?"on":""}" ${attr}="${k}" aria-label="${COLORS[k].l}" title="${COLORS[k].l}"><i style="background:${COLORS[k].c}"></i><span>${COLORS[k].l}</span></button>`;
+  const P=k=>{const x=matsUsed(R.parts).includes(k)?pack(R.parts,k):null;return x?x.sheets.length+" plaka · fire %"+fmt(x.fire*100):"—"};
+  openSheet(`<div class="ed-head"><b>Renk ve malzeme</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+   <span class="lbl">Gövde · ${P("sunta")}</span><div class="swatches">${Object.keys(COLORS).map(k=>sw(k,c.body,"data-cbody")).join("")}</div>
+   <span class="lbl">Kapak ve çekmece önü</span>
+   <div class="chips"><button class="chip" data-cfront="same" aria-pressed="${!frontSep()}">Gövdeyle aynı</button><button class="chip" data-cfront="diff" aria-pressed="${frontSep()}">Farklı renk</button></div>
+   ${frontSep()?`<div class="swatches">${Object.keys(COLORS).filter(k=>k!==c.body).map(k=>sw(k,c.front,"data-cfrontc")).join("")}</div>
+     <div class="note" style="color:var(--warn)">Kapaklar ayrı plakadan kesilir: ${P("kapak")}. Kapak plakası ayrı alınır, artanı başka işte kullanılmazsa maliyet artar.</div>
+     <label class="check"><input type="checkbox" id="c-panels" data-cpanels="1" ${c.panels?"checked":""}><span>Tabla ve başlık panelleri de kapak renginde<small>Masa tablası, yatak başlığı gibi görünen paneller</small></span></label>`:`<div class="note">Kapaklar gövdeyle aynı plakadan kesilir; plaka ve bant ortak.</div>`}
+   <div class="note">Kapak plakasının ölçüsü ve fiyatı Ayarlar → "Kapak ve çekmece önü"nden girilir.</div>`)}
 function backSheet(){openSheet(`<div class="ed-head"><b>Arkalık</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
    <div class="chips" style="flex-wrap:wrap">${Object.entries(BACKS).map(([k,v])=>`<button class="chip" data-backtype="${k}" aria-pressed="${backOf()===k}">${v.label}</button>`).join("")}</div>
    <div class="note">${esc(BACKS[backOf()].desc)}${backOf()===(BACK_DEF[S.type]||"3")?" Bu mobilya için önerilen seçim.":" Bu mobilya için önerilen: "+BACKS[BACK_DEF[S.type]||"3"].label+"."}</div>`)}
@@ -1464,13 +1493,13 @@ function bandHTML(p){const on=k=>`<i class="${k?"on":""}"></i>`;return `<span cl
 function sheetSVG(sh,m,mat){const fs=m.L/42;
   let s=`<svg viewBox="0 0 ${m.L} ${m.W}" role="img" aria-label="Plaka yerleşimi"><rect x="0" y="0" width="${m.L}" height="${m.W}" fill="var(--bg)" stroke="var(--muted)" stroke-width="6"/>`;
   sh.placed.forEach(p=>{const big=p.w>fs*5&&p.h>fs*2.2;
-    s+=`<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="var(${mat!=="sunta"?"--back":"--wood"})" stroke="var(${mat!=="sunta"?"--back-edge":"--wood-edge"})" stroke-width="5"/>`;
-    s+=`<text x="${p.x+p.w/2}" y="${p.y+p.h/2+(big?-fs*.2:fs*.35)}" font-size="${Math.min(fs,p.h*.45,p.w*.3)}" text-anchor="middle" fill="var(--ink)" font-family="IBM Plex Mono,monospace">${p.id}</text>`;
+    s+=`<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="${mat==="sunta"?bodyFill():mat==="kapak"?frontFill():"var(--back)"}" fill-opacity="${mat==="kapak"||mat==="sunta"?.85:1}" stroke="var(${mat==="sunta"||mat==="kapak"?"--wood-edge":"--back-edge"})" stroke-width="5"/>`;
+    s+=`<text x="${p.x+p.w/2}" y="${p.y+p.h/2+(big?-fs*.2:fs*.35)}" font-size="${Math.min(fs,p.h*.45,p.w*.3)}" text-anchor="middle" fill="${(mat==="kapak"?isDark(frontFill()):mat==="sunta"?isDark(bodyFill()):false)?"#F2F2F2":"var(--ink)"}" font-family="IBM Plex Mono,monospace">${p.id}</text>`;
     if(big)s+=`<text x="${p.x+p.w/2}" y="${p.y+p.h/2+fs*.95}" font-size="${fs*.75}" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${p.rot?p.b+"×"+p.a:p.a+"×"+p.b}</text>`});
   return s+"</svg>"}
 function cutText(){
   const L=[`${S.name} — ${TYPES[S.type].label}`];
-  matsUsed(R.parts).forEach(m=>{L.push("",`${SET.mats[m].name} (${SET.mats[m].L}×${SET.mats[m].W})`);
+  matsUsed(R.parts).forEach(m=>{L.push("",`${matLabel(m)} (${SET.mats[m].L}×${SET.mats[m].W})`);
     R.parts.filter(p=>p.mat===m).forEach(p=>{const b=[];if(p.bl)b.push(p.bl+" uzun");if(p.bs)b.push(p.bs+" kısa");
       L.push(`${p.id}  ${p.name}: ${p.qty} ad  ${p.a} x ${p.b}${b.length?"  bant: "+b.join(" + "):""}`)})});
   (S.inp.obs||[]).filter(o=>o.type==="kolon"||o.type==="kiris").forEach(o=>L.push((o.type==="kolon"?"Kolon":"Kiriş")+" ("+(o.wall||"A")+" duvarı): "+(o.type==="kolon"?`soldan ${o.x} cm, ${o.w}×${o.d} cm`:`alt ${o.h} cm, çıkıntı ${o.d} cm`)));
@@ -1482,10 +1511,10 @@ function renderSonuc(){
   relabel();R=computeAll(S.mods);const tabs=[["parca","Parçalar"],["plaka","Plakalar"],["hw","Hırdavat"],["teklif","Teklif"],["gonder","Gönder"]];if(!S.opener)S.opener="kulp";
   let h=`<div class="chips">${tabs.map(([k,l])=>`<button class="chip" data-rt="${k}" aria-pressed="${S.resTab===k}">${l}</button>`).join("")}</div>`;
   if(S.resTab==="parca"){h+=`<p class="note">Ölçüler mm. Bant: ilk iki çizgi uzun kenarlar, son ikisi kısa kenarlar; turuncu = bant var. Parça adının altında hangi dolaplarda kullanıldığı yazar.</p>`;
-    matsUsed(R.parts).forEach(mt=>{h+=`<div class="matbar"><span class="sw ${mt!=="sunta"?"back":""}"></span>${esc(SET.mats[mt].name)}</div><div class="tablewrap"><table><thead><tr><th>No</th><th>Parça</th><th style="text-align:right">Adet</th><th style="text-align:right">Boy × En</th><th>Bant</th></tr></thead><tbody>${partRows(mt)}</tbody></table></div>`})}
+    matsUsed(R.parts).forEach(mt=>{h+=`<div class="matbar"><span class="sw ${mt!=="sunta"&&mt!=="kapak"?"back":""}" style="${mt==="sunta"?"background:"+bodyFill():mt==="kapak"?"background:"+frontFill():""}"></span>${esc(matLabel(mt))}</div><div class="tablewrap"><table><thead><tr><th>No</th><th>Parça</th><th style="text-align:right">Adet</th><th style="text-align:right">Boy × En</th><th>Bant</th></tr></thead><tbody>${partRows(mt)}</tbody></table></div>`})}
   if(S.resTab==="plaka"){h+=`<p class="note">Testere payı ${SET.kerf} mm, kenar temizleme ${SET.trim} mm. Numaralar parça listesindeki No ile aynı.</p>`;
     matsUsed(R.parts).forEach(mt=>{const P=pack(R.parts,mt);
-      h+=`<div class="matbar"><span class="sw ${mt!=="sunta"?"back":""}"></span>${esc(P.m.name)} · ${P.sheets.length} plaka · fire %${fmt(P.fire*100)}</div>`;
+      h+=`<div class="matbar"><span class="sw ${mt!=="sunta"&&mt!=="kapak"?"back":""}" style="${mt==="sunta"?"background:"+bodyFill():mt==="kapak"?"background:"+frontFill():""}"></span>${esc(matLabel(mt))} · ${P.sheets.length} plaka · fire %${fmt(P.fire*100)}</div>`;
       P.sheets.forEach((sh,i)=>{h+=`<div class="sheet"><span class="lbl">Plaka ${i+1} / ${P.sheets.length} · ${P.m.L}×${P.m.W}</span>${sheetSVG(sh,P.m,mt)}</div>`});
       if(P.un.length)h+=`<div class="note" style="color:var(--warn)">Sığmayan parça: ${P.un.map(u=>u.id).join(", ")}</div>`})}
   if(S.resTab==="hw"){const items=hardware(S.mods,R);const op=S.opener||"kulp";let cat="";const tot=hwCost(items);
@@ -1504,12 +1533,12 @@ function renderSonuc(){
   $("#view").innerHTML=h;setBar("duzen",null);
 }
 function renderAyar(){
-  const mf=m=>`<div class="panel"><div class="matbar"><span class="sw ${m!=="sunta"?"back":""}"></span>${{sunta:"Gövde, kapak ve 18 mm arkalık",arka8:"8 mm arkalık ve çekmece tabanı",arka3:"3 mm arkalık (duralit)"}[m]}</div>
+  const mf=m=>`<div class="panel"><div class="matbar"><span class="sw ${m!=="sunta"?"back":""}"></span>${{sunta:"Gövde (ve kapak aynı renkse kapak)",kapak:"Kapak ve çekmece önü (farklı renk)",arka8:"8 mm arkalık ve çekmece tabanı",arka3:"3 mm arkalık (duralit)"}[m]}</div>
     <label class="field"><span class="k">Ad</span><input id="m-${m}-name" data-mat="${m}:name" value="${esc(SET.mats[m].name)}" style="font-family:var(--f-body);font-size:16px"></label>
     <div class="grid3"><label class="field"><span class="k">Plaka boyu mm</span><input type="number" id="m-${m}-L" data-mat="${m}:L" value="${SET.mats[m].L}"></label>
     <label class="field"><span class="k">Plaka eni mm</span><input type="number" id="m-${m}-W" data-mat="${m}:W" value="${SET.mats[m].W}"></label>
     <label class="field"><span class="k">Plaka fiyatı ₺</span><input type="number" id="m-${m}-price" data-mat="${m}:price" value="${SET.mats[m].price}"></label></div></div>`;
-  $("#view").innerHTML=`<h1>Atölye ayarları</h1><p class="lead">Bunlar tüm projelerde geçerlidir.</p>${mf("sunta")}${mf("arka8")}${mf("arka3")}
+  $("#view").innerHTML=`<h1>Atölye ayarları</h1><p class="lead">Bunlar tüm projelerde geçerlidir.</p>${mf("sunta")}${mf("kapak")}${mf("arka8")}${mf("arka3")}
    <div class="panel"><div class="grid3">${[["t","Gövde kalınlığı mm"],["kerf","Testere payı mm"],["trim","Kenar temizleme mm"],["gap","Kapak boşluğu mm"],["drawerMin","En alçak çekmece mm"],["bandPrice","Bant ₺/m"]].map(([k,l])=>`<label class="field"><span class="k">${l}</span><input type="number" id="set-${k}" data-set="${k}" value="${SET[k]}"></label>`).join("")}</div>
    <label class="check"><input type="checkbox" id="grain" ${SET.grain?"checked":""}><span>Suntalam desen yönü sabit<small>Parçalar plakada döndürülmez</small></span></label></div>`;
   $("#bar").innerHTML=`<button class="btn" data-back="1">Tamam</button>`;
@@ -1661,7 +1690,10 @@ document.addEventListener("click",e=>{
   if(d.qround!==undefined){qset().round=+d.qround;persist();renderSonuc();return}
   if(d.copyq){const t=quoteText(),ta=$("#qText");try{navigator.clipboard.writeText(t).then(()=>toast("Teklif kopyalandı"),()=>{ta.focus();ta.select();toast("Metni seçtim; uzun basıp kopyalayın")})}catch(err){ta.focus();ta.select()}return}
   if(d.backtype&&BACKS[d.backtype]){S.back=d.backtype;renderDuzen();persist();backSheet();toast("Arkalık: "+BACKS[d.backtype].label);return}
-  if(d.sheet){({notes:notesSheet,back:backSheet,plan:planSheet})[d.sheet]();return}
+  if(d.sheet){({notes:notesSheet,back:backSheet,plan:planSheet,color:colorSheet})[d.sheet]();return}
+  if(d.cbody){const c=colorsOf();c.body=d.cbody;if(c.front===c.body)c.front=null;renderDuzen();colorSheet();persist();return}
+  if(d.cfront){const c=colorsOf();if(d.cfront==="same")c.front=null;else {if(!c.body)c.body="beyaz";c.front=c.body==="antrasit"?"beyaz":"antrasit"}renderDuzen();colorSheet();persist();return}
+  if(d.cfrontc){colorsOf().front=d.cfrontc;renderDuzen();colorSheet();persist();return}
   if(d.rtgo){S.resTab=d.rtgo;S.step="sonuc";render();return}
   if(d.otab){S.otab=S.otab||{};S.otab[S.inp.mode||"oda"]=d.otab;persist();renderOlcu();return}
   if(d.expimg){exportDrawing();return}
@@ -1698,6 +1730,7 @@ document.addEventListener("input",e=>{const x=e.target,d=x.dataset;
 document.addEventListener("change",e=>{const x=e.target,d=x.dataset;const m=curMod();
   if(d.inp&&S.type==="mutfak"&&S.step==="olcu"){S.mods=[];refreshFix()}
   if((d.room||d.rop||d.inp||d.chk)&&S.type==="mutfak"&&S.step==="olcu"&&(S.inp.mode||"oda")==="oda"){const el=document.getElementById("roomCands");if(el)el.innerHTML=roomCandsHTML();if(d.room||d.rop){const sv=document.querySelector(".panel .elev");if(sv)sv.innerHTML=roomSVG(roomOf(),null,false)}}
+  if(d.cpanels){colorsOf().panels=x.checked;renderDuzen();colorSheet();persist();return}
   if(x.id==="impFile"&&x.files&&x.files[0]){const fr=new FileReader();fr.onload=()=>importText(String(fr.result));fr.onerror=()=>toast("Dosya okunamadı");fr.readAsText(x.files[0]);x.value="";return}
   if(x.id==="showDoors"){S.showDoors=x.checked;renderDuzen();return}
   if(x.id==="grain"){SET.grain=x.checked;persist();return}
