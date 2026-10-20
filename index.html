@@ -306,6 +306,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .carousel .body{padding:10px 12px;gap:6px}.carousel .body p{-webkit-line-clamp:1}
 .fmzoom .sp{flex:1}
 .sharerow{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:12px 14px;font:inherit;cursor:pointer}.sharerow b{font-size:16px}.sharerow.rec{border:2px solid var(--accent)}.sharerow span{color:var(--muted);font-size:13px}
+.artikp{border-left:4px solid #2F8A4B}.artikp .prow{justify-content:space-between;align-items:center;gap:8px}.artikp .prow small,.artikl small{display:block;color:var(--muted);font-size:12px}
+.artikl{list-style:none;margin:0;padding:0;display:grid;gap:8px}.artikl li{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--line);padding-top:8px;font-size:14px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -680,6 +682,50 @@ function pack(parts,mat,opt={}){
 
 
 
+
+/* ====================== ARTIKTAN NE ÇIKAR ====================== */
+const ARTIK=[
+ {k:"kom2",l:"Komodin · 2 çekmece",tip:"komodin",W:45,H:50,D:40,cek:2},
+ {k:"kom3",l:"Komodin · 3 çekmece",tip:"komodin",W:45,H:65,D:40,cek:3},
+ {k:"sehpa",l:"Yan sehpa · açık raflı",tip:"rafli",W:45,H:55,D:45,bolme:1,raf:1,kapak:false},
+ {k:"banyo",l:"Banyo dolabı · asma, tek kapak",tip:"ust",W:40,H:60,D:22,bolme:1,raf:2,kapak:true},
+ {k:"banyob",l:"Banyo boy dolabı",tip:"rafli",W:35,H:150,D:30,bolme:1,raf:4,kapak:true},
+ {k:"ayak",l:"Ayakkabılık",tip:"rafli",W:60,H:100,D:32,bolme:1,raf:3,kapak:true},
+ {k:"kitap1",l:"Dar kitaplık",tip:"kitaplik",W:40,H:120,D:25,raf:3,kapak:false},
+ {k:"kitap2",l:"Kitaplık",tip:"kitaplik",W:60,H:180,D:30,raf:5,kapak:false},
+ {k:"kahve",l:"Kahve köşesi alt modülü",tip:"alt",W:60,H:86,D:45,cek:1,raf:1,kapak:true},
+ {k:"balkon",l:"Balkon dolabı · dar",tip:"rafli",W:40,H:150,D:35,bolme:1,raf:4,kapak:true},
+ {k:"asma",l:"Duvar rafı · asma açık",tip:"ust",W:80,H:35,D:22,bolme:1,raf:0,kapak:false},
+ {k:"tv",l:"Küçük TV sehpası",tip:"rafli",W:100,H:45,D:35,bolme:2,raf:1,kapak:true}];
+let ARTIKR=null;
+function artikMod(c,x){return qhMod(Object.assign({adet:1,bolme:1,aski:0,cek:0,raf:0,kapak:false},c),x)}
+function artikParts(c,n,tag){const ms=[];for(let i=0;i<n;i++)ms.push(artikMod(c,1e6+i*2000));const r=computeAll(ms);return r.parts.map(p=>Object.assign({},p,{id:tag+p.id,key:"artik|"+tag+p.key}))}
+function artikPrice(c){const save=S.mods,saveR=R;try{const m=artikMod(c,0);S.mods=[m];R=computeAll(S.mods);const q=qset(),T=+SET.trim;
+    let mat=0,miss=false;matsUsed(R.parts).forEach(k=>{const mm=SET.mats[k],A=(mm.L-2*T)*(mm.W-2*T),ar=R.parts.filter(p=>p.mat===k).reduce((x,p)=>x+p.qty*p.a*p.b,0);if(!+mm.price)miss=true;mat+=ar/A*1.1*(+mm.price||0)});
+    const items=hardware(S.mods,R),hw=hwCost(items),band=R.band*(+SET.bandPrice||0),base=mat+hw+band;
+    const labor=q.laborMode==="pct"?base*(+q.laborPct||0)/100:q.laborMode==="mod"?(+q.laborMod||0):0;const net=(base+labor)*(1+(+q.profit||0)/100),tot=net*(1+(+q.vat||0)/100),rnd=+q.round||0;
+    return{full:rnd?Math.ceil(tot/rnd)*rnd:Math.round(tot),out:hw+band,miss}}catch(e){return{full:0,out:0,miss:true}}finally{S.mods=save;R=saveR}}
+function artikCalc(parts){const MAIN=["sunta","kapak"].filter(k=>parts.some(p=>p.mat===k));const T=+SET.trim,K=+SET.kerf;
+  const n0={},room={};MAIN.forEach(k=>{const P=pack(parts,k),mm=SET.mats[k],U=(mm.L-2*T+K)*(mm.W-2*T+K);n0[k]=P.sheets.length;room[k]=P.sheets.length*U*0.97-P.need*U});
+  const arka=matsUsed(parts).filter(k=>!MAIN.includes(k));const out=[];let fullChecks=0;
+  ARTIK.forEach(c=>{let best=0;let extra={};
+    for(let n=1;n<=4;n++){const pp=artikParts(c,n,"Ü"+c.k+n+"-");const main=pp.filter(p=>MAIN.includes(p.mat));
+      if(pp.some(p=>(p.mat==="sunta"||p.mat==="kapak")&&!MAIN.includes(p.mat)))break;
+      const okArea=MAIN.every(k=>pp.filter(p=>p.mat===k).reduce((q,p)=>q+p.qty*(p.a+K)*(p.b+K),0)<=room[k]+1);if(!okArea)break;
+      const all=parts.concat(pp);let ok=MAIN.every(k=>pack(all,k,{quick:true}).sheets.length<=n0[k]);
+      if(!ok&&fullChecks<6){fullChecks++;ok=MAIN.every(k=>pack(all,k).sheets.length<=n0[k])}
+      if(!ok)break;best=n;extra={};arka.forEach(k=>{const d=pack(all,k,{quick:true}).sheets.length-pack(parts,k).sheets.length;if(d>0)extra[k]=d})}
+    if(best)out.push({c,n:best,extra,price:artikPrice(c)})});
+  out.sort((a,b)=>(b.price.full*b.n)-(a.price.full*a.n)||b.n-a.n);return{list:out,n0}}
+function artikHTML(parts,isF){const sig=partsSig(parts)+JSON.stringify(S.artik||{});
+  if(!ARTIKR||ARTIKR.sig!==sig)return `<div class="panel artikp"><div class="prow"><span><b>Artıktan ne çıkar?</b><small>Aldığınız levhaların artığından satılabilir küçük mobilya</small></span><button class="btn small" data-artikne="${isF?"f":"p"}">Hesapla</button></div></div>`;
+  const L=ARTIKR.res.list;if(!L.length)return `<div class="panel artikp"><b>Artıktan ne çıkar?</b><div class="note">Artık alan küçük; katalogdaki ürünlerden hiçbiri ek levha almadan sığmıyor.</div></div>`;
+  return `<div class="panel artikp"><b>Artıktan ne çıkar? · ${L.length} ürün</b><div class="note">Her biri tek başına, levha sayısını artırmadan mevcut artığa sığıyor; birini ekleyince liste kalan artığa göre yeniden hesaplanır. Levha parası müşteri işinden çıktığı için masrafınız yalnız hırdavat ve bant.</div>
+   <ul class="artikl">${L.map((r,i)=>`<li><div><b>${esc(r.c.l)}</b><small>${nv(r.c.W)}×${nv(r.c.H)}×${nv(r.c.D)} cm · en fazla ${r.n} adet${Object.keys(r.extra).length?" · arkalık için "+Object.entries(r.extra).map(([k,n])=>n+" "+SET.mats[k].name).join(", ")+" daha":""}</small>
+     <small>${r.price.full>0?"Önerilen satış ≈ "+fmt(r.price.full)+" ₺ (kullandığı levha alanına göre) · cebinizden çıkan ≈ "+fmt(r.price.out)+" ₺":"Fiyat kütüphanesine fiyat girince satış fiyatı hesaplanır"}</small></div>
+     <span class="btns" style="margin:0">${[...Array(r.n)].map((_,j)=>`<button class="btn small ${j?"ghost":""}" data-artikadd="${isF?"f":"p"}:${r.c.k}:${j+1}">${j+1} adet ekle</button>`).join("")}</span></li>`).join("")}</ul></div>`}
+function extrasHTML(){const ex=S.mods.filter(m=>m.extra);if(!ex.length)return"";const g={};ex.forEach(m=>{(g[m.extra]=g[m.extra]||[]).push(m)});
+  return `<div class="panel artikp"><b>Ek ürünler (artıktan)</b><div class="note">Kesim listesine, etiketlere ve delik planına dahil; müşteri teklifine ve çizime dahil değil.</div><ul class="artikl">${Object.entries(g).map(([k,ms])=>`<li><div><b>${ms.length} × ${esc((ARTIK.find(c=>c.k===k)||{l:k}).l)}</b><small>${ms.map(m=>m.label).join(", ")}</small></div><button class="btn small danger" data-artikdel="${esc(k)}">Kaldır</button></li>`).join("")}</ul></div>`}
 /* ====================== KENDİM KARAR VERECEĞİM (parça eşikleri) ====================== */
 let WHATIF={};
 function whatifCalc(mat){R=computeAll(S.mods);const parts=R.parts,P=pack(parts,mat),n0=P.sheets.length;if(n0<2)return{n0,rows:[]};
@@ -1410,7 +1456,7 @@ function hwText(items){const L=[`${S.name} — hırdavat listesi`];let cat="";
 /* ====================== HIZLI TEKLİF ====================== */
 const QDEF={laborMode:"pct",laborPct:100,laborFix:0,laborMod:0,transport:0,install:0,extra:0,profit:25,vat:20,round:100,valid:15};
 function qset(){SET.quote=Object.assign({},QDEF,SET.quote||{});return SET.quote}
-function quote(){const q=qset();R=R||computeAll(S.mods);
+function quote(){const q=qset();R=R||computeAll(S.mods);if(S.mods.some(m=>m.extra)){const sv=S.mods,sR=R;try{S.mods=sv.filter(m=>!m.extra);R=computeAll(S.mods);return quote()}finally{S.mods=sv;R=sR}}
   const used=matsUsed(R.parts),rows=[],miss=[];
   used.forEach(k=>{const P=pack(R.parts,k),pr=+SET.mats[k].price||0;rows.push({l:matLabel(k)+" · "+P.sheets.length+" plaka",v:P.sheets.length*pr});if(!pr)miss.push(SET.mats[k].name+" plaka fiyatı")});
   {const bm=k=>R.parts.filter(p=>p.mat===k).reduce((q,p)=>q+p.qty*(p.bl*p.a0+p.bs*p.b0),0)/1000;
@@ -2271,7 +2317,7 @@ function renderSonuc(){
   let h=`<div class="chips">${tabs.map(([k,l])=>`<button class="chip" data-rt="${k}" aria-pressed="${S.resTab===k}">${l}</button>`).join("")}</div>`;
   if(S.resTab==="parca"){h+=`<p class="note"><b>Bant:</b> parçanın kenarına dokunarak bant ekleyin ya da kaldırın (turuncu = bantlı; üst-alt uzun, sağ-sol kısa kenar). ${+SET.bandT?"Bant kalınlığı "+SET.bandT+" mm kesim ölçüsünden düşülüyor.":"Kalın bantta kesimden düşmek için Ayarlar → Bant kalınlığı."}${Object.keys(S.bandOv||{}).length?` <button class="btn small ghost" data-bandreset="1">Bantları sıfırla</button>`:""}</p><p class="note" style="display:none">Ölçüler mm. Bant: ilk iki çizgi uzun kenarlar, son ikisi kısa kenarlar; turuncu = bant var. Parça adının altında hangi dolaplarda kullanıldığı yazar.</p>`;
     matsUsed(R.parts).forEach(mt=>{h+=`<div class="matbar"><span class="sw ${mt!=="sunta"&&mt!=="kapak"?"back":""}" style="${mt==="sunta"?"background:"+bodyFill():mt==="kapak"?"background:"+frontFill():""}"></span>${esc(matLabel(mt))}</div><div class="tablewrap"><table><thead><tr><th>No</th><th>Parça</th><th style="text-align:right">Adet</th><th style="text-align:right">Boy × En</th><th>Bant</th></tr></thead><tbody>${partRows(mt)}</tbody></table></div>`})}
-  if(S.resTab==="plaka"){h+=`<p class="note">Testere payı ${SET.kerf} mm, kenar temizleme ${SET.trim} mm. Numaralar parça listesindeki No ile aynı.</p>`;
+  if(S.resTab==="plaka"){h+=extrasHTML()+artikHTML(R.parts,false);h+=`<p class="note">Testere payı ${SET.kerf} mm, kenar temizleme ${SET.trim} mm. Numaralar parça listesindeki No ile aynı.</p>`;
     matsUsed(R.parts).forEach(mt=>{const P=pack(R.parts,mt);
       h+=`<div class="matbar"><span class="sw ${mt!=="sunta"&&mt!=="kapak"?"back":""}" style="${mt==="sunta"?"background:"+bodyFill():mt==="kapak"?"background:"+frontFill():""}"></span>${esc(matLabel(mt))} · ${P.sheets.length} plaka · fire %${fmt(P.fire*100)}</div>`+saverHTML(mt,P);
       P.sheets.forEach((sh,i)=>{h+=`<div class="sheet"><span class="lbl">Plaka ${i+1} / ${P.sheets.length} · %${fmt(sheetUse(sh,P.m)*100)} dolu · ${P.m.L}×${P.m.W}</span>${sheetSVG(sh,P.m,mt)}</div>`});
@@ -2481,6 +2527,7 @@ const APPVER="2026.10.20b";
 const NEWS=[
  {d:"20 Ekim 2026 · akşam",t:"Levha tasarrufu, müşteri klasörleri, fotoğrafla ölçü",items:[
   ["Daha iyi levha yerleşimi","Her kesim için 190'a yakın yerleşim deneniyor (panel testeresine uygun şerit kesim dahil); en az levhalı olan seçiliyor.",null],
+  ["Artıktan ne çıkar?","Kesim → Plakalar ve Ölçüden levha planı: levha sayısını artırmadan artığa sığan hazır ürünler (komodin, banyo dolabı, kitaplık, ayakkabılık, sehpa, kahve köşesi modülü…), kaç adet çıktığı, önerilen satış fiyatı. 'Ekle' ile kesime girer, müşteri teklifine girmez.",null],
   ["Kesim optimizasyonu yenilendi","Levhalar sırayla, her biri en dolu olacak şekilde doldurulur; aynı ölçüdeki parçalar aynı şeride dizilir (panel testeresine uygun 3 aşamalı giyotin kesim); kötü dolan levhadaki parçalara öncelik verilip plan tekrar kurulur. 'En iyisini ara' 15 saniyeye kadar arar. Her levhada kendi doluluk oranı yazar.",null],
   ["3D'yi gönder","3D ekranında 'Paylaş' → 'Bağlantı olarak gönder': WhatsApp'ta bağlantıya dokunan müşteri iPhone'da da Android'de de tarayıcıda açıp çevirir. Ayrıca döndürülebilir 3D sayfa (müşteri tarayıcıda çevirir, ölçüler ve kapak aç/kapa içinde), 3D model dosyası (.glb) ya da resim.",null],
   ["Mutfak cihazları","Eviye, bulaşık, buzdolabı ve ocak tesisat şeridinde üst üste gelmez. Pişirme: ankastre fırın + ocak, set üstü ocak ya da fırın boy dolapta; mikrodalga üst dolapta, boy dolapta ya da tezgahta.",null],
@@ -2756,7 +2803,7 @@ function flResultsHTML(){const parts=flParts();if(!parts.length)return `<div cla
     if(FLSAVER&&FLSAVER.mt===k&&FLSAVER.sig===partsSig(parts))h+=FLSAVER.tips.length?`<ul class="saver">${FLSAVER.tips.map((t,i)=>`<li><div><b>−${t.save} levha</b> · ${esc(t.desc)}</div><button class="btn small" data-flsapply="${i}">Uygula</button></li>`).join("")}</ul>`:`<div class="note">1–2 cm'lik kısaltmayla levha düşmüyor.</div>`;
     P.sheets.forEach((sh,i)=>{h+=`<div class="sheet"><span class="lbl">Levha ${i+1} / ${P.sheets.length} · %${fmt(sheetUse(sh,P.m)*100)} dolu · ${P.m.L}×${P.m.W}</span>${sheetSVG(sh,P.m,k)}</div>`});
     if(P.un.length)h+=`<div class="note" style="color:var(--warn)">Levhaya sığmayan: ${[...new Set(P.un.map(u=>u.id))].join(", ")} (desen yönünü kapatıp döndürmeyi deneyin)</div>`});
-  return h}
+  return h+artikHTML(parts,true)}
 let flT;function flResults(){clearTimeout(flT);flT=setTimeout(()=>{const el=document.getElementById("flres");if(el)el.innerHTML=flResultsHTML()},250)}
 function renderListe(){document.querySelector("main").className="";
   $("#view").innerHTML=`<h1 class="c">Ölçüden levha planı</h1><p class="lead">Parça ölçülerini yazın; levha yerleşimi hemen çıkar. Listeyi fasoncuya dosya ya da mesaj olarak gönderin.</p>
@@ -2918,6 +2965,13 @@ document.addEventListener("click",e=>{
   if(d.fmdel!==undefined){FM.meas.splice(+d.fmdel,1);renderFoto();return}
   if(d.fmuse){const[i,k]=d.fmuse.split(":");const L=fmLen(FM.meas[+i].a,FM.meas[+i].b);if(L==null)return;const v=Math.round(L)/10;S.inp[k]=v;S.mods=[];persist();toast((fmUseTargets().find(t=>t[0]===k)||[,k])[1]+" = "+nv(v)+" cm aktarıldı");return}
   if(d.fmcopy){const t=FM.meas.map((m,i)=>(i+1)+": "+nv(Math.round(fmLen(m.a,m.b)||0)/10)+" cm").join("\n");(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Kopyalandı")).catch(()=>toast("Kopyalanamadı"));return}
+  if(d.artikne){const isF=d.artikne==="f";toast("Artık alan hesaplanıyor…");setTimeout(()=>{const parts=isF?flParts():computeAll(S.mods).parts;ARTIKR={sig:partsSig(parts)+JSON.stringify(S.artik||{}),res:artikCalc(parts)};if(isF)renderListe();else renderSonuc();toast(ARTIKR.res.list.length?ARTIKR.res.list.length+" ürün artığa sığıyor":"Artığa sığan ürün yok")},60);return}
+  if(d.artikadd){const[w,k,n]=d.artikadd.split(":");const c=ARTIK.find(x=>x.k===k);if(!c)return;
+    if(w==="f"){const pp=artikParts(c,+n,"");pp.forEach(p=>FL.rows.push(flNew({ad:c.l+" · "+p.name,boy:p.a0,en:p.b0,adet:p.qty,mat:p.mat,bl:p.bl,bs:p.bs,desen:!(SET.grain&&(p.mat==="sunta"||p.mat==="kapak"))})));FL.net=false;flSave();ARTIKR=null;renderListe()}
+    else{const cnt=S.mods.filter(m=>m.extra).length;for(let i=0;i<+n;i++){const m=artikMod(c,0);m.extra=c.k;m.wall="E";m.x=(cnt+i)*1200;m.label="EK"+(cnt+i+1);S.mods.push(m)}ARTIKR=null;SAVER={};WHATIF={};persist();renderSonuc();
+      setTimeout(()=>{const parts=computeAll(S.mods).parts;ARTIKR={sig:partsSig(parts)+JSON.stringify(S.artik||{}),res:artikCalc(parts)};renderSonuc()},80)}
+    toast(n+" × "+c.l+" kesime eklendi");return}
+  if(d.artikdel){S.mods=S.mods.filter(m=>m.extra!==d.artikdel);ARTIKR=null;persist();renderSonuc();toast("Ek ürün kaldırıldı");return}
   if(d.deep||d.fldeep){const mt=d.deep||d.fldeep,isF=!!d.fldeep;toast("En iyi yerleşim aranıyor (en fazla 15 sn)…");setTimeout(()=>{const parts=isF?flParts():computeAll(S.mods).parts;const n0=pack(parts,mt).sheets.length;const P=pack(parts,mt,{deep:true});
       if(isF)renderListe();else{SAVER={};WHATIF={};renderSonuc()}toast(P.sheets.length<n0?"Bulundu: "+(n0-P.sheets.length)+" levha az ("+P.sheets.length+" levha)":"Daha az levhalı yerleşim bulunamadı ("+P.sheets.length+" levha)")},60);return}
   if(d.whatif){const mt=d.whatif;toast("Parçalar deneniyor…");setTimeout(()=>{const W=whatifCalc(mt);W.sig=partsSig(R.parts)+JSON.stringify(S.artik||{});WHATIF[mt]=W;renderSonuc();toast(W.rows.filter(r=>r.a!=null||r.b!=null||r.artik).length+" parçada levha düşürme imkanı")},40);return}
