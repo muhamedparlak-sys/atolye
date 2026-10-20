@@ -281,6 +281,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .guide ol li span{color:var(--muted)}
 .news ul{margin:0;padding-left:18px;display:grid;gap:8px;font-size:14px;line-height:1.4}.news .prow{justify-content:space-between;align-items:center}
 .wsteps{margin:4px 0;padding-left:20px;display:grid;gap:6px;font-size:15px}
+.saverbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:-2px 0 8px}
+.saver{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:8px}.saver li{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ok,#2F8A4B);border-radius:10px;padding:8px 10px;font-size:14px}
+.saver small{display:block;color:var(--muted);font-size:12px;margin-top:2px}.saver small.w{color:var(--warn)}.saver .muted{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -510,7 +513,7 @@ function computeAll(mods){
         const BG={kind:b.kind,top,bot,it,ib,h,shelvesY:[],rod:null,clear:null,space:null,hook:b.hook,door:b.door,shoe:b.shoe};
         if(k<bs.length-1){add(m,b.topName||"Ara tabla",1,sw,Di,1,0);CG.seps.push({y:top,name:b.topName})}
         if(b.kind==="raf"||b.kind==="nis"){const s=b.shelves|0;
-          if(s>0){add(m,"Raf",s,sw,Di-20,1,0);if(sw>600)addHw("Raf pimi",4*s);else addHw("Raf pimi",4*s)}
+          if(s>0){add(m,"Raf",s,sw,Di-20-(m.rafKis||0),1,0);if(sw>600)addHw("Raf pimi",4*s);else addHw("Raf pimi",4*s)}
           for(let j=1;j<=s;j++)BG.shelvesY.push(it+(ib-it)*j/(s+1)-t/2);
           BG.space=((ib-it)-s*t)/(s+1)}
         if(b.kind==="aski"){BG.rod=it+80;BG.clear=ib-BG.rod;
@@ -545,28 +548,99 @@ function computeAll(mods){
   const band=parts.reduce((s,p)=>s+p.qty*(p.bl*p.a0+p.bs*p.b0),0)/1000;
   return{parts,hw,err,geo,band};
 }
-function pack(parts,mat){
+const PACKC=new Map();
+function pack(parts,mat,opt={}){
   const m=SET.mats[mat],kerf=+SET.kerf,trim=+SET.trim,rot=!(SET.grain&&(mat==="sunta"||mat==="kapak"));
   const UW=m.L-2*trim+kerf,UH=m.W-2*trim+kerf;
   const items=[];parts.filter(p=>p.mat===mat).forEach(p=>{for(let q=0;q<p.qty;q++)items.push({id:p.id,a:p.a,b:p.b,fr:!!p.free})});
-  items.sort((x,y)=>y.a*y.b-x.a*x.b||y.a-x.a);
-  const sheets=[],un=[];
-  const tryPlace=sh=>it=>{let best=null;sh.free.forEach((f,fi)=>{[0,1].forEach(o=>{if(o&&!rot&&!it.fr)return;
-    const w=(o?it.b:it.a)+kerf,h=(o?it.a:it.b)+kerf;
-    if(w<=f.w&&h<=f.h){const sc=Math.min(f.w-w,f.h-h);if(!best||sc<best.sc)best={sc,fi,w,h,o}}})});return best};
-  const commit=(sh,b,it)=>{const f=sh.free.splice(b.fi,1)[0];
-    sh.placed.push({...it,x:f.x+trim,y:f.y+trim,w:b.w-kerf,h:b.h-kerf,rot:b.o});
-    const rw=f.w-b.w,rh=f.h-b.h;let r,d;
-    if(rw<rh){r={x:f.x+b.w,y:f.y,w:rw,h:b.h};d={x:f.x,y:f.y+b.h,w:f.w,h:rh}}
-    else{r={x:f.x+b.w,y:f.y,w:rw,h:f.h};d={x:f.x,y:f.y+b.h,w:b.w,h:rh}}
-    [r,d].forEach(z=>{if(z.w>kerf+20&&z.h>kerf+20)sh.free.push(z)})};
-  for(const it of items){let done=false;
-    for(const sh of sheets){const b=tryPlace(sh)(it);if(b){commit(sh,b,it);done=true;break}}
-    if(!done){const sh={free:[{x:0,y:0,w:UW,h:UH}],placed:[]};const b=tryPlace(sh)(it);if(b){sheets.push(sh);commit(sh,b,it)}else un.push(it)}}
-  const used=items.reduce((s,i)=>s+i.a*i.b,0);
-  return{sheets,un,fire:sheets.length?1-used/(sheets.length*m.L*m.W):0,m};
-}
+  const key=[mat,m.L,m.W,kerf,trim,rot,opt.quick?1:0,items.map(i=>i.id+":"+i.a+"x"+i.b+(i.fr?"r":"")).join(",")].join("|");
+  if(PACKC.has(key))return PACKC.get(key);
+  const used=items.reduce((s2,i)=>s2+i.a*i.b,0);
+  const run=(list,fit,split,glob)=>{const sheets=[],un=[];
+    const tryPlace=(sh,it)=>{let best=null;sh.free.forEach((f,fi)=>{for(let o=0;o<2;o++){if(o&&!rot&&!it.fr)continue;
+      const w=(o?it.b:it.a)+kerf,h=(o?it.a:it.b)+kerf;if(w>f.w||h>f.h)continue;
+      const dw=f.w-w,dh=f.h-h,sc=fit===0?Math.min(dw,dh):fit===1?f.w*f.h-w*h:Math.max(dw,dh);
+      if(!best||sc<best.sc||(sc===best.sc&&(f.y<best.fy||(f.y===best.fy&&f.x<best.fx))))best={sc,fi,w,h,o,fx:f.x,fy:f.y}}});return best};
+    const commit=(sh,b,it)=>{const f=sh.free.splice(b.fi,1)[0];
+      sh.placed.push({...it,x:f.x+trim,y:f.y+trim,w:b.w-kerf,h:b.h-kerf,rot:!!b.o});sh.area+=it.a*it.b;
+      const rw=f.w-b.w,rh=f.h-b.h;const horiz=split===0?rw<rh:split===1?rw>=rh:split===2;let r,d;
+      if(horiz){r={x:f.x+b.w,y:f.y,w:rw,h:b.h};d={x:f.x,y:f.y+b.h,w:f.w,h:rh}}
+      else{r={x:f.x+b.w,y:f.y,w:rw,h:f.h};d={x:f.x,y:f.y+b.h,w:b.w,h:rh}}
+      [r,d].forEach(z=>{if(z.w>kerf+20&&z.h>kerf+20)sh.free.push(z)})};
+    for(const it of list){let tgt=null,bb=null;
+      for(const sh of sheets){const b=tryPlace(sh,it);if(b){if(!glob){tgt=sh;bb=b;break}if(!bb||b.sc<bb.sc){tgt=sh;bb=b}}}
+      if(tgt)commit(tgt,bb,it);
+      else{const sh={free:[{x:0,y:0,w:UW,h:UH}],placed:[],area:0};const b=tryPlace(sh,it);if(b){sheets.push(sh);commit(sh,b,it)}else un.push(it)}}
+    const last=sheets.length?sheets[sheets.length-1].area/(UW*UH):0;
+    return{sheets,un,last}};
+  const better=(x,y)=>!y||x.un.length<y.un.length||(x.un.length===y.un.length&&(x.sheets.length<y.sheets.length||(x.sheets.length===y.sheets.length&&x.last<y.last-1e-9)));
+  const ORD=[(x,y)=>y.a*y.b-x.a*x.b||y.a-x.a,(x,y)=>Math.max(y.a,y.b)-Math.max(x.a,x.b)||y.a*y.b-x.a*x.b,(x,y)=>y.a-x.a||y.b-x.b,(x,y)=>y.b-x.b||y.a-x.a,(x,y)=>(y.a+y.b)-(x.a+x.b),(x,y)=>Math.min(y.a,y.b)-Math.min(x.a,x.b)||y.a-x.a];
+  // iki aşamalı (şerit) kesim: önce şerit, sonra parça — panel testeresinin doğal kesimi
+  const level=(list,ax,flip)=>{const L0=ax?UH:UW,C0=ax?UW:UH;const strips=[],un=[];
+    list.forEach(it=>{let o=0;if(flip&&(rot||it.fr))o=it.b>it.a?1:0;else if(!flip&&(rot||it.fr))o=it.a>it.b?1:0;
+      let w=(o?it.b:it.a)+kerf,h=(o?it.a:it.b)+kerf;if(ax){const t=w;w=h;h=t}
+      if(w>L0||h>C0){if(rot||it.fr){o=1-o;w=(o?it.b:it.a)+kerf;h=(o?it.a:it.b)+kerf;if(ax){const t=w;w=h;h=t}}if(w>L0||h>C0){un.push(it);return}}
+      let bs=null;strips.forEach(st=>{if(st.h>=h&&L0-st.len>=w){const sc=(st.h-h)*1e6+(L0-st.len-w);if(!bs||sc<bs.sc)bs={st,sc}}});
+      const st=bs?bs.st:(strips.push({h,len:0,items:[]}),strips[strips.length-1]);st.items.push({it,o,w,h,p:st.len});st.len+=w});
+    strips.sort((x,y)=>y.h-x.h);const sheets=[];
+    strips.forEach(st=>{let sh=sheets.find(q=>C0-q.used>=st.h);if(!sh){sh={used:0,placed:[],area:0,free:[]};sheets.push(sh)}
+      st.items.forEach(q=>{const X=ax?sh.used:q.p,Y=ax?q.p:sh.used;sh.placed.push({...q.it,x:X+trim,y:Y+trim,w:(ax?q.h:q.w)-kerf,h:(ax?q.w:q.h)-kerf,rot:!!q.o});sh.area+=q.it.a*q.it.b});sh.used+=st.h});
+    sheets.sort((x,y)=>y.area-x.area);return{sheets,un,last:sheets.length?sheets[sheets.length-1].area/(UW*UH):0}};
+  let best=null,runs=0;
+  const ords=opt.quick?[ORD[0],ORD[2],ORD[3]]:ORD,fits=opt.quick?[0,1]:[0,1,2],spl=opt.quick?[0,1]:[0,1,2,3],globs=opt.quick?[false]:[false,true];
+  for(const o of ords){const list=items.slice().sort(o);for(const f of fits)for(const sp of spl)for(const g of globs){const r=run(list,f,sp,g);runs++;if(better(r,best))best=r}}
+  for(const o of [ORD[3],ORD[2],ORD[5]])for(const ax of [0,1])for(const fl of (rot||items.some(i=>i.fr)?[false,true]:[false])){const r=level(items.slice().sort(o),ax,fl);runs++;if(better(r,best))best=r}
+  if(!opt.quick&&items.length>3){let seed=items.length*7919+1;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;const base=items.slice().sort(ORD[0]);
+    for(let k=0;k<40;k++){const l=base.slice();for(let q=0;q<Math.max(2,l.length/4);q++){const i1=Math.floor(rnd()*l.length),i2=Math.min(l.length-1,i1+1+Math.floor(rnd()*3));[l[i1],l[i2]]=[l[i2],l[i1]]}
+      const r=run(l,k%3,k%4,k%2===1);runs++;if(better(r,best))best=r}}
+  const res={sheets:best.sheets,un:best.un,fire:best.sheets.length?1-used/(best.sheets.length*m.L*m.W):0,m,runs,need:used/(UW*UH),last:best.last};
+  if(PACKC.size>400)PACKC.clear();PACKC.set(key,res);return res}
 
+
+/* ====================== LEVHA AZALTMA ÖNERİLERİ ====================== */
+let SAVER={};
+function partsSig(parts){return parts.map(p=>p.mat+p.a+"x"+p.b+"x"+p.qty).join(",")}
+function sheetsOf(parts,quick){const o={};matsUsed(parts).forEach(k=>o[k]=pack(parts,k,{quick}).sheets.length);return o}
+function partTips(parts,mat,n0,skipIds){const tips=[];const byId=parts.filter(p=>p.mat===mat&&!(skipIds||[]).includes(p.id));
+  byId.forEach(p=>{[["a",10],["b",10],["a",20],["b",20]].forEach(([ax,d])=>{if(p[ax]-d<100)return;const pp=parts.map(q=>q===p?Object.assign({},q,{[ax]:q[ax]-d}):q);
+    if(pack(pp,mat,{quick:true}).sheets.length>=n0)return;
+    tips.push({kind:"parca",d,pid:p.id,ax,desc:`${p.id} ${p.name}: ${p.a}×${p.b} → ${ax==="a"?p.a-d:p.a}×${ax==="b"?p.b-d:p.b} mm (${ax==="a"?"boyu":"eni"} ${d/10} cm kısa)`,save:n0-pack(pp,mat).sheets.length})})});
+  return tips}
+function saverTips(mat){R=computeAll(S.mods);const n0=pack(R.parts,mat).sheets.length,base=sheetsOf(R.parts,false),tips=[];if(n0<2)return tips;
+  const baseWarn=new Set(advise(S.mods,R).filter(a=>a.lvl==="warn").map(a=>a.txt)),kitchen=S.type==="mutfak";
+  const tryMods=(kind,d,desc,mut,apply)=>{const mods2=clone(S.mods);mut(mods2);const R2=computeAll(mods2);
+    if(pack(R2.parts,mat,{quick:true}).sheets.length>=n0)return;
+    const full=sheetsOf(R2.parts,false);if(full[mat]>=n0||Object.keys(full).some(k=>k!==mat&&full[k]>(base[k]||0)))return;
+    const save=Object.keys(full).reduce((q,k)=>q+((base[k]||0)-full[k])*(+SET.mats[k].price||0),0)+((base[mat]||0)-full[mat])*(+SET.mats[mat].price?0:0);
+    const w2=advise(mods2,R2).filter(a=>a.lvl==="warn"&&!baseWarn.has(a.txt)).map(a=>a.txt);tips.push({kind,d,desc,save:n0-full[mat],tl:save,warn:w2[0]||null,apply})};
+  const body=S.mods.filter(m=>!m.gap&&!m.panel&&!m.tzu&&!m.tac&&m.cols);
+  const groups={};body.forEach(m=>{const k=[m.role,m.W,m.H,m.D,m.cols.map(c=>c.p).join("+")].join("|");(groups[k]=groups[k]||[]).push(m.id)});
+  const byIds=(mods,ids)=>mods.filter(m=>ids.includes(m.id));
+  // raflar
+  if(R.parts.some(p=>p.mat===mat&&p.name==="Raf"))[10,20].forEach(d=>tryMods("raf",d,`Raflar ${d/10} cm sığ (arkada ${(20+d)/10} cm boşluk kalır)`,ms=>ms.forEach(m=>{if(m.cols)m.rafKis=(m.rafKis||0)+d}),()=>S.mods.forEach(m=>{if(m.cols)m.rafKis=(m.rafKis||0)+d})));
+  // tüm gövdeler derinlik
+  if(body.length>1)[10,20].forEach(d=>tryMods("mod",d,`Tüm gövdelerin derinliği ${d/10} cm az`,ms=>byIds(ms,body.map(m=>m.id)).forEach(m=>m.D-=d),()=>byIds(S.mods,body.map(m=>m.id)).forEach(m=>m.D-=d)));
+  Object.values(groups).forEach(ids=>{const m0=S.mods.find(m=>m.id===ids[0]),lb=byIds(S.mods,ids).map(m=>m.label).join(", ");
+    [10,20].forEach(d=>{
+      tryMods("mod",d,`${lb}: derinlik ${cm(m0.D)} → ${cm(m0.D-d)} cm`,ms=>byIds(ms,ids).forEach(m=>m.D-=d),()=>byIds(S.mods,ids).forEach(m=>m.D-=d));
+      if(!(kitchen&&m0.role==="alt"))tryMods("mod",d,`${lb}: boy ${cm(m0.H)} → ${cm(m0.H-d)} cm`,ms=>byIds(ms,ids).forEach(m=>m.H-=d),()=>byIds(S.mods,ids).forEach(m=>{const top=m.mount+m.H;m.H-=d;S.mods.filter(t=>t.role==="tavan"&&Math.abs(t.mount-top)<2&&t.x===m.x).forEach(t=>t.mount-=d)}));
+      if(!kitchen)tryMods("mod",d,`${lb}: genişlik ${cm(m0.W)} → ${cm(m0.W-d)} cm`,ms=>byIds(ms,ids).forEach(m=>m.W-=d),()=>byIds(S.mods,ids).forEach(m=>{m.W-=d;reflow(m,-d)}))})});
+  // kesimhane ayarları
+  const trySet=(k,v,desc)=>{const old=SET[k];SET[k]=v;const q=pack(R.parts,mat).sheets.length;SET[k]=old;if(q<n0)tips.push({kind:"ayar",d:0,desc:desc+" · atölye ayarı, tüm projeleri etkiler",save:n0-q,apply:()=>{SET[k]=v}})};
+  if(+SET.trim>5)trySet("trim",5,`Kesimhane kenar temizlemeyi 5 mm yapsın (şu an ${SET.trim} mm)`);
+  if(+SET.kerf>3)trySet("kerf",3,`Testere payı 3 mm (şu an ${SET.kerf} mm; ince testere)`);
+  if(SET.grain&&(mat==="sunta"||mat==="kapak"))trySet("grain",false,"Desen yönü serbest: parçalar döndürülebilir (düz renk ya da desensiz plakada)");
+  // parça bazında (elle)
+  if(tips.length<4)partTips(R.parts,mat,n0,R.parts.filter(p=>p.name==="Raf").map(p=>p.id)).slice(0,4).forEach(t=>tips.push(t));
+  const ord={raf:0,mod:1,ayar:2,parca:3};const seen=new Set();
+  return tips.filter(t=>!seen.has(t.desc)&&seen.add(t.desc)).sort((a,b)=>(a.warn?1:0)-(b.warn?1:0)||ord[a.kind]-ord[b.kind]||b.save-a.save||a.d-b.d).slice(0,8)}
+function saverHTML(mt,P){const sv=SAVER[mt];const pr=+SET.mats[mt].price||0;
+  const head=`<div class="saverbar"><span>Gereken ${fmt(P.need,2)} levha · son levha %${fmt((P.last||0)*100)} dolu${P.runs?" · "+P.runs+" yerleşim denendi":""}</span>${P.sheets.length>1&&!(sv&&sv.sig===partsSig(R.parts))?`<button class="btn small ${P.last<.45?"":"ghost"}" data-saver="${mt}">${P.last<.45?"Son levhayı kurtar":"Levha azaltma önerisi"}</button>`:""}</div>`;
+  const lastSh=P.sheets[P.sheets.length-1],lastNote=P.sheets.length>1&&P.last<.3&&lastSh?(()=>{const c={};lastSh.placed.forEach(q=>{c[q.id]=(c[q.id]||0)+1});const ps=(R.parts||[]);
+    return `<div class="note">Son levhada yalnız: ${Object.entries(c).map(([id,n])=>{const p=ps.find(x=>x.id===id);return n+" × "+id+(p?" "+esc(p.name)+" "+p.a+"×"+p.b:"")}).join(", ")}. Bunları atölyedeki artık parçadan kesmek de bir levha kazandırır.</div>`})():"";
+  if(!sv||sv.sig!==partsSig(R.parts))return head+lastNote;
+  if(!sv.tips.length)return head+lastNote+`<div class="note">1–2 cm'lik değişikliklerle levha düşmüyor. Bir modülü daraltmak, bölme sayısını değiştirmek ya da küçük parçaları başka işin artığından kesmek gerekir.</div>`;
+  return head+lastNote+`<ul class="saver">${sv.tips.map((t,i)=>`<li><div><b>−${t.save} levha</b>${pr?` <span class="muted">≈ ${fmt(t.save*pr)} ₺</span>`:""} · ${esc(t.desc)}${t.warn?`<small class="w">⚠ ${esc(t.warn)}</small>`:""}${t.kind==="parca"?`<small>Parça ölçüsü; modelde karşılığını elle ayarlayın</small>`:""}</div>${t.apply?`<button class="btn small" data-saveapply="${mt}:${i}">Uygula</button>`:""}</li>`).join("")}</ul>`}
 /* ====================== VARYASYON ÜRETİCİ ====================== */
 function splitEq(L,target,min,max){if(L<min)return[];let k=Math.max(1,Math.round(L/target));
   while(L/k>max)k++;while(k>1&&L/k<min)k--;return Array(k).fill(Math.round(L/k))}
@@ -1921,7 +1995,7 @@ function renderSonuc(){
     matsUsed(R.parts).forEach(mt=>{h+=`<div class="matbar"><span class="sw ${mt!=="sunta"&&mt!=="kapak"?"back":""}" style="${mt==="sunta"?"background:"+bodyFill():mt==="kapak"?"background:"+frontFill():""}"></span>${esc(matLabel(mt))}</div><div class="tablewrap"><table><thead><tr><th>No</th><th>Parça</th><th style="text-align:right">Adet</th><th style="text-align:right">Boy × En</th><th>Bant</th></tr></thead><tbody>${partRows(mt)}</tbody></table></div>`})}
   if(S.resTab==="plaka"){h+=`<p class="note">Testere payı ${SET.kerf} mm, kenar temizleme ${SET.trim} mm. Numaralar parça listesindeki No ile aynı.</p>`;
     matsUsed(R.parts).forEach(mt=>{const P=pack(R.parts,mt);
-      h+=`<div class="matbar"><span class="sw ${mt!=="sunta"&&mt!=="kapak"?"back":""}" style="${mt==="sunta"?"background:"+bodyFill():mt==="kapak"?"background:"+frontFill():""}"></span>${esc(matLabel(mt))} · ${P.sheets.length} plaka · fire %${fmt(P.fire*100)}</div>`;
+      h+=`<div class="matbar"><span class="sw ${mt!=="sunta"&&mt!=="kapak"?"back":""}" style="${mt==="sunta"?"background:"+bodyFill():mt==="kapak"?"background:"+frontFill():""}"></span>${esc(matLabel(mt))} · ${P.sheets.length} plaka · fire %${fmt(P.fire*100)}</div>`+saverHTML(mt,P);
       P.sheets.forEach((sh,i)=>{h+=`<div class="sheet"><span class="lbl">Plaka ${i+1} / ${P.sheets.length} · ${P.m.L}×${P.m.W}</span>${sheetSVG(sh,P.m,mt)}</div>`});
       if(P.un.length)h+=`<div class="note" style="color:var(--warn)">Sığmayan parça: ${P.un.map(u=>u.id).join(", ")}</div>`})}
   if(S.resTab==="hw"){const items=hardware(S.mods,R);const op=S.opener||"kulp";let cat="";const tot=hwCost(items);
@@ -2256,7 +2330,7 @@ function qhText(){const r=qhCalc(),q=r.q,L=["Teklif — "+new Date().toLocaleDat
   QH.items.forEach(it=>L.push(`${it.adet} × ${QT[it.tip].l} ${nv(it.W)}×${nv(it.H)}×${nv(it.D)} cm${it.tip!=="komodin"?" · "+it.bolme+" bölme":""}${it.cek?" · "+it.cek+" çekmece":""}${it.tip!=="komodin"?(it.kapak?" · kapaklı":" · açık"):""}`));
   L.push("","Malzeme: "+r.packs.map(({k,P})=>P.sheets.length+" levha "+SET.mats[k].name).join(", "));if(q)L.push("Toplam: "+fmt(q.rounded)+" ₺ (KDV dahil)");return L.join("\n")}
 /* ====================== ÖLÇÜDEN LEVHA PLANI (serbest kesim listesi) ====================== */
-let FL=LS.get("atolye2_liste")||{name:"Kesim listesi",unit:"mm",net:false,rows:[]};
+let FLSAVER=null;let FL=LS.get("atolye2_liste")||{name:"Kesim listesi",unit:"mm",net:false,rows:[]};
 function confirmClr(){try{return window.confirm?true:true}catch(e){return true}}
 function flSave(){LS.set("atolye2_liste",FL)}
 function flNew(o={}){return Object.assign({ad:"",boy:0,en:0,adet:1,mat:"sunta",bl:0,bs:0,desen:true},o)}
@@ -2278,6 +2352,8 @@ function flRowHTML(r,i){const u=FL.unit;
 function flResultsHTML(){const parts=flParts();if(!parts.length)return `<div class="note">Ölçü yazdıkça levha yerleşimi burada çıkar.</div>`;
   const band=parts.reduce((q,p)=>q+p.qty*(p.bl*p.a0+p.bs*p.b0),0)/1000;let h=`<div class="stat"><b>${matsUsed(parts).map(k=>pack(parts,k).sheets.length+" "+esc(SET.mats[k].name)).join(" · ")}</b><span>${parts.reduce((q,p)=>q+p.qty,0)} parça · ${fmt(band,1)} m bant · testere payı ${SET.kerf} mm</span></div>`;
   matsUsed(parts).forEach(k=>{const P=pack(parts,k);h+=`<div class="matbar"><span class="sw ${k!=="sunta"&&k!=="kapak"?"back":""}"></span>${esc(SET.mats[k].name)} · ${P.sheets.length} levha · fire %${fmt(P.fire*100)}</div>`;
+    h+=`<div class="saverbar"><span>Gereken ${fmt(P.need,2)} levha · son levha %${fmt((P.last||0)*100)} dolu</span>${P.sheets.length>1?`<button class="btn small ${P.last<.45?"":"ghost"}" data-flsaver="${k}">${P.last<.45?"Son levhayı kurtar":"Levha azaltma önerisi"}</button>`:""}</div>`;
+    if(FLSAVER&&FLSAVER.mt===k&&FLSAVER.sig===partsSig(parts))h+=FLSAVER.tips.length?`<ul class="saver">${FLSAVER.tips.map((t,i)=>`<li><div><b>−${t.save} levha</b> · ${esc(t.desc)}</div><button class="btn small" data-flsapply="${i}">Uygula</button></li>`).join("")}</ul>`:`<div class="note">1–2 cm'lik kısaltmayla levha düşmüyor.</div>`;
     P.sheets.forEach((sh,i)=>{h+=`<div class="sheet"><span class="lbl">Levha ${i+1} / ${P.sheets.length} · ${P.m.L}×${P.m.W}</span>${sheetSVG(sh,P.m,k)}</div>`});
     if(P.un.length)h+=`<div class="note" style="color:var(--warn)">Levhaya sığmayan: ${[...new Set(P.un.map(u=>u.id))].join(", ")} (desen yönünü kapatıp döndürmeyi deneyin)</div>`});
   return h}
@@ -2433,6 +2509,10 @@ document.addEventListener("click",e=>{
   if(d.helpopen){closeSheet();S.helpTab=d.helpopen;S.view="yardim";render();window.scrollTo(0,0);return}
   if(d.helptab){S.helpTab=d.helptab;renderYardim();return}
   if(d.helpgo){closeSheet();const g=d.helpgo;if(g.startsWith("type:")){const b2=document.createElement("button");b2.dataset.type=g.slice(5);S.view=null;document.body.appendChild(b2);b2.click();b2.remove()}else{S.view=g;render()}window.scrollTo(0,0);return}
+  if(d.saver){const mt=d.saver;toast("Öneriler hesaplanıyor…");setTimeout(()=>{SAVER[mt]={sig:partsSig(computeAll(S.mods).parts),tips:saverTips(mt)};renderSonuc();const n=SAVER[mt].tips.length;toast(n?n+" öneri bulundu":"Mikro değişiklikle levha düşmüyor")},40);return}
+  if(d.saveapply){const[mt,i]=d.saveapply.split(":");const t=SAVER[mt]&&SAVER[mt].tips[+i];if(t&&t.apply){t.apply();SAVER={};persist();renderSonuc();toast("Uygulandı: "+t.desc)}return}
+  if(d.flsaver){const mt=d.flsaver,parts=flParts(),n0=pack(parts,mt).sheets.length;toast("Öneriler hesaplanıyor…");setTimeout(()=>{const tips=partTips(parts,mt,n0).sort((a,b)=>b.save-a.save||a.d-b.d).slice(0,8);FLSAVER={mt,sig:partsSig(parts),tips};flResults();toast(tips.length?tips.length+" öneri bulundu":"Mikro değişiklikle levha düşmüyor")},40);return}
+  if(d.flsapply!==undefined){const t=FLSAVER&&FLSAVER.tips[+d.flsapply];if(t){const r=FL.rows[+t.pid-1];if(r){if(t.ax==="a")r.boy-=t.d;else r.en-=t.d;FLSAVER=null;flSave();renderListe();toast("Uygulandı")}}return}
   if(d.qhadd){QH.items.push(qhNew(QH.items.length?QH.items[QH.items.length-1].tip:"gardirop"));qhSave();renderHizli();return}
   if(d.qhdel!==undefined){QH.items.splice(+d.qhdel,1);qhSave();renderHizli();return}
   if(d.qht){const[i,k]=d.qht.split(":");const ad=QH.items[+i].adet;QH.items[+i]=Object.assign(qhNew(k),{adet:ad});qhSave();renderHizli();return}
