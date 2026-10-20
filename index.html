@@ -284,6 +284,15 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .saverbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:-2px 0 8px}
 .saver{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:8px}.saver li{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ok,#2F8A4B);border-radius:10px;padding:8px 10px;font-size:14px}
 .saver small{display:block;color:var(--muted);font-size:12px;margin-top:2px}.saver small.w{color:var(--warn)}.saver .muted{color:var(--muted)}
+.folder>summary{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:16px}.folder>summary .tag{margin-left:auto}.folder .fic{font-size:18px}
+.proj{border-top:1px solid var(--line);padding:8px 0}.proj>summary{cursor:pointer;display:flex}.proj>summary span{display:flex;flex-direction:column}.proj>summary small{color:var(--muted);font-size:12px}
+.proj .mods{list-style:none;margin:6px 0;padding:0;display:grid;gap:3px;font-size:13px}.proj .mods li{display:grid;grid-template-columns:56px 1fr auto;gap:6px;padding:4px 6px;background:var(--bg);border-radius:6px}.proj .mods .mono{font-family:var(--f-mono)}
+.proj select{border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:6px;font:13px var(--f-body);max-width:150px}
+.fmstage{position:relative;overflow:auto;max-height:62vh;border-radius:10px;background:#111;touch-action:pan-x pan-y}.fmstage svg{display:block;max-width:none}
+.fmh{cursor:grab;touch-action:none}#fmloupe{position:absolute;top:10px;left:10px;width:150px;height:150px;border-radius:50%;border:3px solid #fff;box-shadow:0 4px 18px rgba(0,0,0,.4);pointer-events:none;z-index:3}
+.fmzoom{display:flex;align-items:center;gap:6px;margin:6px 0}
+.fmlist{list-style:none;margin:0;padding:0;display:grid;gap:6px}.fmlist li{display:grid;grid-template-columns:22px auto 1fr 34px;gap:8px;align-items:center;background:var(--bg);border-radius:8px;padding:6px 8px}
+.fmlist .fmv{font:700 18px var(--f-mono);color:#C2410C;display:flex;flex-direction:column;line-height:1.1}.fmlist .fmv small{font:500 11px var(--f-mono);color:var(--muted)}.fmlist .fmv small.w{color:var(--warn)}.fmlist .fmuse{display:flex;gap:4px;flex-wrap:wrap}.fmlist .icobtn.sm{width:32px;height:32px;font-size:13px}
 </style>
 </head>
 <body>
@@ -1638,8 +1647,37 @@ function show3D(el,boxes,o={}){
     const mesh=new THREE.Mesh(geo,mat(c,op));const k=cur?140:0;mesh.position.set((b.x0+b.x1)/2+b.ex[0]*k,(b.y0+b.y1)/2+b.ex[1]*k,(b.z0+b.z1)/2+b.ex[2]*k);g.add(mesh);
     if(b.kind!=="wall"){const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),edgeM);e.position.copy(mesh.position);g.add(e)}});
   T3.scene.add(g);T3.group=g;
-  if(o.fit||!T3.fitted){const bb=new THREE.Box3().setFromObject(g);if(!bb.isEmpty()){const c=bb.getCenter(new THREE.Vector3()),sz=bb.getSize(new THREE.Vector3());const r=Math.max(sz.x,sz.y,sz.z)*1.25+600;
-    T3.camera.position.set(c.x+r*.55,c.y+r*.38,c.z+r*.95);T3.controls.target.copy(c);T3.controls.update();T3.fitted=true}}}
+  if(T3.dims){T3.scene.remove(T3.dims);T3.dims.traverse(x=>{x.geometry&&x.geometry.dispose();x.material&&x.material.map&&x.material.map.dispose()});T3.dims=null}
+  if(o.dims){try{T3.dims=dims3D(boxes);T3.scene.add(T3.dims)}catch(e){}}
+  if(o.fit||!T3.fitted||o.cam){const bb=new THREE.Box3().setFromObject(g);if(!bb.isEmpty()){const c=bb.getCenter(new THREE.Vector3()),sz=bb.getSize(new THREE.Vector3());const r=Math.max(sz.x,sz.y,sz.z)*(o.dims?1.5:1.25)+600;
+    const cam=o.cam||"persp";if(cam==="front")T3.camera.position.set(c.x,c.y+r*.05,c.z+r*1.35);else if(cam==="top")T3.camera.position.set(c.x,c.y+r*1.7,c.z+r*.02);else if(cam==="side")T3.camera.position.set(c.x+r*1.35,c.y+r*.05,c.z);else T3.camera.position.set(c.x+r*.55,c.y+r*.38,c.z+r*.95);
+    T3.controls.target.copy(c);T3.controls.update();T3.fitted=true}}}
+
+function dims3D(boxes){const g=new THREE.Group();const kitchen=S.type==="mutfak";const walls=kitchen?planWalls(S.inp.plan,S.inp).walls:{A:{dir:"h",x:0,y:0,L:Math.max(1,...S.mods.map(m=>m.x+m.W))}};
+  const ids=new Set(boxes.filter(b=>b.mod&&b.kind!=="wall"&&b.kind!=="fix").map(b=>b.mod)),mods=S.mods.filter(m=>ids.has(m.id)&&!m.gap);if(!mods.length)return g;
+  const ext=Math.max(...mods.map(m=>m.x+m.W))-Math.min(...mods.map(m=>m.x)),HH=Math.max(...mods.map(m=>m.mount+m.H)),U=Math.max(ext,HH,1200)/14;
+  const col=0xC2410C,lm=new THREE.LineBasicMaterial({color:col,depthTest:false,transparent:true,opacity:.95});
+  const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+  const label=(txt,p)=>{const c=document.createElement("canvas");c.width=256;c.height=96;const x=c.getContext("2d");x.fillStyle="rgba(255,255,255,.92)";x.strokeStyle="#C2410C";x.lineWidth=5;
+    const r=18;x.beginPath();x.moveTo(r,4);x.arcTo(252,4,252,92,r);x.arcTo(252,92,4,92,r);x.arcTo(4,92,4,4,r);x.arcTo(4,4,252,4,r);x.closePath();x.fill();x.stroke();
+    x.fillStyle="#9A3412";x.font="bold 58px Arial";x.textAlign="center";x.textBaseline="middle";x.fillText(txt,128,50);
+    const tx=new THREE.CanvasTexture(c);const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,depthTest:false,transparent:true}));sp.scale.set(U*1.25,U*.47,1);sp.position.copy(p);sp.renderOrder=20;g.add(sp)};
+  const line=(a,b)=>{const L=new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),lm);L.renderOrder=19;g.add(L)};
+  const dim=(a,b,txt,tick)=>{line(a,b);const tk=tick.clone().multiplyScalar(U*.18);[a,b].forEach(p=>line(p.clone().sub(tk),p.clone().add(tk)));label(txt,a.clone().add(b).multiplyScalar(.5).add(tick.clone().multiplyScalar(U*.45)))};
+  const frame=(m)=>{const w=walls[m.wall||"A"];if(!w)return null;const p0=toPlan(w,m.x,0),p1=toPlan(w,m.x+m.W,0),pf=toPlan(w,m.x,m.D||1);
+    const al=V((p1[0]-p0[0])/m.W,0,(p1[1]-p0[1])/m.W),fr=V((pf[0]-p0[0])/(m.D||1),0,(pf[1]-p0[1])/(m.D||1));return{w,al,fr,P:(x,z,y)=>{const q=toPlan(w,x,z);return V(q[0],y,q[1])}}};
+  const byW={};mods.forEach(m=>{(byW[m.wall||"A"]=byW[m.wall||"A"]||[]).push(m)});
+  Object.values(byW).forEach(ms=>{const F=frame(ms[0]);if(!F)return;const maxD=Math.max(...ms.map(m=>m.D||0)),top=Math.max(...ms.map(m=>m.mount+m.H)),bot=Math.min(...ms.map(m=>m.mount)),x0=Math.min(...ms.map(m=>m.x)),x1=Math.max(...ms.map(m=>m.x+m.W));
+    const up=V(0,1,0);
+    // modül genişlikleri: her sıranın altında
+    ms.filter(m=>!m.panel||m.panel.o!=="v").forEach(m=>{if(m.W<150)return;const z=(m.D||0)+U*.5,y=m.mount>0?m.mount-U*.15:U*.15;dim(F.P(m.x,z,y),F.P(m.x+m.W,z,y),cm(m.W),m.mount>0?up.clone().negate():up)});
+    // toplam genişlik: üstte
+    if(ms.length>1)dim(F.P(x0,maxD,top+U*.9),F.P(x1,maxD,top+U*.9),cm(x1-x0),up);
+    // yükseklik: sağ uçta
+    const rx=x1+U*.6;dim(F.P(rx,maxD,bot),F.P(rx,maxD,top),cm(top-bot),F.al.clone());
+    // derinlik: sağ uçta üstte
+    const mr=ms.reduce((a,m)=>m.x+m.W>a.x+a.W?m:a);dim(F.P(x1+U*.2,0,mr.mount+mr.H+U*.3),F.P(x1+U*.2,mr.D,mr.mount+mr.H+U*.3),cm(mr.D),up)});
+  return g}
 function partIds(mod,names){if(!R)return[];return R.parts.filter(p=>names.some(n=>p.name.startsWith(n))&&(!mod||p.mods.includes(mod.label))).map(p=>p.id+" "+p.name+" ×"+p.qty)}
 function montajText(st,m){const hw=m?hardware([m],R):hardware(S.mods,R),q=n=>{const i=hw.find(i=>i.name.startsWith(n)&&!i.off);return i?fmt(i.qty,i.unit==="m"?1:0)+" "+i.unit:null};const F=floorOf(),bk=backOf();
   return [
@@ -1669,13 +1707,14 @@ function renderMontaj(){relabel();R=computeAll(S.mods);document.querySelector("m
 function render3D(){relabel();R=computeAll(S.mods);document.querySelector("main").className="fill";S.v3=S.v3||{open:false,walls:true};
   const used=matsUsed(R.parts),packs=used.map(k=>pack(R.parts,k));
   $("#view").innerHTML=`
-   <div class="dz-top"><button class="chip" data-v3="open" aria-pressed="${S.v3.open}">Kapaklar ${S.v3.open?"açık":"kapalı"}</button>${S.type==="mutfak"?`<button class="chip" data-v3="walls" aria-pressed="${S.v3.walls}">Duvarlar</button>`:""}<span class="sp"></span>
+   <div class="dz-top"><button class="chip" data-v3="dims" aria-pressed="${S.v3.dims!==false}">Ölçüler</button><button class="chip" data-v3="open" aria-pressed="${S.v3.open}">Kapaklar ${S.v3.open?"açık":"kapalı"}</button>${S.type==="mutfak"?`<button class="chip" data-v3="walls" aria-pressed="${S.v3.walls}">Duvarlar</button>`:""}<span class="sp"></span>
     <button class="icobtn" data-v3shot="1" aria-label="Görüntüyü resim olarak al"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M7 10l5 5 5-5M5 19h14"/></svg></button></div>
    <div class="dz-draw" id="v3d"><div class="hint" style="margin:auto">3D yükleniyor…</div></div>
    <div class="dz-bottom"><div class="sumrow"><span class="sumbtn">${S.mods.filter(m=>!m.gap).length} gövde</span><span class="sumbtn">${packs.map((P,i)=>P.sheets.length+" "+({sunta:"gövde",kapak:"kapak"}[used[i]]||"arkalık")).join(" · ")} plaka</span><button class="sumbtn" data-rtgo="teklif">${quote().rounded>0?fmt(quote().rounded)+" ₺":"Teklif"}</button></div>
+   <div class="chips" style="justify-content:center">${[["persp","Perspektif"],["front","Önden"],["side","Yandan"],["top","Üstten"]].map(([k,l])=>`<button class="chip sm" data-v3cam="${k}" aria-pressed="${(S.v3.cam||"persp")===k}">${l}</button>`).join("")}</div>
    <p class="hint">Döndürmek için sürükleyin, yakınlaştırmak için iki parmakla açın.</p></div>`;
   setBar("montaj",null);
-  load3D().then(()=>{const el=document.getElementById("v3d");if(!el)return;show3D(el,sceneBoxes(S.mods,R,{open:S.v3.open,walls:S.v3.walls}),{fit:!T3})}).catch(()=>{const el=document.getElementById("v3d");if(el)el.innerHTML=`<div class="hint" style="margin:auto">3D için internet bağlantısı gerekiyor.</div>`})}
+  load3D().then(()=>{const el=document.getElementById("v3d");if(!el)return;show3D(el,sceneBoxes(S.mods,R,{open:S.v3.open,walls:S.v3.walls}),{fit:!T3,dims:S.v3.dims!==false,cam:S.v3.camGo?S.v3.cam:null});S.v3.camGo=false}).catch(()=>{const el=document.getElementById("v3d");if(el)el.innerHTML=`<div class="hint" style="margin:auto">3D için internet bağlantısı gerekiyor.</div>`})}
 /* ====================== GÖRÜNÜMLER ====================== */
 const $=s=>document.querySelector(s);
 let R=null,VARS=null;
@@ -1687,7 +1726,7 @@ function renderSteps(){const ci=stepIdx();
 function render(){
   renderSteps();$("#projName").value=S.name;closeSheet&&document.getElementById("sheet")?.remove();
   const main=document.querySelector("main");main.className="";main.scrollTop=0;
-  if(S.view==="ayar")return renderAyar();if(S.view==="lib")return renderLib();if(S.view==="liste")return renderListe();if(S.view==="hizli")return renderHizli();if(S.view==="yardim")return renderYardim();if(S.view==="proj")return renderProj();
+  if(S.view==="ayar")return renderAyar();if(S.view==="lib")return renderLib();if(S.view==="liste")return renderListe();if(S.view==="hizli")return renderHizli();if(S.view==="yardim")return renderYardim();if(S.view==="foto")return renderFoto();if(S.view==="proj")return renderProj();
   if(S.step!=="montaj"&&S.step!=="d3"&&T3){T3.dispose();T3=null}
   ({tur:renderTur,olcu:renderOlcu,oneri:renderOneri,duzen:renderDuzen,sonuc:renderSonuc,montaj:renderMontaj,d3:render3D})[S.step]();
   persist();
@@ -1712,7 +1751,7 @@ function renderOlcu(){
     let tab=S.otab[mode];if(!tabs.some(t=>t[0]===tab))tab=tabs[0][0];S.otab[mode]=tab;
     const head=`<div class="chips" style="flex:none"><button class="chip" data-kmode="oda" aria-pressed="${mode==="oda"}">Odayı tarif et</button><button class="chip" data-kmode="plan" aria-pressed="${mode==="plan"}">Planı ben seçerim</button></div>
       <div class="otabs" role="tablist">${tabs.map(([k,l])=>`<button data-otab="${k}" aria-pressed="${tab===k}">${l}</button>`).join("")}</div>`;
-    const heights=`<div class="panel"><span class="lbl">Yükseklikler · cm</span><div class="bigin">
+    const heights=`<div class="helprow" style="justify-content:flex-start"><button class="btn small ghost" data-view="foto">📷 Fotoğrafla ölç</button></div><div class="panel"><span class="lbl">Yükseklikler · cm</span><div class="bigin">
       <label class="field"><span class="k">Tavan</span><input type="number" inputmode="decimal" id="in-tavan" data-inp="tavan" value="${i.tavan}"></label>
       <label class="field"><span class="k">Tezgah</span><input type="number" inputmode="decimal" id="in-tezgah" data-inp="tezgah" value="${i.tezgah}"><span class="h">Standart 90; 85–95</span></label>
       <label class="field"><span class="k">Alt dolap derinliği</span><input type="number" inputmode="decimal" id="in-altD" data-inp="altD" value="${i.altD||56}"><span class="h">gövde; tezgah +4 cm taşar</span></label>
@@ -1747,7 +1786,7 @@ function renderOlcu(){
     else setBar("tur","oneri","Önerileri gör");
     return}
   const ot=i.olcuTip||"dolap",yp=i.yanPay??1,up=i.ustPay??2;
-  h=`<h1 class="c">${T.label} ölçüleri</h1>
+  h=`<h1 class="c">${T.label} ölçüleri</h1><div class="helprow" style="justify-content:flex-start;margin-top:-4px"><button class="btn small ghost" data-view="foto">📷 Fotoğrafla ölç</button></div>
     <div class="row"><span>Girdiğim ölçü</span><div class="chips"><button class="chip sm" data-olt="dolap" aria-pressed="${ot==="dolap"}">Dolabın kendisi</button><button class="chip sm" data-olt="duvar" aria-pressed="${ot==="duvar"}">Duvar / niş</button></div></div>
     ${ot==="duvar"?`<div class="grid3"><label class="field"><span class="k">Yan pay (her yan)</span><input type="number" inputmode="decimal" id="in-yp" data-inp="yanPay" value="${nv(yp)}"><span class="h">cm · duvar gönyesizliği</span></label><label class="field"><span class="k">Üst pay</span><input type="number" inputmode="decimal" id="in-up" data-inp="ustPay" value="${nv(up)}"><span class="h">cm · tavana kaldırma payı</span></label></div>
       <div class="note">Dolap ${nv(i.W-2*yp)} × ${nv(i.H-up)} cm olarak çizilir; kalan ${nv(yp)} cm'lik yan boşluklar kapama çıtasıyla kapanır.</div>`:`<div class="note">Dolap tam bu ölçüde çizilir. Duvar arasına girecekse "Duvar / niş" seçin; montaj payı düşülür.</div>`}
@@ -2032,15 +2071,16 @@ function renderAyar(){
 function renderProj(){const projs=LS.get("atolye2_projeler")||[];
   $("#view").innerHTML=`<h1>Projeler</h1><p class="lead">Kayıtlar bu telefonda tutulur. Başka telefona taşımak ya da yedeklemek için dosya olarak indirin.</p>
    <div class="panel"><span class="lbl">Açık proje · ${esc(S.name)}</span>
+    <label class="field"><span class="k">Müşteri / klasör</span><input id="projFolder" list="folderList" value="${esc(S.folder||"")}" placeholder="ör. Ayşe Hanım — Konyaaltı" style="font-family:var(--f-body);font-size:16px"><datalist id="folderList">${folders().map(f=>`<option value="${esc(f)}">`).join("")}</datalist><span class="h">Bir müşterinin tüm mobilyaları aynı klasörde durur</span></label>
     <div class="btns"><button class="btn" data-save="1">Kaydet</button>${S.mods.length?`<button class="btn ghost" data-expjson="project">Dosya olarak indir</button><button class="btn ghost" data-expimg="1">Çizimi resim olarak al</button>`:""}<button class="btn ghost" data-new="1">Yeni proje</button></div></div>
+   <h2>Müşteriler ve projeler</h2>${projListHTML()}
    <div class="panel"><span class="lbl">Dosyadan aç</span>
     <label class="btn ghost" style="display:block">Dosya seç (.json)<input type="file" id="impFile" accept=".json,application/json" hidden></label>
     <details class="more"><summary>Metinden aç</summary><textarea id="impText" placeholder="Kopyalanan proje metnini buraya yapıştırın" style="min-height:110px;margin-top:8px"></textarea><div class="btns" style="margin-top:8px"><button class="btn small" data-imptext="1">Yapıştırdığımı aç</button></div></details></div>
    <div class="panel"><span class="lbl">Yedek</span><div class="note">Tüm projeler ve fiyatlar tek dosyada. Telefon değiştirirken ya da veriler silinmesin diye ara ara alın.</div>
     <div class="btns"><button class="btn ghost" data-expjson="backup">Yedeği indir</button></div></div>
    <div class="panel"><span class="lbl">Ölçüden levha planı</span><div class="note">Tasarım yapmadan parça ölçülerini yazıp levha yerleşimi alın, fasoncuya gönderin.</div><div class="btns"><button class="btn ghost" data-view="liste">Aç${FL.rows.length?" · "+FL.rows.length+" satır":""}</button></div></div>
-   <h2>Kayıtlı projeler</h2>
-   <div class="panel">${projs.length?`<ul class="projects">${projs.map((p,i)=>`<li><span>${esc(p.name)} · ${TYPES[p.type]?.label||""}</span><span class="btns"><button class="btn small" data-load="${i}">Aç</button><button class="btn small danger" data-pdel="${i}">Sil</button></span></li>`).join("")}</ul>`:`<div class="note">Henüz kayıtlı proje yok.</div>`}</div>`;
+`;
   $("#bar").innerHTML=`<button class="btn ghost" data-back="1">Geri</button>`}
 
 
@@ -2198,8 +2238,14 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
 
 
 /* ====================== YARDIM · YENİLİKLER ====================== */
-const APPVER="2026.10.20";
+const APPVER="2026.10.20b";
 const NEWS=[
+ {d:"20 Ekim 2026 · akşam",t:"Levha tasarrufu, müşteri klasörleri, fotoğrafla ölçü",items:[
+  ["Daha iyi levha yerleşimi","Her kesim için 190'a yakın yerleşim deneniyor (panel testeresine uygun şerit kesim dahil); en az levhalı olan seçiliyor.",null],
+  ["Levha azaltma önerileri","Kesim → Plakalar: son levha az doluysa 'Son levhayı kurtar'. Raf 1–2 cm sığ, derinlik 1 cm az, boy 2 cm kısa gibi küçük değişikliklerden levha düşürenler listelenir; tek dokunuşla uygulanır.",null],
+  ["3D'de ölçüler","3D görünümde modül genişlikleri, toplam en, boy ve derinlik; perspektif, önden, yandan, üstten görünüm.",null],
+  ["Müşteri klasörleri","Projeler sayfasında her müşteriye klasör: içindeki tüm mobilyalar, her birinin modül listesi, toplu müşteri teklifi ve klasörü dosya olarak indirme.","proj"],
+  ["Fotoğrafla ölçü","Duvara A4 kağıt yapıştırıp ya da metre şeridi, kart, anahtar gibi ölçüsü bilinen bir şeyle fotoğraf çekin; noktaları sürükleyip ölçün, ölçüyü projeye aktarın.","foto"]]},
  {d:"20 Ekim 2026",t:"Hızlı fiyat ve mutfak yenileme",items:[
   ["Hızlı fiyat","Dolabın kendi ölçüsünü yazın, bölme-çekmece-raf sayısını seçin: levha sayısı, yerleşim planı ve fiyat hemen çıkar. Birden çok dolap tek teklifte toplanır.","hizli"],
   ["Dolap mı duvar mı?","Gardırop ve diğer mobilyalarda girdiğiniz ölçünün dolabın kendisi mi, duvar arası mı olduğunu seçin; duvar seçilirse montaj payı düşülür.",null],
@@ -2243,6 +2289,10 @@ const GUIDE=[
   ["Aç","Ne yapıyoruz? ekranının altındaki 'Ölçüden levha planı' ya da Projeler sayfası."],
   ["Ölçü yaz","Her parçaya boy, en, adet; bantlı kenarlara parçanın resminde dokunun. Hızlı giriş için 'Metinden hızlı ekle': her satıra '2180 580 2 yan'."],
   ["Gönder","Levha yerleşimi altta çıkar. Kesim planı (PDF), Excel (CSV) ya da metin olarak fasoncuya gönderin."]]},
+ {k:"musteri",t:"Müşteri klasörleri",go:{view:"proj"},steps:[
+  ["Klasör","Projeler (klasör simgesi) → Açık proje → 'Müşteri / klasör' alanına müşterinin adını yazıp Kaydet."],
+  ["Mobilya ekle","Klasörün altındaki '+ Bu müşteriye mobilya' ile aynı müşteriye yeni proje açın; her proje kendi modülleriyle görünür."],
+  ["Teklif","'Müşteri teklifi' tüm mobilyaların fiyatını toplar; kopyalayıp gönderin. 'Klasörü indir' ile yedekleyin ya da başka telefona taşıyın."]]},
  {k:"fiyat",t:"Fiyatlar ve teklif",go:{view:"lib"},steps:[
   ["Fiyat kütüphanesi","Üstteki ₺ düğmesi: plaka, bant, ebatlama, menteşe, ray, kulp fiyatlarını bir kez girin. '…' olan kalemlerde fiyat tüm boylara uygulanır."],
   ["Teklif","Kesim → Teklif: işçilik, kâr, nakliye, KDV ve yuvarlama. Bu oranlar tüm projelerde ortaktır."],
@@ -2251,6 +2301,11 @@ const GUIDE=[
   ["Etiket","Kesim → Etiket: A4 24'lü kağıda yazdırın; parçalar kesimden çıkınca plaka sırasıyla yapıştırın."],
   ["Delik","Kesim → Delik: bağlantı tipini seçin (sahada konfirmat pratik). Her parçanın delikleri ölçülü çizilir; yazdırıp parçanın yanında tutun."],
   ["Montaj","Montaj şeması hangi parçanın hangi sırayla takılacağını gösterir."]]},
+ {k:"foto",t:"Fotoğrafla ölçü",go:{view:"foto"},steps:[
+  ["Referans","Ölçülecek duvara A4 kağıt yapıştırın ya da metre şeridini 1 m açıp duvara tutturun (en doğrusu). Kart, cetvel, anahtar da olur; anahtarın boyunu girin."],
+  ["Fotoğraf","Telefonu duvara paralel tutup karşıdan çekin; referans fotoğrafta iri görünsün."],
+  ["Noktalar","Mavi noktaları referansın köşelerine (A4'te 1-2-3-4: sol üst, sağ üst, sağ alt, sol alt), turuncu çizginin uçlarını ölçülecek yere sürükleyin; üstte büyüteç açılır."],
+  ["Kullan","Ölçünün yanındaki En / Boy / Derinlik (mutfakta A/B/C duvarı) ile projeye aktarın. ± değeri büyükse yaklaşıp yeniden çekin."]]},
  {k:"ipucu",t:"İpuçları",go:null,steps:[
   ["Kayıt","Her değişiklik telefona kendiliğinden kaydedilir. Projeyi adıyla saklamak için klasör simgesi → Kaydet."],
   ["Ana ekrana ekle","Tarayıcının Paylaş menüsünden 'Ana Ekrana Ekle' ile uygulama gibi açın."],
@@ -2272,6 +2327,106 @@ function welcomeSheet(first){LS.set("atolye2_seen",APPVER);
      <ol class="wsteps"><li><b>Türü seçin</b> (gardırop, mutfak…)</li><li><b>Ölçüyü yazın</b>, hazır düzenlerden birini seçin</li><li><b>Kesim</b> sekmesinden listeyi kesimhaneye, teklifi müşteriye gönderin</li></ol>
      <div class="note">Sadece fiyat lazımsa: <b>Hızlı fiyat</b>. Ölçüleri kendiniz yazacaksanız: <b>Ölçüden levha planı</b>.</div>`:newsHTML(1)}
    <div class="btns"><button class="btn" data-helpopen="${first?"rehber":"yeni"}">${first?"Kısa rehberi aç":"Tüm yenilikler"}</button><button class="btn ghost" data-closesheet="1">${first?"Başla":"Tamam"}</button></div>`)}
+
+
+/* ====================== FOTOĞRAFLA ÖLÇÜ ====================== */
+const FREF={a4:{l:"A4 kağıt",r:[297,210]},a5:{l:"A5 kağıt",r:[210,148]},kart:{l:"Kredi / kimlik kartı",r:[85.6,53.98]},rect:{l:"Özel dikdörtgen",r:null},
+  metre:{l:"Açık metre 100 cm",len:1000},anahtar:{l:"Anahtar",len:null},cetvel:{l:"Cetvel 30 cm",len:300},terazi:{l:"Su terazisi 60 cm",len:600},len:{l:"Bilinen uzunluk",len:null}};
+let FM={img:null,el:null,w:0,h:0,ref:"a4",rw:297,rh:210,len:60,pts:[],meas:[],zoom:1};
+try{const sv=LS.get("atolye2_foto");if(sv)Object.assign(FM,{ref:sv.ref||"a4",rw:sv.rw||297,rh:sv.rh||210,len:sv.len||60})}catch(e){}
+function fmSave(){LS.set("atolye2_foto",{ref:FM.ref,rw:FM.rw,rh:FM.rh,len:FM.len})}
+const fmIsRect=()=>!!(FREF[FM.ref].r||FM.ref==="rect");
+function fmRectMM(){return FREF[FM.ref].r||[FM.rw,FM.rh]}
+function fmLenMM(){return FREF[FM.ref].len||FM.len}
+function solve8(A,b){const n=8,M=A.map((r,i)=>r.concat([b[i]]));for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;[M[c],M[p]]=[M[p],M[c]];if(Math.abs(M[c][c])<1e-12)return null;
+  for(let r=0;r<n;r++){if(r===c)continue;const f=M[r][c]/M[c][c];for(let k=c;k<=n;k++)M[r][k]-=f*M[c][k]}}return M.map((r,i)=>r[n]/r[i])}
+function fmH(){if(FM.pts.length<4)return null;const P=FM.pts;const [L,Sh]=(()=>{const r=fmRectMM();return[Math.max(...r),Math.min(...r)]})();
+  const d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),horiz=d(P[0],P[1])+d(P[2],P[3]),vert=d(P[1],P[2])+d(P[3],P[0]);const W=horiz>=vert?L:Sh,H=horiz>=vert?Sh:L;
+  const dst=[[0,0],[W,0],[W,H],[0,H]],A=[],b=[];P.forEach((p,i)=>{const[x,y]=p,[u,v]=dst[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)});
+  const h=solve8(A,b);return h?{h,W,H}:null}
+function solve3(M,v){const A=M.map((r,i)=>r.concat([v[i]]));for(let c=0;c<3;c++){let p=c;for(let r=c+1;r<3;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;[A[c],A[p]]=[A[p],A[c]];if(Math.abs(A[c][c])<1e-12)return null;for(let r=0;r<3;r++){if(r===c)continue;const f=A[r][c]/A[c][c];for(let k=c;k<4;k++)A[r][k]-=f*A[c][k]}}return A.map((r,i)=>r[3]/r[i])}
+function fmAff(){const H=fmH();if(!H)return null;const P=FM.pts,dst=[[0,0],[H.W,0],[H.W,H.H],[0,H.H]];const M=[[0,0,0],[0,0,0],[0,0,0]],vu=[0,0,0],vv=[0,0,0];
+  P.forEach((p,i)=>{const r=[p[0],p[1],1];for(let a=0;a<3;a++){for(let b=0;b<3;b++)M[a][b]+=r[a]*r[b];vu[a]+=r[a]*dst[i][0];vv[a]+=r[a]*dst[i][1]}});const u=solve3(M,vu),v=solve3(M,vv);return u&&v?{u,v}:null}
+function fmMap(H,p){if(H.u)return[H.u[0]*p[0]+H.u[1]*p[1]+H.u[2],H.v[0]*p[0]+H.v[1]*p[1]+H.v[2]];const h=H.h,z=h[6]*p[0]+h[7]*p[1]+1;return[(h[0]*p[0]+h[1]*p[1]+h[2])/z,(h[3]*p[0]+h[4]*p[1]+h[5])/z]}
+function fmLen(a,b){if(fmIsRect()){const H=FM.persp?fmH():fmAff();if(!H)return null;const A=fmMap(H,a),B=fmMap(H,b);return Math.hypot(A[0]-B[0],A[1]-B[1])}
+  if(FM.pts.length<2)return null;const px=Math.hypot(FM.pts[0][0]-FM.pts[1][0],FM.pts[0][1]-FM.pts[1][1]);return px>2?Math.hypot(a[0]-b[0],a[1]-b[1])*fmLenMM()/px:null}
+function fmErr(a,b){const L=fmLen(a,b);if(L==null)return null;const T=FM.pts.map(p=>p.slice());let w=0,e=1.5;
+  const n=T.length;for(let k=0;k<16;k++){FM.pts=T.map((p,i)=>[p[0]+((k>>(i%4))&1?e:-e),p[1]+((k>>((i+1)%4))&1?e:-e)]);const q=fmLen(a,b);if(q!=null)w=Math.max(w,Math.abs(q-L))}FM.pts=T;
+  const sc=L/Math.max(1,Math.hypot(a[0]-b[0],a[1]-b[1]));return w+2*e*sc}
+function fmInitRef(){const w=FM.w,h=FM.h,s2=Math.min(w,h)/7,cx=w/2,cy=h/2;FM.pts=fmIsRect()?[[cx-s2*1.2,cy-s2*.85],[cx+s2*1.2,cy-s2*.85],[cx+s2*1.2,cy+s2*.85],[cx-s2*1.2,cy+s2*.85]]:[[cx-s2,cy],[cx+s2,cy]]}
+function fmSVG(){const w=FM.w,h=FM.h,r=Math.max(w,h)/80,sw=Math.max(w,h)/450,fsz=Math.max(w,h)/38;const P=FM.pts;let o=`<svg id="fmsvg" viewBox="0 0 ${w} ${h}" style="width:${FM.zoom*100}%"><image href="${FM.img}" x="0" y="0" width="${w}" height="${h}"/>`;
+  if(fmIsRect()&&P.length===4)o+=`<polygon id="fmref" points="${P.map(p=>p.join(",")).join(" ")}" fill="rgba(39,71,166,.18)" stroke="#2747A6" stroke-width="${sw*2}"/>`;
+  else if(P.length===2)o+=`<line id="fmrefl" x1="${P[0][0]}" y1="${P[0][1]}" x2="${P[1][0]}" y2="${P[1][1]}" stroke="#2747A6" stroke-width="${sw*3}"/>`;
+  FM.meas.forEach((m,i)=>{const L=fmLen(m.a,m.b),mx=(m.a[0]+m.b[0])/2,my=(m.a[1]+m.b[1])/2;
+    o+=`<line id="fml${i}" x1="${m.a[0]}" y1="${m.a[1]}" x2="${m.b[0]}" y2="${m.b[1]}" stroke="#C2410C" stroke-width="${sw*3}"/>
+    <g id="fmt${i}" transform="translate(${mx} ${my})"><rect x="${-fsz*2.6}" y="${-fsz*1.5}" width="${fsz*5.2}" height="${fsz*1.3}" rx="${fsz*.3}" fill="#fff" stroke="#C2410C" stroke-width="${sw}"/><text id="fmtt${i}" y="${-fsz*.5}" text-anchor="middle" font-size="${fsz}" font-weight="700" fill="#9A3412" font-family="Arial">${i+1}: ${L!=null?nv(Math.round(L)/10)+" cm":"—"}</text></g>`});
+  const hd=(id,p,c,lb)=>`<g class="fmh" data-fh="${id}" transform="translate(${p[0]} ${p[1]})"><circle r="${r*2.6}" fill="transparent"/><circle r="${r}" fill="none" stroke="${c}" stroke-width="${sw*2.2}"/><circle r="${sw*1.6}" fill="${c}"/>${lb?`<text x="${r*1.3}" y="${-r*1.2}" font-size="${fsz*.8}" font-weight="700" fill="${c}" stroke="#fff" stroke-width="${sw*1.5}" paint-order="stroke" font-family="Arial">${lb}</text>`:""}</g>`;
+  P.forEach((p,i)=>o+=hd("r"+i,p,"#2747A6",fmIsRect()?["1","2","3","4"][i]:""));
+  FM.meas.forEach((m,i)=>{o+=hd("m"+i+"a",m.a,"#C2410C","");o+=hd("m"+i+"b",m.b,"#C2410C","")});
+  return o+`</svg>`}
+function fmCheck(){if(!fmIsRect()||FM.pts.length<4)return"";const H=fmH();if(!H)return`<div class="note" style="color:var(--warn)">Köşeler hatalı; 1-2-3-4 sırasıyla sol üst, sağ üst, sağ alt, sol alt köşeye koyun.</div>`;
+  const P=FM.pts,d=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),skew=Math.max(d(P[0],P[1])/d(P[3],P[2]),d(P[3],P[2])/d(P[0],P[1]),d(P[1],P[2])/d(P[0],P[3]),d(P[0],P[3])/d(P[1],P[2]));
+  const side=Math.min(d(P[0],P[1]),d(P[1],P[2]));
+  return `<div class="note">${skew>1.6?"⚠ Fotoğraf çok yandan çekilmiş; daha karşıdan çekin. ":""}${side<Math.max(FM.w,FM.h)/14?"⚠ Referans fotoğrafta küçük kalmış; yaklaşın ya da daha büyük referans (metre şeridi) kullanın. ":""}Referans ${nv(H.W/10)} × ${nv(H.H/10)} cm olarak eşlendi; ${FM.persp?"eğiklik düzeltiliyor":"karşıdan çekim varsayılıyor"}.</div>`}
+function fmUseTargets(){if(S.type==="mutfak")return[["A","A duvarı"],["B","B duvarı"],["C","C duvarı"],["tavan","Tavan"]];if(!S.type)return[];return[["W","En"],["H","Boy"],["D","Derinlik"]]}
+function fmListHTML(){const tg=fmUseTargets();return FM.meas.map((m,i)=>{const L=fmLen(m.a,m.b),E=fmErr(m.a,m.b);return `<li><b>${i+1}</b><span class="fmv" id="fmv${i}">${L!=null?nv(Math.round(L)/10)+" cm":"—"}${E!=null?`<small class="${E>20?"w":""}">± ${nv(Math.max(.5,Math.round(E)/10))} cm</small>`:""}</span><span class="fmuse">${tg.map(([k,l])=>`<button class="chip sm" data-fmuse="${i}:${k}">${l}</button>`).join("")}</span><button class="icobtn sm" data-fmdel="${i}" aria-label="${i+1}. ölçüyü sil">✕</button></li>`}).join("")}
+function renderFoto(){document.querySelector("main").className="";const rect=fmIsRect();
+  $("#view").innerHTML=`<h1 class="c">Fotoğrafla ölçü</h1>
+   <div class="panel"><span class="lbl">1 · Referans</span><div class="chips" style="flex-wrap:wrap">${Object.entries(FREF).map(([k,v])=>`<button class="chip sm" data-fmref="${k}" aria-pressed="${FM.ref===k}">${v.l}</button>`).join("")}</div>
+    ${FM.ref==="rect"?`<div class="grid3"><label class="field"><span class="k">Uzun kenar mm</span><input type="number" inputmode="decimal" data-fmrw="1" value="${FM.rw}"></label><label class="field"><span class="k">Kısa kenar mm</span><input type="number" inputmode="decimal" data-fmrh="1" value="${FM.rh}"></label></div>`:""}
+    ${FM.ref==="anahtar"||FM.ref==="len"?`<label class="field"><span class="k">${FM.ref==="anahtar"?"Anahtarın boyu (metreyle ölçün)":"Uzunluk"} mm</span><input type="number" inputmode="decimal" data-fmlen="1" value="${FM.len}"></label>`:""}
+    ${rect?`<div class="row"><span>Çekim</span><div class="chips"><button class="chip sm" data-fmpersp="0" aria-pressed="${!FM.persp}">Karşıdan</button><button class="chip sm" data-fmpersp="1" aria-pressed="${!!FM.persp}">Eğik (düzelt)</button></div></div>`:""}
+    <div class="note">${rect?"Kağıdı ya da kartı ölçeceğiniz duvara düz yapıştırın. Mavi 1-2-3-4 noktalarını sol üst, sağ üst, sağ alt, sol alt köşeye sürükleyin. Telefonu duvara paralel tutup karşıdan çekin; 'Eğik' düzeltme yalnız kağıt büyük göründüğünde güvenilir. Ölçülen her şey kağıtla aynı düzlemde (duvarda) olmalı.":"Nesneyi ölçülecek yüzeye koyun ve fotoğrafı tam karşıdan çekin. Mavi iki noktayı nesnenin iki ucuna getirin. Referans ne kadar uzunsa ölçü o kadar doğru: duvara açılmış metre şeridinde 100 cm en iyisidir."}</div></div>
+   <div class="panel"><span class="lbl">2 · Fotoğraf</span><label class="btn ${FM.img?"ghost":""}" style="display:block;text-align:center">${FM.img?"Başka fotoğraf":"Fotoğraf çek ya da seç"}<input type="file" id="fmFile" accept="image/*" capture="environment" hidden></label>
+    ${FM.img?`<div class="fmzoom"><span class="note">Yakınlaştır</span>${[1,2,3].map(z=>`<button class="chip sm" data-fmzoom="${z}" aria-pressed="${FM.zoom===z}">${z}×</button>`).join("")}</div><div class="fmstage" id="fmstage">${fmSVG()}<canvas id="fmloupe" width="220" height="220" hidden></canvas></div>${fmCheck()}`:`<div class="note">Telefonun kamerası açılır. Duvarın tamamı ve referans nesne görünsün; ışık iyi olsun.</div>`}</div>
+   ${FM.img?`<div class="panel"><span class="lbl">3 · Ölçüler</span><ul class="fmlist" id="fmlist">${fmListHTML()}</ul><div class="btns"><button class="btn" data-fmadd="1">+ Ölçü çizgisi</button>${FM.meas.length?`<button class="btn ghost" data-fmcopy="1">Ölçüleri kopyala</button>`:""}</div>
+    <div class="note">Turuncu çizginin iki ucunu ölçmek istediğiniz noktalara sürükleyin; sürüklerken üstte büyüteç açılır. Referanstan uzak noktalarda hata artar (%1–3); kritik ölçüyü metreyle kontrol edin.</div></div>`:""}`;
+  $("#bar").innerHTML=`<button class="btn" data-back="1">Tamam</button>`}
+function fmLoad(file){const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const mx=3000,k=Math.min(1,mx/Math.max(im.width,im.height));const c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    c.getContext("2d").drawImage(im,0,0,c.width,c.height);FM.img=c.toDataURL("image/jpeg",.9);FM.w=c.width;FM.h=c.height;FM.el=new Image();FM.el.src=FM.img;FM.zoom=1;fmInitRef();
+    FM.meas=[{a:[FM.w*.2,FM.h*.8],b:[FM.w*.8,FM.h*.8]}];renderFoto()};im.onerror=()=>toast("Fotoğraf açılamadı");im.src=rd.result};rd.readAsDataURL(file)}
+let FDRAG=null;
+function fmPt(e){const sv=document.getElementById("fmsvg");const pt=sv.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(sv.getScreenCTM().inverse());return[Math.max(0,Math.min(FM.w,q.x)),Math.max(0,Math.min(FM.h,q.y))]}
+function fmLoupe(p,e){const c=document.getElementById("fmloupe");if(!c||!FM.el)return;c.hidden=false;const st=document.getElementById("fmstage").getBoundingClientRect();
+  const stg=document.getElementById("fmstage");c.style.left=(stg.scrollLeft+(e.clientX-st.left<st.width/2?st.width-162:10))+"px";c.style.top=(stg.scrollTop+10)+"px";
+  const x=c.getContext("2d"),zm=4,sz=220/zm;x.fillStyle="#000";x.fillRect(0,0,220,220);try{x.drawImage(FM.el,p[0]-sz/2,p[1]-sz/2,sz,sz,0,0,220,220)}catch(err){}
+  x.strokeStyle="#C2410C";x.lineWidth=1.5;x.beginPath();x.moveTo(110,0);x.lineTo(110,95);x.moveTo(110,125);x.lineTo(110,220);x.moveTo(0,110);x.lineTo(95,110);x.moveTo(125,110);x.lineTo(220,110);x.stroke();x.beginPath();x.arc(110,110,6,0,7);x.stroke()}
+function fmUpdate(){const P=FM.pts,tr=p=>`translate(${p[0]} ${p[1]})`,q=s2=>document.querySelector(s2);
+  const pg=document.getElementById("fmref");if(pg)pg.setAttribute("points",P.map(p=>p.join(",")).join(" "));
+  const rl=document.getElementById("fmrefl");if(rl&&P.length===2){rl.setAttribute("x1",P[0][0]);rl.setAttribute("y1",P[0][1]);rl.setAttribute("x2",P[1][0]);rl.setAttribute("y2",P[1][1])}
+  P.forEach((p,i)=>{const g=q(`[data-fh="r${i}"]`);if(g)g.setAttribute("transform",tr(p))});
+  FM.meas.forEach((m,i)=>{const L=fmLen(m.a,m.b),t=L!=null?nv(Math.round(L)/10)+" cm":"—",ln=document.getElementById("fml"+i);
+    if(ln){ln.setAttribute("x1",m.a[0]);ln.setAttribute("y1",m.a[1]);ln.setAttribute("x2",m.b[0]);ln.setAttribute("y2",m.b[1])}
+    const g=document.getElementById("fmt"+i);if(g)g.setAttribute("transform",tr([(m.a[0]+m.b[0])/2,(m.a[1]+m.b[1])/2]));const tt=document.getElementById("fmtt"+i);if(tt)tt.textContent=(i+1)+": "+t;
+    const ha=q(`[data-fh="m${i}a"]`),hb=q(`[data-fh="m${i}b"]`);if(ha)ha.setAttribute("transform",tr(m.a));if(hb)hb.setAttribute("transform",tr(m.b));
+    const el=document.getElementById("fmv"+i);if(el&&el.firstChild)el.firstChild.textContent=t})}
+document.addEventListener("pointerdown",e=>{const h=e.target.closest("[data-fh]");if(!h)return;FDRAG={id:h.dataset.fh,pid:e.pointerId};try{h.setPointerCapture(e.pointerId)}catch(err){}e.preventDefault()});
+document.addEventListener("pointermove",e=>{if(!FDRAG)return;const p=fmPt(e),id=FDRAG.id;if(id[0]==="r")FM.pts[+id.slice(1)]=p;else{const i=parseInt(id.slice(1));FM.meas[i][id.endsWith("a")?"a":"b"]=p}
+  const g=document.querySelector(`[data-fh="${id}"]`);fmUpdate();fmLoupe(p,e);e.preventDefault()},{passive:false});
+const fmEnd=()=>{if(!FDRAG)return;FDRAG=null;const c=document.getElementById("fmloupe");if(c)c.hidden=true;const l=document.getElementById("fmlist");if(l)l.innerHTML=fmListHTML();const st=document.querySelector(".fmstage+.note");if(st&&fmIsRect())st.outerHTML=fmCheck()||"<div></div>"};
+document.addEventListener("pointerup",fmEnd);document.addEventListener("pointercancel",fmEnd);
+/* ====================== KLASÖRLER (müşteri) ====================== */
+const sameProj=(x,y)=>x.name===y.name&&(x.folder||"")===(y.folder||"");
+function projSave(){const p=LS.get("atolye2_projeler")||[];const i=p.findIndex(x=>sameProj(x,S));const c=clone(S);c.view=null;c.saved=new Date().toISOString();if(i>=0)p[i]=c;else p.unshift(c);LS.set("atolye2_projeler",p)}
+function folders(){return [...new Set((LS.get("atolye2_projeler")||[]).map(p=>p.folder||"").concat(S.folder?[S.folder]:[]))].filter(Boolean).sort((a,b)=>a.localeCompare(b,"tr"))}
+function withProj(p,fn){const save=S,saveR=R;try{S=Object.assign(freshState(),clone(p));R=computeAll(S.mods);return fn()}finally{S=save;R=saveR}}
+function projQuote(p){try{return withProj(p,()=>S.mods.length?quote():null)}catch(e){return null}}
+function modRows(p){const RN={alt:"Alt",ust:"Üst",govde:"Gövde",tavan:"Tavan",asma:"Asma",panel:"Panel"};
+  return (p.mods||[]).filter(m=>!m.gap).map(m=>`<li><b>${esc(m.label||"—")}</b><span>${RN[m.role]||""}${m.panel?" · "+esc(m.panel.name):m.cols?" · "+m.cols.length+" bölme":""}</span><span class="mono">${nv(m.W/10)}×${nv(m.H/10)}×${nv(m.D/10)}</span></li>`).join("")}
+function projListHTML(){const projs=LS.get("atolye2_projeler")||[];if(!projs.length)return `<div class="panel"><div class="note">Henüz kayıtlı proje yok.</div></div>`;
+  const fl=[...new Set(projs.map(p=>p.folder||""))].sort((a,b)=>(a===""?1:b===""?-1:a.localeCompare(b,"tr")));const all=folders();
+  return fl.map(f=>{const items=projs.map((p,i)=>({p,i})).filter(x=>(x.p.folder||"")===f);
+    return `<details class="panel folder" ${f===(S.folder||"")||fl.length===1?"open":""}><summary><span class="fic">${f?"📁":"🗂"}</span><b>${esc(f||"Klasörsüz")}</b><span class="tag">${items.length} mobilya</span></summary>
+     ${items.map(({p,i})=>`<details class="proj"><summary><span><b>${esc(p.name)}</b><small>${esc(TYPES[p.type]?.label||"")} · ${(p.mods||[]).filter(m=>!m.gap).length} modül${p.saved?" · "+new Date(p.saved).toLocaleDateString("tr-TR"):""}</small></span></summary>
+       <ul class="mods">${modRows(p)||"<li>Modül yok</li>"}</ul>
+       <div class="btns"><button class="btn small" data-load="${i}">Aç</button><select data-pmove="${i}" aria-label="Klasöre taşı"><option value="">Klasöre taşı…</option>${all.filter(x=>x!==(p.folder||"")).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("")}${p.folder?`<option value="__none">Klasörden çıkar</option>`:""}<option value="__new">+ Yeni klasör</option></select><button class="btn small ghost" data-pdup="${i}">Kopyala</button><button class="btn small danger" data-pdel="${i}">Sil</button></div></details>`).join("")}
+     ${f?`<div class="btns"><button class="btn small" data-fquote="${esc(f)}">Müşteri teklifi</button><button class="btn small ghost" data-fnew="${esc(f)}">+ Bu müşteriye mobilya</button><button class="btn small ghost" data-fexp="${esc(f)}">Klasörü indir</button></div>`:""}</details>`}).join("")}
+function movePrj(i,f){const p=LS.get("atolye2_projeler")||[];const pr=p[i];if(!pr)return;const cur=sameProj(pr,S);pr.folder=f;LS.set("atolye2_projeler",p);if(cur){S.folder=f;persist()}renderProj();toast(f?"Taşındı: "+f:"Klasörden çıkarıldı")}
+function folderQuote(f){const projs=(LS.get("atolye2_projeler")||[]).filter(p=>(p.folder||"")===f);const rows=projs.map(p=>({p,q:projQuote(p)}));const tot=rows.reduce((a,r)=>a+(r.q?r.q.rounded:0),0);
+  const txt=[f+" — teklif ("+new Date().toLocaleDateString("tr-TR")+")",""].concat(rows.map(r=>`- ${r.p.name} (${TYPES[r.p.type]?.label||""}): ${r.q&&r.q.rounded>0?fmt(r.q.rounded)+" ₺":"fiyat yok"}`)).concat(["","Toplam: "+fmt(tot)+" ₺ (KDV dahil)"]).join("\n");
+  openSheet(`<div class="ed-head"><b>${esc(f)} · teklif</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+   <table class="qtab"><tbody>${rows.map(r=>`<tr><td>${esc(r.p.name)}<small style="display:block;color:var(--muted)">${esc(TYPES[r.p.type]?.label||"")} · ${(r.p.mods||[]).filter(m=>!m.gap).length} modül</small></td><td class="num">${r.q&&r.q.rounded>0?fmt(r.q.rounded)+" ₺":"—"}</td></tr>`).join("")}<tr><td><b>Toplam</b></td><td class="num"><b>${fmt(tot)} ₺</b></td></tr></tbody></table>
+   <textarea id="fqText" readonly style="min-height:120px">${esc(txt)}</textarea><div class="btns"><button class="btn" data-fqcopy="1">Teklifi kopyala</button></div>`)}
 /* ====================== HIZLI FİYAT (dolap ölçüsüyle) ====================== */
 const QT={gardirop:{l:"Gardırop",W:100,H:220,D:58,bolme:2,aski:1,cek:2,raf:4,kapak:true},
   alt:{l:"Mutfak alt",W:60,H:86,D:56,bolme:1,aski:0,cek:0,raf:1,kapak:true},
@@ -2446,6 +2601,7 @@ function importText(txt){let d;try{d=JSON.parse(txt)}catch(e){toast("Dosya okuna
   if(!d||d.app!=="atolye"){toast("Bu bir atölye dosyası değil.");return}
   const projs=LS.get("atolye2_projeler")||[];const put=p=>{const i=projs.findIndex(x=>x.name===p.name);if(i>=0)projs[i]=p;else projs.unshift(p)};
   if(d.kind==="project"&&d.project&&d.project.type){put(d.project);LS.set("atolye2_projeler",projs);S=Object.assign(freshState(),clone(d.project));S.view=null;S.step=S.mods.length?"duzen":"olcu";render();toast("Açıldı: "+S.name);return}
+  if(d.kind==="folder"&&d.projects){d.projects.forEach(p=>{const i=projs.findIndex(x=>sameProj(x,p));if(i>=0)projs[i]=p;else projs.unshift(p)});LS.set("atolye2_projeler",projs);renderProj();toast((d.folder||"Klasör")+": "+d.projects.length+" proje yüklendi");return}
   if(d.kind==="backup"){(d.projects||[]).forEach(put);LS.set("atolye2_projeler",projs);
     if(d.set){SET=Object.assign(clone(DEFAULT_SET),d.set);SET.mats=Object.assign(clone(DEFAULT_SET.mats),d.set.mats||{})}
     if(d.liste&&d.liste.rows){FL=d.liste;flSave()}if(d.hizli&&d.hizli.items){QH=d.hizli;qhSave()}
@@ -2509,6 +2665,13 @@ document.addEventListener("click",e=>{
   if(d.helpopen){closeSheet();S.helpTab=d.helpopen;S.view="yardim";render();window.scrollTo(0,0);return}
   if(d.helptab){S.helpTab=d.helptab;renderYardim();return}
   if(d.helpgo){closeSheet();const g=d.helpgo;if(g.startsWith("type:")){const b2=document.createElement("button");b2.dataset.type=g.slice(5);S.view=null;document.body.appendChild(b2);b2.click();b2.remove()}else{S.view=g;render()}window.scrollTo(0,0);return}
+  if(d.fmref){FM.ref=d.fmref;if(FM.ref==="cetvel"||FM.ref==="terazi")FM.len=FREF[FM.ref].len;if(FM.img)fmInitRef();fmSave();renderFoto();return}
+  if(d.fmpersp!==undefined){FM.persp=d.fmpersp==="1";renderFoto();return}
+  if(d.fmzoom){FM.zoom=+d.fmzoom;renderFoto();return}
+  if(d.fmadd){const n=FM.meas.length,y=FM.h*(.3+.12*(n%5));FM.meas.push({a:[FM.w*.25,y],b:[FM.w*.75,y]});renderFoto();return}
+  if(d.fmdel!==undefined){FM.meas.splice(+d.fmdel,1);renderFoto();return}
+  if(d.fmuse){const[i,k]=d.fmuse.split(":");const L=fmLen(FM.meas[+i].a,FM.meas[+i].b);if(L==null)return;const v=Math.round(L)/10;S.inp[k]=v;S.mods=[];persist();toast((fmUseTargets().find(t=>t[0]===k)||[,k])[1]+" = "+nv(v)+" cm aktarıldı");return}
+  if(d.fmcopy){const t=FM.meas.map((m,i)=>(i+1)+": "+nv(Math.round(fmLen(m.a,m.b)||0)/10)+" cm").join("\n");(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Kopyalandı")).catch(()=>toast("Kopyalanamadı"));return}
   if(d.saver){const mt=d.saver;toast("Öneriler hesaplanıyor…");setTimeout(()=>{SAVER[mt]={sig:partsSig(computeAll(S.mods).parts),tips:saverTips(mt)};renderSonuc();const n=SAVER[mt].tips.length;toast(n?n+" öneri bulundu":"Mikro değişiklikle levha düşmüyor")},40);return}
   if(d.saveapply){const[mt,i]=d.saveapply.split(":");const t=SAVER[mt]&&SAVER[mt].tips[+i];if(t&&t.apply){t.apply();SAVER={};persist();renderSonuc();toast("Uygulandı: "+t.desc)}return}
   if(d.flsaver){const mt=d.flsaver,parts=flParts(),n0=pack(parts,mt).sheets.length;toast("Öneriler hesaplanıyor…");setTimeout(()=>{const tips=partTips(parts,mt,n0).sort((a,b)=>b.save-a.save||a.d-b.d).slice(0,8);FLSAVER={mt,sig:partsSig(parts),tips};flResults();toast(tips.length?tips.length+" öneri bulundu":"Mikro değişiklikle levha düşmüyor")},40);return}
@@ -2523,7 +2686,7 @@ document.addEventListener("click",e=>{
   if(d.qhcopy){const txt=qhText();(navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast("Teklif kopyalandı")).catch(()=>toast("Kopyalanamadı"));return}
   if(d.qhpdf){const r=qhCalc();saveFile(new Blob([cutDoc("Hızlı fiyat "+new Date().toLocaleDateString("tr-TR"),r.parts)],{type:"text/html"}),"hizli-fiyat-kesim-plani.html");return}
   if(d.qhopen){const r=qhCalc();if(!r.mods.length)return;
-    if(S.mods.length){const pl=LS.get("atolye2_projeler")||[];const i2=pl.findIndex(x=>x.name===S.name);const c=clone(S);c.view=null;if(i2>=0)pl[i2]=c;else pl.unshift(c);LS.set("atolye2_projeler",pl)}
+    if(S.mods.length)projSave();
     const tips=[...new Set(QH.items.map(x=>x.tip))],ty=tips.length===1&&tips[0]==="kitaplik"?"kitaplik":"gardirop",W=r.mods.reduce((a,m)=>Math.max(a,m.x+m.W),0),H=r.mods.reduce((a,m)=>Math.max(a,m.H),0);
     S=Object.assign(freshState(),{type:ty,name:"Hızlı fiyat "+new Date().toLocaleDateString("tr-TR"),mods:r.mods,back:QH.back||"3",colors:{body:null,front:QH.front?Object.keys(COLORS)[0]:null,panels:false},floor:{sup:false,supH:8,supD:1.5,supM:"kert",foot:"baza",footH:+QH.baza||8},step:"duzen"});
     S.inp.W=W/10;S.inp.H=H/10;persist();render();toast("Düzen'de açıldı; önceki proje kaydedildi");return}
@@ -2609,7 +2772,8 @@ document.addEventListener("click",e=>{
   if(d.backtype&&BACKS[d.backtype]){S.back=d.backtype;renderDuzen();persist();backSheet();toast("Arkalık: "+BACKS[d.backtype].label);return}
   if(d.mstep!==undefined){S.mStep=+d.mstep;persist();renderMontaj();return}
   if(d.msel){S.mSel=d.msel;if(T3)T3.fitted=false;persist();renderMontaj();return}
-  if(d.v3){S.v3[d.v3]=!S.v3[d.v3];persist();render3D();return}
+  if(d.v3){if(d.v3==="dims")S.v3.dims=S.v3.dims===false;else S.v3[d.v3]=!S.v3[d.v3];persist();render3D();return}
+  if(d.v3cam){S.v3=S.v3||{};S.v3.cam=d.v3cam;S.v3.camGo=true;render3D();return}
   if(d.v3shot&&T3){T3.renderer.domElement.toBlob(b=>{if(b)saveFile(b,slug(S.name)+"-3d.png")},"image/png");return}
   if(d.sheet){({notes:notesSheet,back:backSheet,plan:planSheet,color:colorSheet,tzu:tzuSheet,tac:tacSheet})[d.sheet]();return}
   if(d.tact){tacOf().type=d.tact;const n=applyTac(S.mods);S.sel=null;S.band=null;persist();renderDuzen();tacSheet();if(n.length)toast(n[0]);return}
@@ -2638,13 +2802,21 @@ document.addEventListener("click",e=>{
     try{navigator.clipboard.writeText(txt).then(()=>toast("Hırdavat listesi kopyalandı"),fb)}catch(err){fb()}return}
   if(d.copy){const txt=cutText(),ta=$("#cutText");const fb=()=>{ta.focus();ta.select();toast("Metni seçtim; uzun basıp kopyalayın")};
     try{navigator.clipboard.writeText(txt).then(()=>toast("Liste kopyalandı"),fb)}catch(err){fb()}return}
-  if(d.save){const p=LS.get("atolye2_projeler")||[];const i=p.findIndex(x=>x.name===S.name);const c=clone(S);c.view=null;if(i>=0)p[i]=c;else p.unshift(c);LS.set("atolye2_projeler",p);toast("Kaydedildi: "+S.name);renderProj();return}
-  if(d.new){S=freshState();render();toast("Yeni proje");return}
+  if(d.save){projSave();toast("Kaydedildi: "+(S.folder?S.folder+" / ":"")+S.name);renderProj();return}
+  if(d.pdup!==undefined){const p=LS.get("atolye2_projeler")||[];const c=clone(p[+d.pdup]);c.name=c.name+" (kopya)";p.splice(+d.pdup+1,0,c);LS.set("atolye2_projeler",p);renderProj();return}
+  if(d.fnew){if(S.mods.length)projSave();const f=d.fnew;S=freshState();S.folder=f;render();toast(f+" için yeni mobilya");return}
+  if(d.fquote){folderQuote(d.fquote);return}
+  if(d.fqcopy){const t=$("#fqText");(navigator.clipboard?navigator.clipboard.writeText(t.value):Promise.reject()).then(()=>toast("Teklif kopyalandı")).catch(()=>{t.select();toast("Seçtim; uzun basıp kopyalayın")});return}
+  if(d.pmovenew!==undefined){const v=($("#newFolder")||{}).value||"";if(!v.trim()){toast("Klasör adı yazın");return}closeSheet();movePrj(+d.pmovenew,v.trim());return}
+  if(d.fexp){const f=d.fexp,projects=(LS.get("atolye2_projeler")||[]).filter(p=>(p.folder||"")===f);saveFile(new Blob([JSON.stringify({app:"atolye",v:1,kind:"folder",folder:f,date:new Date().toISOString(),projects})],{type:"application/json"}),slug(f)+"-klasor.json");return}
+  if(d.new){const f=S.folder;if(S.mods.length)projSave();S=freshState();if(f)S.folder=f;render();toast(f?f+" için yeni mobilya":"Yeni proje");return}
   if(d.load){const p=(LS.get("atolye2_projeler")||[])[+d.load];if(p){S=Object.assign(freshState(),clone(p));S.view=null;S.step=S.mods.length?"duzen":"tur";render();toast("Açıldı: "+S.name)}return}
   if(d.pdel){if(d.armed){const p=LS.get("atolye2_projeler")||[];p.splice(+d.pdel,1);LS.set("atolye2_projeler",p);renderProj()}else{b.dataset.armed=1;b.textContent="Emin misin?"}return}
 });
 document.addEventListener("input",e=>{const x=e.target,d=x.dataset;
   if(x.id==="projName"){S.name=x.value;persist();return}
+  if(d.fmrw||d.fmrh||d.fmlen){const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)&&v>0){if(d.fmrw)FM.rw=v;else if(d.fmrh)FM.rh=v;else FM.len=v;fmSave();fmUpdate();const l=document.getElementById("fmlist");if(l)l.innerHTML=fmListHTML()}return}
+  if(x.id==="projFolder"){S.folder=x.value.trim();persist();return}
   if(d.tacv){const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)&&v>=0){tacOf()[d.tacv]=v;applyTac(S.mods);persist();renderDuzen()}return}
   if(d.qh){const[i,k]=d.qh.split(":");const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)&&v>0){QH.items[+i][k]=v;qhSave();qhResults()}return}
   if(d.qhbz){const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)&&v>=0){QH.baza=v;qhSave();qhResults()}return}
@@ -2664,7 +2836,11 @@ document.addEventListener("input",e=>{const x=e.target,d=x.dataset;
     const el=$("#hwTot");if(el){const t=hwCost(hardware(S.mods,R));el.textContent=t>0?fmt(t)+" ₺":"—"}return}
 });
 document.addEventListener("change",e=>{const x=e.target,d=x.dataset;const m=curMod();
+  if(x.id==="fmFile"&&x.files&&x.files[0]){fmLoad(x.files[0]);return}
   if(m&&d.dsh!==undefined){const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)){const col=Math.min(S.col,m.cols.length-1),bz=R.geo[m.id].bz;doorSplit(m,col,2,Math.round(v*10)-m.mount-bz)}renderDuzen();return}
+  if(d.pmove!==undefined){const p=LS.get("atolye2_projeler")||[];const pr=p[+d.pmove];if(!pr)return;const f=x.value;
+    if(f==="__new"){openSheet(`<div class="ed-head"><b>Yeni müşteri klasörü</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div><label class="field"><span class="k">Klasör adı</span><input id="newFolder" placeholder="ör. Mehmet Bey — Lara" style="font-family:var(--f-body);font-size:16px"></label><div class="btns"><button class="btn" data-pmovenew="${+d.pmove}">${esc(pr.name)} projesini taşı</button></div>`);setTimeout(()=>{const n=$("#newFolder");n&&n.focus()},50);return}
+    movePrj(+d.pmove,f==="__none"?"":f);return}
   if(d.flm!==undefined){FL.rows[+d.flm].mat=x.value;flSave();renderListe();return}
   if(d.inp&&S.type==="mutfak"&&S.step==="olcu"){S.mods=[];refreshFix()}
   if((d.room||d.rop||d.inp||d.chk)&&S.type==="mutfak"&&S.step==="olcu"&&(S.inp.mode||"oda")==="oda"){const el=document.getElementById("roomCands");if(el)el.innerHTML=roomCandsHTML();if(d.room||d.rop){const sv=document.querySelector(".panel .elev");if(sv)sv.innerHTML=roomSVG(roomOf(),null,false)}}

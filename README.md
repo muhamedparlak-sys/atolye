@@ -23,6 +23,13 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 
 ## Yenilikler
 
+**20 Ekim 2026 · akşam**
+- Levha yerleşiminde ~190 deneme (şerit kesim dahil), en az levhalı plan seçilir
+- Levha azaltma önerileri: raf/derinlik/boy 1–2 cm değişikliklerle son levhayı kurtarma, tek dokunuşla uygulama
+- 3D'de ölçüler; perspektif, önden, yandan, üstten görünüm
+- Müşteri klasörleri: mobilyalar ve modül listeleri, toplu müşteri teklifi, klasörü indirme
+- Fotoğrafla ölçü: A4, kart, metre şeridi, anahtar gibi referansla; ± belirsizlik gösterimi
+
 **20 Ekim 2026**
 - Hızlı fiyat (dolap ölçüsüyle levha + fiyat)
 - Ölçü tipi: dolabın kendisi ya da duvar/niş (montaj payı düşülür)
