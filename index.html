@@ -710,7 +710,7 @@ function furnitureVariants(type,inp){
 }
 function kitchenVariants(inp){
   inp=withDoors(inp);
-  const plan=inp.plan,tz=Math.round(inp.tezgah*10),altH=tz-40,altD=Math.round((inp.altD||56)*10),ustH=720,ustD=Math.round((inp.ustD||32)*10),mountU=tz+550,bzA=100;
+  const plan=inp.plan,tz=Math.round(inp.tezgah*10),altH=inp.tezgahVar&&+inp.tzAlt>0?Math.round(inp.tzAlt*10):tz-40,altD=Math.round((inp.altD||56)*10),ustH=720,ustD=Math.round((inp.ustD||32)*10),mountU=tz+550,bzA=100;
   const walls={A:Math.round(inp.A*10),B:Math.round(inp.B*10),C:Math.round(inp.C*10)};
   const wl=plan==="I"?["A"]:plan==="L"?["A","B"]:["A","B","C"];
   const CA=1050,CU=700,offA=altD+40,offU=ustD+30;
@@ -730,7 +730,7 @@ function kitchenVariants(inp){
   // cihaz grupları ve duvar ataması
   const groups=[];
   if(inp.fridge)groups.push({k:"fridge",w:700,wall:"A",first:true});
-  groups.push({k:"sink",w:800+(inp.dish?600:0),wall:plan==="U"?"B":"A"});
+  if(inp.sinkOn!==false)groups.push({k:"sink",w:800+(inp.dish?600:0),wall:plan==="U"?"B":"A"});
   if(inp.oven)groups.push({k:"oven",w:600,wall:plan==="I"?"A":plan==="L"?"B":"C"});
   const notes=[];
   const load=w=>groups.filter(g=>g.wall===w).reduce((s,g)=>s+g.w,0);
@@ -744,7 +744,7 @@ function kitchenVariants(inp){
   wl.forEach(w=>{if(runs[w].cnote)notes.push(runs[w].cnote)});
   // elle yerleştirilmiş noktalar (cm → mm)
   let MAN=null;
-  if(inp.fix){MAN={};[["fridge",inp.fridge],["sink",true],["dish",inp.dish],["oven",inp.oven]].forEach(([k,on])=>{const f=inp.fix[k];if(!on||!f)return;
+  if(inp.fix){MAN={};[["fridge",inp.fridge],["sink",inp.sinkOn!==false],["dish",inp.dish&&inp.sinkOn!==false],["oven",inp.oven]].forEach(([k,on])=>{const f=inp.fix[k];if(!on||!f)return;
       if(!runs[f.wall]){notes.push(NM[k]+" "+f.wall+" duvarında, ama bu planda o duvar yok.");return}
       (MAN[f.wall]=MAN[f.wall]||[]).push({k,x:Math.round(f.x*10),w:Math.round(f.w*10),hinge:f.hinge})});
     // eviye tesisata bağlı: önce o yerleşir; köşe dolabının alanına düşerse o köşe dolabı kalkar
@@ -839,6 +839,7 @@ function kitchenVariants(inp){
         else if(m.role==="ust"){m.gap="Kiriş altı";delete m.cols;m.H=Math.max(100,nh)}
         else notes.push(w+" duvarında kiriş tezgah seviyesine iniyor; ölçüyü kontrol edin.")});
     });
+    if(inp.ustYok)for(let q=mods.length-1;q>=0;q--)if(mods[q].role==="ust")mods.splice(q,1);
     // varsayılan menteşe: duvar, buzdolabı, kolon ya da kapı tarafına değil, açık tarafa
     mods.filter(m=>!m.gap&&m.cols&&m.cols.length===1&&!m.blind).forEach(m=>{const Lw=walls[m.wall];
       const tall=q=>q.wall===m.wall&&q.gap&&["Buzdolabı","Kolon","Kapı"].includes(q.gap);
@@ -985,7 +986,7 @@ function advise(mods,R){
     else add("ok","Tezgah "+tz+" cm.","Standart 90 cm; 85–95 arası kullanıcının boyuna göre ayarlanır.");
     {const ad=S.inp.altD||56,ud=S.inp.ustD||32;if(ud>ad-15)add("warn","Üst dolap ("+ud+" cm) alt dolaba ("+ad+" cm) çok yakın derinlikte.","Üst dolap tezgahta çalışırken başa çarpmasın diye alt dolaptan en az 15 cm sığ olmalı; 30–35 cm önerilir.");
       if(ad<50||ad>62)add("info","Alt dolap gövde derinliği "+ad+" cm.","Standart tezgah 60 cm; gövde 55–58 cm olur ki tezgah önden 2–4 cm taşsın, ankastre cihazlar sığsın.")}
-    add("info","Üst dolap tezgahtan 55 cm yukarıda, alt kenarı "+(tz+55)+" cm'de.","Genel uygulama: tezgah ile üst dolap arası 50–65 cm. Daha alçağı ocakta çalışırken başa çarpar, daha yükseği üst rafa uzanmayı zorlaştırır.");
+    if(!S.inp.ustYok)add("info","Üst dolap tezgahtan 55 cm yukarıda, alt kenarı "+(tz+55)+" cm'de.","Genel uygulama: tezgah ile üst dolap arası 50–65 cm. Daha alçağı ocakta çalışırken başa çarpar, daha yükseği üst rafa uzanmayı zorlaştırır.");
     const ut=tz+55+72;if(ut>S.inp.tavan)add("warn","Üst dolap tavana sığmıyor ("+ut+" cm).","Tavan yüksekliğini kontrol edin ya da üst dolabı kısaltın.");
     else if(S.inp.tavan-ut>=30)add("info","Üst dolabın üstünde "+(S.inp.tavan-ut)+" cm boşluk var.","Taç düğmesinden 'Tavana kapama' seçilebilir. Toz tutmaması için tavana kadar kapatma paneli ya da 30–35 cm yükseklikte ek dolap düşünebilirsiniz.");
     // duvar dolulukları
@@ -1001,6 +1002,8 @@ function advise(mods,R){
         if(sink&&sill-tz<300)add("warn","Eviye pencerenin altında; batarya kanada çarpabilir ("+cm(sill-tz)+" cm).","İçe açılan pencerenin altında batarya için tezgahtan denizliğe yaklaşık 30 cm gerekir. Yatırılabilir (pencere önü) ya da kısa batarya seçin, veya bataryayı pencere kenarına alın.");
         else if(sink)add("ok","Eviye pencere altında, batarya kanada çarpmaz.","Denizlik tezgahtan "+cm(sill-tz)+" cm yukarıda.")}
       if(k==="ic")add("info",(o.wall||"A")+" duvarı: pencere içe açılıyor.","Kanadın süpürdüğü alana (planda mavi yay) yüksek eşya, davlumbaz ya da üst dolap konmaz.")})}
+  if(kitchen&&S.inp.tezgahVar)add("info","Tezgah mevcut; alt dolap yüksekliği "+cm(mods.filter(m=>m.role==="alt"&&!m.gap).reduce((a,m)=>Math.max(a,m.H),0))+" cm.","Eski tezgahın altını birkaç yerden ölçün; zemin eğimliyse en alçak ölçüyü girin, ayarlı ayakla terazileyin. Eski dolaplar sökülürken tezgahı altından destekleyin.");
+  if(kitchen&&S.inp.sinkOn===false)add("info","Eviyesiz dolap sırası.","Su tesisatı olmayan duvar için: kiler, kahve köşesi ya da karşı duvar dolabı. Eviye gerekiyorsa Cihazlar'dan açın.");
   if(kitchen&&mods.some(m=>m.kat2)){const k2=mods.find(m=>m.kat2),k1=mods.find(m=>m.role==="ust"&&!m.gap&&!m.kat2),dd=k1?k2.D-k1.D:0;
     dd>=25?add("ok","Üst kademe "+cm(dd)+" cm önde; altına LED şerit sığar.","Taşan kısmın altına alüminyum profilli LED yapıştırılır, ışık alt kademenin kapaklarını aydınlatır. Kabloyu üst kademenin arkasından indirin."):dd>0?add("info","Üst kademe yalnız "+cm(dd)+" cm önde.","LED profili için en az 2,5–3 cm taşma gerekir; 3–5 cm önerilir."):add("info","Üst kademe alt kademeyle aynı derinlikte.","Derinliği 3–5 cm artırırsanız altına LED çekilebilir.");
     add("info","Üst kademe kapakları "+cm(k2.H)+" cm, yerden "+cm(k2.mount+k2.H)+" cm'e kadar.","Tavana kadar dolapta üst kademeye merdivenle ulaşılır; az kullanılan eşya için. Kapağı yukarı kalkar (amortisörlü) yapmak isterseniz menteşe yerine kapak mekanizması kullanın.")}
@@ -1129,9 +1132,10 @@ function hardware(mods,R){
   {const bm=k=>R.parts.filter(p=>p.mat===k).reduce((q,p)=>q+p.qty*(p.bl*p.a+p.bs*p.b),0)/1000,c=colorsOf();
     if(frontSep()){add("Kenar","PVC kenar bandı · gövde"+(c.body?" ("+COLORS[c.body].l+")":""),Math.ceil(bm("sunta")*1.1),"m","%10 fire payıyla");add("Kenar","PVC kenar bandı · kapak ("+COLORS[c.front].l+")",Math.ceil(bm("kapak")*1.1),"m","%10 fire payıyla; kapak rengine uygun")}
     else add("Kenar","PVC kenar bandı"+(c.body?" ("+COLORS[c.body].l+")":""),Math.ceil(R.band*1.1),"m","%10 fire payıyla")}
-  if(S.type==="mutfak"){const tl=tezgahLen();add("Mutfak","Tezgah (60 cm derinlik)",Math.round(tl*100)/100,"m");
+  if(S.type==="mutfak"&&!S.inp.tezgahVar){const tl=tezgahLen();add("Mutfak","Tezgah (60 cm derinlik)",Math.round(tl*100)/100,"m");
     const j={I:0,L:1,U:2}[S.inp.plan];if(j)add("Mutfak","Tezgah köşe birleştirme cıvatası",j*3);
-    add("Mutfak","Tezgah süpürgeliği",Math.round(tl*100)/100,"m");
+    add("Mutfak","Tezgah süpürgeliği",Math.round(tl*100)/100,"m")}
+  if(S.type==="mutfak"){
     if(floorOf().foot==="plastik")add("Mutfak","Baza köşe/birleşim parçası",({I:0,L:1,U:2}[S.inp.plan]||0)+2)}
   (S.hwCustom||[]).forEach(c=>items.push({cat:"Ek kalemler",name:c.name,qty:c.qty,unit:c.unit||"ad",note:"elle eklendi",custom:true}));
   const order=["Menteşe & kapak","Kulp","Çekmece","Raf & askı","Aksesuar","Bağlantı","Montaj","Vida & çivi","Kenar","Mutfak","Ek kalemler"];
@@ -1636,9 +1640,15 @@ function renderOlcu(){
       ${i.ustKat?`<div class="grid3"><label class="field"><span class="k">Üst kademe derinliği</span><input type="number" inputmode="decimal" id="in-ustD2" data-inp="ustD2" value="${i.ustD2||((i.ustD||32)+4)}"><span class="h">alttakinden 3–5 cm derin</span></label>
         <div class="note">Üst kademe yüksekliği: tavan ${i.tavan} − ${nv((Math.round(i.tezgah*10)+1270)/10)} = ${nv(Math.max(0,i.tavan*10-(Math.round(i.tezgah*10)+1270)-5)/10)} cm</div></div>`:""}</div>`;
     const devs=`<div class="panel"><span class="lbl">Cihazlar</span><div class="checks">
-      <label class="check"><input type="checkbox" id="c-dish" data-chk="dish" ${i.dish?"checked":""}><span>Bulaşık makinesi<small>60 cm, eviyenin yanına</small></span></label>
+      <label class="check"><input type="checkbox" id="c-sinkOn" data-chk="sinkOn" ${i.sinkOn!==false?"checked":""}><span>Eviye<small>${i.sinkOn!==false?"Pis su giderinin önüne gelir":"Eviyesiz dolap sırası (ör. karşı duvar, kiler)"}</small></span></label>
+      <label class="check"><input type="checkbox" id="c-dish" data-chk="dish" ${i.dish&&i.sinkOn!==false?"checked":""} ${i.sinkOn===false?"disabled":""}><span>Bulaşık makinesi<small>60 cm, eviyenin yanına</small></span></label>
       <label class="check"><input type="checkbox" id="c-oven" data-chk="oven" ${i.oven?"checked":""}><span>Ankastre fırın ve ocak<small>60 cm, üstüne davlumbaz</small></span></label>
-      <label class="check"><input type="checkbox" id="c-fridge" data-chk="fridge" ${i.fridge?"checked":""}><span>Buzdolabı<small>70 cm; genişliği Tesisat'tan değişir</small></span></label></div></div>`;
+      <label class="check"><input type="checkbox" id="c-fridge" data-chk="fridge" ${i.fridge?"checked":""}><span>Buzdolabı<small>70 cm; genişliği Tesisat'tan değişir</small></span></label></div></div>
+    <div class="panel"><span class="lbl">Yenileme · neler değişecek?</span><div class="checks">
+      <label class="check"><input type="checkbox" id="c-tezgahVar" data-chk="tezgahVar" ${i.tezgahVar?"checked":""}><span>Tezgah mevcut, değişmeyecek<small>Tezgah, süpürgelik ve köşe cıvatası listeden çıkar; alt dolaplar tezgahın altına göre yapılır</small></span></label>
+      ${i.tezgahVar?`<label class="field"><span class="k">Tezgahın altı yerden</span><input type="number" inputmode="decimal" id="in-tzAlt" data-inp="tzAlt" value="${nv(i.tzAlt||(i.tezgah-4))}"><span class="h">cm · alt dolap bu yüksekliğe kadar (baza dahil)</span></label>`:""}
+      <label class="check"><input type="checkbox" id="c-ustYok" data-chk="ustYok" ${i.ustYok?"checked":""}><span>Üst dolap yapılmayacak<small>Yalnız alt dolaplar; mevcut üst dolaplar kalıyor ya da üst dolap istenmiyor</small></span></label></div>
+      <div class="note">Yalnız tezgah altını yeniliyorsanız: Planı ben seçerim → Duvarlar'a tezgah boyunu girin, Tesisat'ta eviyeyi gider merkezine yerleştirin.</div></div>`;
     let body="";
     if(tab==="oda")body=roomSizeHTML()+heights;
     else if(tab==="acik")body=roomOpenHTML();
@@ -1679,7 +1689,7 @@ function kitchenRange(inp,w){const L=Math.round(inp[w]*10),altD=Math.round((inp.
 let AUTOFIX=null,AUTOKEY="";
 function ancRange(inp,w,k){const r=kitchenRange(inp,w);return k==="sink"?{a:r.a0,e:r.e0,L:r.L}:r}
 function anchorsFrom(mods){const f={};mods.forEach(m=>{const e={wall:m.wall,x:m.x/10,w:m.W/10};if(m.gap==="Buzdolabı")f.fridge=e;else if(m.gap==="Bulaşık mak.")f.dish=e;else if(m.gap==="Fırın + ocak")f.oven=e;else if(m.cols&&m.cols[0]&&m.cols[0].p==="eviye")f.sink=e});return f}
-function autoAnchors(){const key=JSON.stringify([S.inp.plan,S.inp.A,S.inp.B,S.inp.C,S.inp.dish,S.inp.oven,S.inp.fridge,S.inp.tezgah,S.inp.obs]);
+function autoAnchors(){const key=JSON.stringify([S.inp.plan,S.inp.A,S.inp.B,S.inp.C,S.inp.dish,S.inp.oven,S.inp.fridge,S.inp.tezgah,S.inp.obs,S.inp.sinkOn,S.inp.ustYok]);
   if(AUTOFIX&&AUTOKEY===key)return AUTOFIX;
   const v=kitchenVariants(Object.assign({},S.inp,{fix:null}))[0];const f=anchorsFrom(v.mods);
   const wl=S.inp.plan==="I"?["A"]:S.inp.plan==="L"?["A","B"]:["A","B","C"];
@@ -1688,7 +1698,7 @@ function autoAnchors(){const key=JSON.stringify([S.inp.plan,S.inp.A,S.inp.B,S.in
 function curFix(){return S.inp.fix||autoAnchors()}
 const FIXN={fridge:{l:"Buzdolabı",min:55,max:100,hint:"Standart 60–70 cm; çift kapılı 90 cm"},sink:{l:"Eviye",min:50,max:120,hint:"Pis su gideri bu dolabın ortasına gelmeli"},
   dish:{l:"Bulaşık mak.",min:45,max:60,hint:"Ankastre 60 cm, dar model 45 cm"},oven:{l:"Fırın + ocak",min:60,max:90,hint:"Ankastre fırın 60 cm; ocak altı 90 cm olabilir"}};
-function fixOn(k){return k==="sink"||!!S.inp[k]}
+function fixOn(k){const sk=S.inp.sinkOn!==false;return k==="sink"?sk:k==="dish"?sk&&!!S.inp.dish:!!S.inp[k]}
 function fixPanelHTML(){const i=S.inp,fx=curFix(),wl=i.plan==="I"?["A"]:i.plan==="L"?["A","B"]:["A","B","C"];const sel=S.ancSel&&fixOn(S.ancSel)?S.ancSel:null;
   const clash=new Set();Object.entries(fx).forEach(([k1,f1])=>Object.entries(fx).forEach(([k2,f2])=>{if(k1<k2&&fixOn(k1)&&fixOn(k2)&&f1.wall===f2.wall&&f1.x<f2.x+f2.w-.5&&f2.x<f1.x+f1.w-.5){clash.add(k1);clash.add(k2)}}));
   const strip=w=>{const r=kitchenRange(i,w),L=r.L;const pct=v=>(v/L*100).toFixed(3)+"%";
@@ -2501,7 +2511,7 @@ document.addEventListener("change",e=>{const x=e.target,d=x.dataset;const m=curM
   if(x.id==="impFile"&&x.files&&x.files[0]){const fr=new FileReader();fr.onload=()=>importText(String(fr.result));fr.onerror=()=>toast("Dosya okunamadı");fr.readAsText(x.files[0]);x.value="";return}
   if(x.id==="showDoors"){S.showDoors=x.checked;renderDuzen();return}
   if(x.id==="grain"){SET.grain=x.checked;persist();return}
-  if(d.chk){S.inp[d.chk]=x.checked;if(d.chk==="ustKat"){S.mods=[];persist();renderOlcu();return}if(S.inp.fix&&x.checked&&!S.inp.fix[d.chk])S.inp.fix[d.chk]=clone(autoAnchors()[d.chk]);S.mods=[];persist();refreshFix();return}
+  if(d.chk){S.inp[d.chk]=x.checked;if(["ustKat","sinkOn","tezgahVar","ustYok"].includes(d.chk)){S.mods=[];AUTOKEY="";persist();renderOlcu();return}if(S.inp.fix&&x.checked&&FIXN[d.chk]&&!S.inp.fix[d.chk])S.inp.fix[d.chk]=clone(autoAnchors()[d.chk]);S.mods=[];persist();refreshFix();return}
   if(d.ancx!==undefined||d.ancw!==undefined||d.ancc!==undefined){const k=S.ancSel;if(!k)return;if(!S.inp.fix)S.inp.fix=clone(autoAnchors());const f=S.inp.fix[k];const v=parseFloat(String(x.value).replace(",","."));
     const dsh=S.inp.fix.dish,att=k==="sink"&&fixOn("dish")&&dsh&&dsh.wall===f.wall&&Math.abs(dsh.x-(f.x+f.w))<1;
     if(!isNaN(v)){if(d.ancw!==undefined)f.w=Math.max(FIXN[k].min,Math.min(FIXN[k].max,v));else if(d.ancc!==undefined)f.x=v-f.w/2;else f.x=v;
