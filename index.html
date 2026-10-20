@@ -293,6 +293,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .fmzoom{display:flex;align-items:center;gap:6px;margin:6px 0}
 .fmlist{list-style:none;margin:0;padding:0;display:grid;gap:6px}.fmlist li{display:grid;grid-template-columns:22px auto 1fr 34px;gap:8px;align-items:center;background:var(--bg);border-radius:8px;padding:6px 8px}
 .fmlist .fmv{font:700 18px var(--f-mono);color:#C2410C;display:flex;flex-direction:column;line-height:1.1}.fmlist .fmv small{font:500 11px var(--f-mono);color:var(--muted)}.fmlist .fmv small.w{color:var(--warn)}.fmlist .fmuse{display:flex;gap:4px;flex-wrap:wrap}.fmlist .icobtn.sm{width:32px;height:32px;font-size:13px}
+.whatif{display:grid;gap:8px;margin:0 0 12px}.wrow{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:6px;font-size:14px}.wrow.onlast{border-left:4px solid var(--warn)}
+.wrow .wh small{display:block;color:var(--muted);font-size:12px}.wrow .mono{font-family:var(--f-mono)}.wrow .wt{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--muted)}.wrow .wt .ok{color:#2F8A4B;font-weight:600}.wrow .wt .ok i{font-style:normal;font-weight:500;color:var(--muted)}
+.tag.w{color:var(--warn);border-color:var(--warn)}.sumbtn small.need{color:var(--warn);font-weight:600}.artikn{border-left:3px solid var(--accent);padding-left:8px}
 </style>
 </head>
 <body>
@@ -561,10 +564,10 @@ const PACKC=new Map();
 function pack(parts,mat,opt={}){
   const m=SET.mats[mat],kerf=+SET.kerf,trim=+SET.trim,rot=!(SET.grain&&(mat==="sunta"||mat==="kapak"));
   const UW=m.L-2*trim+kerf,UH=m.W-2*trim+kerf;
-  const items=[];parts.filter(p=>p.mat===mat).forEach(p=>{for(let q=0;q<p.qty;q++)items.push({id:p.id,a:p.a,b:p.b,fr:!!p.free})});
+  const AR=opt.noArtik?{}:(S.artik||{}),items=[];parts.filter(p=>p.mat===mat).forEach(p=>{const n=Math.max(0,p.qty-((p.key&&AR[p.key])|0));for(let q=0;q<n;q++)items.push({id:p.id,a:p.a,b:p.b,fr:!!p.free})});
   const key=[mat,m.L,m.W,kerf,trim,rot,opt.quick?1:0,items.map(i=>i.id+":"+i.a+"x"+i.b+(i.fr?"r":"")).join(",")].join("|");
   if(PACKC.has(key))return PACKC.get(key);
-  const used=items.reduce((s2,i)=>s2+i.a*i.b,0);
+  const used=items.reduce((s2,i)=>s2+i.a*i.b,0),usedK=items.reduce((s2,i)=>s2+(i.a+kerf)*(i.b+kerf),0);
   const run=(list,fit,split,glob)=>{const sheets=[],un=[];
     const tryPlace=(sh,it)=>{let best=null;sh.free.forEach((f,fi)=>{for(let o=0;o<2;o++){if(o&&!rot&&!it.fr)continue;
       const w=(o?it.b:it.a)+kerf,h=(o?it.a:it.b)+kerf;if(w>f.w||h>f.h)continue;
@@ -602,10 +605,40 @@ function pack(parts,mat,opt={}){
   if(!opt.quick&&items.length>3){let seed=items.length*7919+1;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;const base=items.slice().sort(ORD[0]);
     for(let k=0;k<40;k++){const l=base.slice();for(let q=0;q<Math.max(2,l.length/4);q++){const i1=Math.floor(rnd()*l.length),i2=Math.min(l.length-1,i1+1+Math.floor(rnd()*3));[l[i1],l[i2]]=[l[i2],l[i1]]}
       const r=run(l,k%3,k%4,k%2===1);runs++;if(better(r,best))best=r}}
-  const res={sheets:best.sheets,un:best.un,fire:best.sheets.length?1-used/(best.sheets.length*m.L*m.W):0,m,runs,need:used/(UW*UH),last:best.last};
+  // iyileştirme: son levhadakileri (zor parçalar) öne al, tekrar dene
+  if(!opt.quick&&best.sheets.length>1){for(let it=0;it<12;it++){const hard=new Map();best.sheets.slice(-1)[0].placed.forEach(q=>hard.set(q.id,(hard.get(q.id)||0)+1));best.un.forEach(q=>hard.set(q.id,(hard.get(q.id)||0)+1));
+      const front=[],rest=[];const cnt=new Map(hard);items.slice().sort(ORD[it%ORD.length]).forEach(x=>{const c=cnt.get(x.id)||0;if(c>0){front.push(x);cnt.set(x.id,c-1)}else rest.push(x)});
+      let improved=false;for(const f of [0,1,2])for(const sp of [0,1,2,3]){const r=run(front.concat(rest),f,sp,true);runs++;if(better(r,best)){best=r;improved=true}}
+      if(!improved&&it>3)break}}
+  const res={sheets:best.sheets,un:best.un,fire:best.sheets.length?1-used/(best.sheets.length*m.L*m.W):0,m,runs,need:usedK/(UW*UH),last:best.last};
   if(PACKC.size>400)PACKC.clear();PACKC.set(key,res);return res}
 
 
+
+/* ====================== KENDİM KARAR VERECEĞİM (parça eşikleri) ====================== */
+let WHATIF={};
+function whatifCalc(mat){R=computeAll(S.mods);const parts=R.parts,P=pack(parts,mat),n0=P.sheets.length;if(n0<2)return{n0,rows:[]};
+  const last=P.sheets[n0-1],onLast={};last.placed.forEach(q=>{onLast[q.id]=(onLast[q.id]||0)+1});
+  const cand=parts.filter(p=>p.mat===mat).sort((x,y)=>(onLast[y.id]?1:0)-(onLast[x.id]?1:0)||y.a*y.b*y.qty-x.a*x.b*x.qty).slice(0,16);
+  const drops=pp=>pack(pp,mat,{quick:true}).sheets.length<n0;
+  const thr=(p,ax)=>{const mk=d=>parts.map(q=>q===p?Object.assign({},q,{[ax]:q[ax]-d}):q);if(p[ax]-60<100||!drops(mk(60)))return null;let lo=0,hi=60;
+    while(hi-lo>5){const mid=Math.round((lo+hi)/2/5)*5;if(mid<=lo||mid>=hi)break;if(drops(mk(mid)))hi=mid;else lo=mid}
+    for(const d of [hi-5,hi].filter(x=>x>lo&&x>0))if(pack(mk(d),mat).sheets.length<n0)return d;return pack(mk(60),mat).sheets.length<n0?60:null};
+  const rows=cand.map(p=>{const r={p,last:onLast[p.id]||0,a:thr(p,"a"),b:thr(p,"b")};
+    if(r.last){const AR=Object.assign({},S.artik||{});const old=S.artik;S.artik=Object.assign({},AR,{[p.key]:((AR[p.key]|0)+r.last)});r.artik=pack(parts,mat).sheets.length<n0;S.artik=old}return r});
+  return{n0,need:P.need,rows}}
+function partMeans(p,ax,d){const n=p.name,c=nv(d/10)+" cm";
+  if(/^(Alt tabla|Üst tabla|Üst kuşak|Baza)/.test(n))return ax==="a"?"= gövde genişliği "+c+" dar":/kuşak|Baza/.test(n)?"":"= gövde derinliği "+c+" az";
+  if(/^(Raf|Ara tabla)/.test(n))return ax==="a"?"= o bölme "+c+" dar (ara dikmeyi kaydırın)":"= raf/tabla "+c+" sığ";
+  if(/^(Yan dikme|Ara dikme)/.test(n))return ax==="a"?"= gövde boyu "+c+" kısa":"= gövde derinliği "+c+" az";
+  if(/^Kapak/.test(n))return ax==="a"?"= kapak boyu "+c+" kısa (göz yüksekliği)":"= kapak eni "+c+" dar (bölme genişliği)";
+  if(/^Çekmece ön/.test(n))return ax==="a"?"= bölme "+c+" dar":"= çekmece önü "+c+" alçak";return""}
+function whatifHTML(mt){const W=WHATIF[mt];if(!W||W.sig!==partsSig(R.parts)+JSON.stringify(S.artik||{}))return"";
+  if(!W.rows.length)return `<div class="note">Tek levha; değişecek bir şey yok.</div>`;const AR=S.artik||{};
+  return `<div class="whatif"><div class="note">Son levhadaki parçalar üstte. Kısaltma, parçanın o yönde en az kaç mm kısalınca levhanın düştüğünü gösterir; değişikliği Düzen'de siz yapın. Uygulama bir şeyi kendiliğinden değiştirmez.</div>
+   ${W.rows.map(r=>{const p=r.p,ar=AR[p.key]|0;return `<div class="wrow${r.last?" onlast":""}"><div class="wh"><b>${p.id}</b> ${esc(p.name)} <span class="mono">${p.a}×${p.b}</span> ×${p.qty}${r.last?` <span class="tag w">son levhada ${r.last}</span>`:""}<small>${esc(p.mods.join(", "))}</small></div>
+     <div class="wt">${r.a!=null?`<span class="ok">Boyu ${r.a} mm kısa → −1 levha <i>${partMeans(p,"a",r.a)}</i></span>`:`<span>Boyu: 6 cm'ye kadar kısaltma yetmez</span>`}${r.b!=null?`<span class="ok">Eni ${r.b} mm kısa → −1 levha <i>${partMeans(p,"b",r.b)}</i></span>`:`<span>Eni: 6 cm'ye kadar yetmez</span>`}${r.artik?`<span class="ok">Son levhadakiler artıktan kesilirse → −1 levha</span>`:""}</div>
+     <div class="btns">${p.mods.length?`<button class="btn small" data-gomod="${esc(p.mods[0])}">Düzen'de aç (${esc(p.mods[0])})</button>`:""}${ar?`<button class="btn small ghost" data-artik="${esc(p.key)}:0">Artıktan çıkar (${ar})</button>`:`<button class="btn small ghost" data-artik="${esc(p.key)}:${r.last||1}">Artıktan keseceğim${r.last?" ("+r.last+")":""}</button>`}</div></div>`}).join("")}</div>`}
 /* ====================== LEVHA AZALTMA ÖNERİLERİ ====================== */
 let SAVER={};
 function partsSig(parts){return parts.map(p=>p.mat+p.a+"x"+p.b+"x"+p.qty).join(",")}
@@ -644,7 +677,9 @@ function saverTips(mat){R=computeAll(S.mods);const n0=pack(R.parts,mat).sheets.l
   const ord={raf:0,mod:1,ayar:2,parca:3};const seen=new Set();
   return tips.filter(t=>!seen.has(t.desc)&&seen.add(t.desc)).sort((a,b)=>(a.warn?1:0)-(b.warn?1:0)||ord[a.kind]-ord[b.kind]||b.save-a.save||a.d-b.d).slice(0,8)}
 function saverHTML(mt,P){const sv=SAVER[mt];const pr=+SET.mats[mt].price||0;
-  const head=`<div class="saverbar"><span>Gereken ${fmt(P.need,2)} levha · son levha %${fmt((P.last||0)*100)} dolu${P.runs?" · "+P.runs+" yerleşim denendi":""}</span>${P.sheets.length>1&&!(sv&&sv.sig===partsSig(R.parts))?`<button class="btn small ${P.last<.45?"":"ghost"}" data-saver="${mt}">${P.last<.45?"Son levhayı kurtar":"Levha azaltma önerisi"}</button>`:""}</div>`;
+  const AR=S.artik||{},arL=(R.parts||[]).filter(p=>p.mat===mt&&AR[p.key]);
+  const head=`<div class="saverbar"><span>Gereken ${fmt(P.need,2)} levha · son levha %${fmt((P.last||0)*100)} dolu${P.runs?" · "+P.runs+" yerleşim denendi":""}</span><span class="btns" style="margin:0">${P.sheets.length>1&&!(sv&&sv.sig===partsSig(R.parts))?`<button class="btn small ${P.last<.45?"":"ghost"}" data-saver="${mt}">${P.last<.45?"Son levhayı kurtar":"Levha azaltma önerisi"}</button>`:""}${P.sheets.length>1?`<button class="btn small ghost" data-whatif="${mt}">Kendim karar vereceğim</button>`:""}</span></div>
+   ${arL.length?`<div class="note artikn">Artıktan kesilecek (levha planı dışında): ${arL.map(p=>AR[p.key]+" × "+p.id+" "+esc(p.name)+" "+p.a+"×"+p.b+` <button class="btn small ghost" data-artik="${esc(p.key)}:0">geri al</button>`).join(" · ")}</div>`:""}${whatifHTML(mt)}`;
   const lastSh=P.sheets[P.sheets.length-1],lastNote=P.sheets.length>1&&P.last<.3&&lastSh?(()=>{const c={};lastSh.placed.forEach(q=>{c[q.id]=(c[q.id]||0)+1});const ps=(R.parts||[]);
     return `<div class="note">Son levhada yalnız: ${Object.entries(c).map(([id,n])=>{const p=ps.find(x=>x.id===id);return n+" × "+id+(p?" "+esc(p.name)+" "+p.a+"×"+p.b:"")}).join(", ")}. Bunları atölyedeki artık parçadan kesmek de bir levha kazandırır.</div>`})():"";
   if(!sv||sv.sig!==partsSig(R.parts))return head+lastNote;
@@ -1891,7 +1926,7 @@ function renderDuzen(){
   const cost=packs.reduce((q,P,i)=>q+P.sheets.length*SET.mats[used[i]].price,0)+R.band*SET.bandPrice+hwCost(hardware(S.mods,R));
   const bottom=m?(S.band!=null&&!m.gap?cellEditorHTML(m):editorHTML(m)):`
     <div class="sumrow">
-      <button class="sumbtn" data-go="sonuc">${packs.map((P,i)=>P.sheets.length+" "+({sunta:"gövde",kapak:"kapak"}[used[i]]||"arkalık")).join(" · ")} · ${fmt(R.band,0)} m bant</button>
+      <button class="sumbtn" data-go="sonuc">${packs.map((P,i)=>P.sheets.length+" "+({sunta:"gövde",kapak:"kapak"}[used[i]]||"arkalık")+(P.sheets.length>1&&P.last<.35&&(used[i]==="sunta"||used[i]==="kapak")?` <small class="need">(${fmt(P.need,1)})</small>`:"")).join(" · ")} · ${fmt(R.band,0)} m bant</button>
       <button class="sumbtn" data-rtgo="teklif">${cost>0?fmt(quote().rounded)+" ₺":"Fiyat yok"}</button>
       <button class="sumbtn ${nw?"w":"ok"}" data-sheet="notes">${nw?"⚠ "+nw+" uyarı":"✓ Usta notları"}</button>
       <button class="sumbtn" data-sheet="color"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--line);background:${bodyFill()}"></span>${frontSep()?`<span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--line);background:${frontFill()}"></span>`:""}Renk</button>
@@ -2017,6 +2052,7 @@ function sheetSVG(sh,m,mat){const fs=m.L/42;
     s+=`<text x="${p.x+p.w/2}" y="${p.y+p.h/2+(big?-fs*.2:fs*.35)}" font-size="${Math.min(fs,p.h*.45,p.w*.3)}" text-anchor="middle" fill="${(mat==="kapak"?isDark(frontFill()):mat==="sunta"?isDark(bodyFill()):false)?"#F2F2F2":"var(--ink)"}" font-family="IBM Plex Mono,monospace">${p.id}</text>`;
     if(big)s+=`<text x="${p.x+p.w/2}" y="${p.y+p.h/2+fs*.95}" font-size="${fs*.75}" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${p.rot?p.b+"×"+p.a:p.a+"×"+p.b}</text>`});
   return s+"</svg>"}
+function artikNote(){const AR=S.artik||{};const l=(R?R.parts:[]).filter(p=>AR[p.key]);return l.length?"Artıktan kesilecek (levhaya yerleştirilmedi): "+l.map(p=>AR[p.key]+" × "+p.id+" "+p.name+" "+p.a+"×"+p.b).join(", "):""}
 function cutText(){
   const L=[`${S.name} — ${TYPES[S.type].label}`];
   matsUsed(R.parts).forEach(m=>{L.push("",`${matLabel(m)} (${SET.mats[m].L}×${SET.mats[m].W})`);
@@ -2025,7 +2061,7 @@ function cutText(){
   (S.inp.obs||[]).filter(o=>o.type==="kolon"||o.type==="kiris").forEach(o=>L.push((o.type==="kolon"?"Kolon":"Kiriş")+" ("+(o.wall||"A")+" duvarı): "+(o.type==="kolon"?`soldan ${o.x} cm, ${o.w}×${o.d} cm`:`alt ${o.h} cm, çıkıntı ${o.d} cm`)));
   L.push("","Arkalık: "+BACKS[backOf()].label+(backOf()==="18"?" (yan dikmeler arasına içten)":" (dıştan bindirme)"));
   L.push("",`Toplam bant: ${fmt(R.band,1)} m · Testere payı ${SET.kerf} mm${SET.grain?" · Desen yönü: boy plakanın uzun kenarı yönünde":""}`);
-  return L.join("\n")}
+  {const an=artikNote();if(an)L.push("",an)}return L.join("\n")}
 function tezgahLen(){if(S.type!=="mutfak")return 0;return S.mods.filter(m=>m.role==="alt"&&m.gap!=="Buzdolabı").reduce((s,m)=>s+m.W,0)/1000}
 function renderSonuc(){
   relabel();R=computeAll(S.mods);const tabs=[["parca","Parçalar"],["plaka","Plakalar"],["etiket","Etiket"],["delik","Delik"],["hw","Hırdavat"],["teklif","Teklif"],["gonder","Gönder"]];if(!S.opener)S.opener="kulp";
@@ -2242,6 +2278,7 @@ const APPVER="2026.10.20b";
 const NEWS=[
  {d:"20 Ekim 2026 · akşam",t:"Levha tasarrufu, müşteri klasörleri, fotoğrafla ölçü",items:[
   ["Daha iyi levha yerleşimi","Her kesim için 190'a yakın yerleşim deneniyor (panel testeresine uygun şerit kesim dahil); en az levhalı olan seçiliyor.",null],
+  ["Kendim karar vereceğim","Kesim → Plakalar: her parça için 'boyu kaç mm kısalırsa levha düşer' ve bunun dolapta neye denk geldiği; Düzen'de aç ile değişikliği kendiniz yapın, 'Artıktan keseceğim' ile parçayı levha planından çıkarın. Düzen'deki sayaç gereken levhayı da gösterir (5 gövde (4,1)).",null],
   ["Levha azaltma önerileri","Kesim → Plakalar: son levha az doluysa 'Son levhayı kurtar'. Raf 1–2 cm sığ, derinlik 1 cm az, boy 2 cm kısa gibi küçük değişikliklerden levha düşürenler listelenir; tek dokunuşla uygulanır.",null],
   ["3D'de ölçüler","3D görünümde modül genişlikleri, toplam en, boy ve derinlik; perspektif, önden, yandan, üstten görünüm.",null],
   ["Müşteri klasörleri","Projeler sayfasında her müşteriye klasör: içindeki tüm mobilyalar, her birinin modül listesi, toplu müşteri teklifi ve klasörü dosya olarak indirme.","proj"],
@@ -2672,6 +2709,9 @@ document.addEventListener("click",e=>{
   if(d.fmdel!==undefined){FM.meas.splice(+d.fmdel,1);renderFoto();return}
   if(d.fmuse){const[i,k]=d.fmuse.split(":");const L=fmLen(FM.meas[+i].a,FM.meas[+i].b);if(L==null)return;const v=Math.round(L)/10;S.inp[k]=v;S.mods=[];persist();toast((fmUseTargets().find(t=>t[0]===k)||[,k])[1]+" = "+nv(v)+" cm aktarıldı");return}
   if(d.fmcopy){const t=FM.meas.map((m,i)=>(i+1)+": "+nv(Math.round(fmLen(m.a,m.b)||0)/10)+" cm").join("\n");(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Kopyalandı")).catch(()=>toast("Kopyalanamadı"));return}
+  if(d.whatif){const mt=d.whatif;toast("Parçalar deneniyor…");setTimeout(()=>{const W=whatifCalc(mt);W.sig=partsSig(R.parts)+JSON.stringify(S.artik||{});WHATIF[mt]=W;renderSonuc();toast(W.rows.filter(r=>r.a!=null||r.b!=null||r.artik).length+" parçada levha düşürme imkanı")},40);return}
+  if(d.artik){const i=d.artik.lastIndexOf(":"),k=d.artik.slice(0,i),n=+d.artik.slice(i+1);S.artik=Object.assign({},S.artik||{});if(n>0)S.artik[k]=n;else delete S.artik[k];const openW=Object.keys(WHATIF);WHATIF={};SAVER={};persist();R=computeAll(S.mods);openW.forEach(mt=>{const W=whatifCalc(mt);W.sig=partsSig(R.parts)+JSON.stringify(S.artik||{});WHATIF[mt]=W});renderSonuc();toast(n>0?"Artıktan kesilecek olarak işaretlendi":"Levha planına geri alındı");return}
+  if(d.gomod){const m=S.mods.find(x=>x.label===d.gomod&&!x.gap);if(m){S.step="duzen";S.view=null;S.sel=m.id;S.band=null;S.col=0;if(S.type==="mutfak")S.wall=m.wall;render();window.scrollTo(0,0);toast(m.label+" seçildi; ölçüyü değiştirince levha sayacını izleyin")}return}
   if(d.saver){const mt=d.saver;toast("Öneriler hesaplanıyor…");setTimeout(()=>{SAVER[mt]={sig:partsSig(computeAll(S.mods).parts),tips:saverTips(mt)};renderSonuc();const n=SAVER[mt].tips.length;toast(n?n+" öneri bulundu":"Mikro değişiklikle levha düşmüyor")},40);return}
   if(d.saveapply){const[mt,i]=d.saveapply.split(":");const t=SAVER[mt]&&SAVER[mt].tips[+i];if(t&&t.apply){t.apply();SAVER={};persist();renderSonuc();toast("Uygulandı: "+t.desc)}return}
   if(d.flsaver){const mt=d.flsaver,parts=flParts(),n0=pack(parts,mt).sheets.length;toast("Öneriler hesaplanıyor…");setTimeout(()=>{const tips=partTips(parts,mt,n0).sort((a,b)=>b.save-a.save||a.d-b.d).slice(0,8);FLSAVER={mt,sig:partsSig(parts),tips};flResults();toast(tips.length?tips.length+" öneri bulundu":"Mikro değişiklikle levha düşmüyor")},40);return}
