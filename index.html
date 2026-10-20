@@ -578,7 +578,7 @@ function pack(parts,mat,opt={}){
   const UW=m.L-2*trim+kerf,UH=m.W-2*trim+kerf;
   const AR=opt.noArtik?{}:(S.artik||{}),items=[];parts.filter(p=>p.mat===mat).forEach(p=>{const n=Math.max(0,p.qty-((p.key&&AR[p.key])|0));for(let q=0;q<n;q++)items.push({id:p.id,a:p.a,b:p.b,fr:!!p.free})});
   const key=[mat,m.L,m.W,kerf,trim,rot,opt.quick?1:0,items.map(i=>i.id+":"+i.a+"x"+i.b+(i.fr?"r":"")).join(",")].join("|");
-  if(PACKC.has(key))return PACKC.get(key);
+  if(!opt.deep&&PACKC.has(key))return PACKC.get(key);
   const used=items.reduce((s2,i)=>s2+i.a*i.b,0),usedK=items.reduce((s2,i)=>s2+(i.a+kerf)*(i.b+kerf),0);
   const run=(list,fit,split,glob)=>{const sheets=[],un=[];
     const tryPlace=(sh,it)=>{let best=null;sh.free.forEach((f,fi)=>{for(let o=0;o<2;o++){if(o&&!rot&&!it.fr)continue;
@@ -622,7 +622,60 @@ function pack(parts,mat,opt={}){
       const front=[],rest=[];const cnt=new Map(hard);items.slice().sort(ORD[it%ORD.length]).forEach(x=>{const c=cnt.get(x.id)||0;if(c>0){front.push(x);cnt.set(x.id,c-1)}else rest.push(x)});
       let improved=false;for(const f of [0,1,2])for(const sp of [0,1,2,3]){const r=run(front.concat(rest),f,sp,true);runs++;if(better(r,best)){best=r;improved=true}}
       if(!improved&&it>3)break}}
+
+  // levha levha doldurma: her levhayı en dolu şekilde bitir, sonra sıradakine geç (şerit + üst üste yığma, 3 aşamalı giyotin)
+  const optsOf=(it,ax)=>{const r=rot||it.fr;const o=ax?[[it.b,it.a,0]]:[[it.a,it.b,0]];if(r)o.push(ax?[it.a,it.b,1]:[it.b,it.a,1]);return o};
+  let WT={};const val=it=>it.a*it.b*(WT[it.id]||1);
+  const stripFill=(left,ax,mode)=>{const SW=ax?UH:UW,SH=ax?UW:UH,K=kerf;const avail=left.map(()=>true);const out=[],frees=[];let y=0,area=0;
+    for(;;){const hs=new Set();left.forEach((it,i)=>{if(avail[i])optsOf(it,ax).forEach(([w,h])=>{if(h+K<=SH-y+.01&&w+K<=SW+.01)hs.add(h)})});if(!hs.size)break;
+      let best=null;
+      for(const hc of [...hs].sort((a,b)=>b-a).slice(0,QS?14:30)){const used=[],pl=[];let x=0,ar=0,vv=0;const B=hc+K;
+        const cand=[];left.forEach((it,i)=>{if(!avail[i])return;let bo=null;optsOf(it,ax).forEach(o=>{if(o[1]<=hc&&o[0]+K<=SW+.01){const sc=(hc-o[1])*1e5-o[0]*o[1]*(WT[it.id]||1)/1e3;if(!bo||sc<bo.sc)bo={o,sc}}});if(bo)cand.push({i,o:bo.o,sc:bo.sc})});
+        cand.sort((p,q)=>p.sc-q.sc);const taken=new Set();
+        for(const c of cand){if(taken.has(c.i))continue;const w=c.o[0]+K;if(x+w>SW+.01)continue;taken.add(c.i);pl.push({i:c.i,x,y:0,w:c.o[0],h:c.o[1],r:c.o[2]});ar+=c.o[0]*c.o[1];vv+=val(left[c.i]);
+          let cy=c.o[1]+K;const cw=c.o[0];
+          for(;;){let bs=null;left.forEach((it,i)=>{if(!avail[i]||taken.has(i))return;optsOf(it,ax).forEach(o=>{if(o[0]<=cw+.01&&cy+o[1]+K<=B+.01){const a2=o[0]*o[1],v2=a2*(WT[it.id]||1);if(!bs||v2>bs.v2)bs={i,o,a2,v2}}})});
+            if(!bs)break;taken.add(bs.i);pl.push({i:bs.i,x,y:cy,w:bs.o[0],h:bs.o[1],r:bs.o[2]});ar+=bs.a2;vv+=bs.v2;cy+=bs.o[1]+K}
+          x+=w}
+        const eff=ar/(B*SW),sc=mode===1?(eff>=.9?1e6+hc:eff):mode===2?vv:eff*(vv/Math.max(1,ar));if(!best||sc>best.sc||(sc===best.sc&&ar>best.ar))best={sc,ar,vv,pl,B,taken}}
+      if(!best||!best.pl.length)break;best.pl.forEach(q=>{out.push({i:q.i,x:q.x,y:y+q.y,w:q.w,h:q.h,r:q.r})});best.taken.forEach(i=>avail[i]=false);
+      {const cols={};let xe=0;best.pl.forEach(q=>{const k=q.x;cols[k]=cols[k]||{x:q.x,w:q.w,top:0};cols[k].top=Math.max(cols[k].top,q.y+q.h+K);cols[k].w=Math.max(cols[k].w,q.w);xe=Math.max(xe,q.x+cols[k].w+K)});
+        Object.values(cols).forEach(c=>{if(best.B-c.top>K+20)frees.push({x:c.x,y:y+c.top,w:c.w+K,h:best.B-c.top})});if(SW-xe>K+20)frees.push({x:xe,y,w:SW-xe,h:best.B})}
+      y+=best.B;area+=best.vv}
+    if(SH-y>K+20)frees.push({x:0,y,w:SW,h:SH-y});
+    const placed=out.map(q=>{const it=left[q.i];return ax?{...it,x:q.y+trim,y:q.x+trim,w:q.h,h:q.w,rot:!!q.r}:{...it,x:q.x+trim,y:q.y+trim,w:q.w,h:q.h,rot:!!q.r}});
+    const free=frees.map(f=>ax?{x:f.y,y:f.x,w:f.h,h:f.w}:f);return{placed,usedIdx:out.map(q=>q.i),area,free}};
+  const guilOne=(left,fit,split)=>{const sh={free:[{x:0,y:0,w:UW,h:UH}],placed:[],area:0};const usedIdx=[];
+    left.forEach((it,idx)=>{let bb=null;sh.free.forEach((f,fi)=>{for(let o=0;o<2;o++){if(o&&!rot&&!it.fr)continue;const w=(o?it.b:it.a)+kerf,h=(o?it.a:it.b)+kerf;if(w>f.w||h>f.h)continue;
+        const dw=f.w-w,dh=f.h-h,sc=fit===0?Math.min(dw,dh):fit===1?f.w*f.h-w*h:Math.max(dw,dh);if(!bb||sc<bb.sc)bb={sc,fi,w,h,o}}});
+      if(!bb)return;const f=sh.free.splice(bb.fi,1)[0];sh.placed.push({...it,x:f.x+trim,y:f.y+trim,w:bb.w-kerf,h:bb.h-kerf,rot:!!bb.o});sh.area+=it.a*it.b;usedIdx.push(idx);sh.val=(sh.val||0)+val(it);
+      const rw=f.w-bb.w,rh=f.h-bb.h,hz=split===0?rw<rh:split===1?rw>=rh:split===2;let r,d;if(hz){r={x:f.x+bb.w,y:f.y,w:rw,h:bb.h};d={x:f.x,y:f.y+bb.h,w:f.w,h:rh}}else{r={x:f.x+bb.w,y:f.y,w:rw,h:f.h};d={x:f.x,y:f.y+bb.h,w:bb.w,h:rh}}
+      [r,d].forEach(z=>{if(z.w>kerf+20&&z.h>kerf+20)sh.free.push(z)})});return{placed:sh.placed,usedIdx,area:sh.val||0,free:sh.free}};
+  let QS=false;const sequential=()=>{let left=items.slice().sort((p,q)=>val(q)-val(p));const sheets=[];
+    while(left.length){let bestS=null;const tryS=r=>{if(r.placed.length&&(!bestS||r.area>bestS.area))bestS=r};
+      for(const ax of [0,1])for(const md of (QS?[0,2]:[0,1,2]))tryS(stripFill(left,ax,md));
+      for(const o of (QS?[(p,q)=>val(q)-val(p),ORD[3]]:[(p,q)=>val(q)-val(p),ORD[0],ORD[2],ORD[3],ORD[1]])){const l2=left.slice().sort(o);for(const f of [0,1])for(const sp of (QS?[0,1]:[0,1,2,3])){const r=guilOne(l2,f,sp);r.usedIdx=r.usedIdx.map(i=>left.indexOf(l2[i]));tryS(r)}}
+      if(!bestS)break;const used=new Set(bestS.usedIdx);sheets.push({placed:bestS.placed,area:bestS.placed.reduce((q,p)=>q+p.a*p.b,0),free:bestS.free||[]});left=left.filter((_,i)=>!used.has(i))}
+    // onarım: son levhadakileri öteki levhaların boşluklarına taşı
+    for(let pass=0;pass<3&&sheets.length>1;pass++){const lastS=sheets[sheets.length-1];const mv=lastS.placed.slice().sort((p,q)=>q.a*q.b-p.a*p.b);let moved=0;
+      for(const it of mv){let bb=null,bs=null;for(const sh of sheets.slice(0,-1))sh.free.forEach((f,fi)=>{for(let o=0;o<2;o++){if(o&&!rot&&!it.fr)continue;const w=(o?it.b:it.a)+kerf,h=(o?it.a:it.b)+kerf;if(w>f.w+.01||h>f.h+.01)continue;const sc=Math.min(f.w-w,f.h-h);if(!bb||sc<bb.sc){bb={sc,fi,w,h,o};bs=sh}}});
+        if(!bb)continue;const f=bs.free.splice(bb.fi,1)[0];bs.placed.push({id:it.id,a:it.a,b:it.b,fr:it.fr,x:f.x+trim,y:f.y+trim,w:bb.w-kerf,h:bb.h-kerf,rot:!!bb.o});bs.area+=it.a*it.b;
+        const rw=f.w-bb.w,rh=f.h-bb.h;let r,d;if(rw<rh){r={x:f.x+bb.w,y:f.y,w:rw,h:bb.h};d={x:f.x,y:f.y+bb.h,w:f.w,h:rh}}else{r={x:f.x+bb.w,y:f.y,w:rw,h:f.h};d={x:f.x,y:f.y+bb.h,w:bb.w,h:rh}}
+        [r,d].forEach(z=>{if(z.w>kerf+20&&z.h>kerf+20)bs.free.push(z)});lastS.placed.splice(lastS.placed.indexOf(it),1);lastS.area-=it.a*it.b;moved++}
+      if(!lastS.placed.length)sheets.pop();if(!moved)break}
+    return{sheets,un:left,last:sheets.length?sheets[sheets.length-1].area/(UW*UH):0}};
+  if(!opt.quick&&items.length>1){const T0=Date.now();let r=sequential();runs++;if(better(r,best)||(r.sheets.length===best.sheets.length&&r.un.length===best.un.length))best=r;
+    // sıralı değer düzeltme: kötü dolan levhalardaki parçalara öncelik ver, yeniden dene
+    QS=true;const budget=opt.deep?15000:(items.length>150?700:400);
+    for(let it=0;it<(opt.deep?2000:30)&&Date.now()-T0<budget&&r.sheets.length>1&&r.sheets.length>Math.ceil(usedK/(UW*UH)-1e-9);it++){const acc={};
+      r.sheets.forEach(sh=>{const u=Math.max(.05,sh.area/(UW*UH));sh.placed.forEach(p=>{(acc[p.id]=acc[p.id]||[]).push(1/u)})});r.un.forEach(p=>{(acc[p.id]=acc[p.id]||[]).push(4)});
+      Object.entries(acc).forEach(([id,a])=>{const m=a.reduce((x,y)=>x+y,0)/a.length;WT[id]=.5*(WT[id]||1)+.5*m*(1+((it*7919+id.length)%5)/50)});
+      r=sequential();runs++;if(better(r,best))best=r}
+    WT={};QS=false}
+  best.sheets.sort((p,q)=>q.area-p.area);best.last=best.sheets.length?best.sheets[best.sheets.length-1].area/(UW*UH):0;
   const res={sheets:best.sheets,un:best.un,fire:best.sheets.length?1-used/(best.sheets.length*m.L*m.W):0,m,runs,need:usedK/(UW*UH),last:best.last};
+  res.deep=!!opt.deep;res.lb=Math.ceil(usedK/(UW*UH)-1e-9);
+  if(opt.deep){const old=PACKC.get(key);if(old&&(old.un.length<res.un.length||(old.un.length===res.un.length&&old.sheets.length<res.sheets.length)))return old}
   if(PACKC.size>400)PACKC.clear();PACKC.set(key,res);return res}
 
 
@@ -690,7 +743,8 @@ function saverTips(mat){R=computeAll(S.mods);const n0=pack(R.parts,mat).sheets.l
   return tips.filter(t=>!seen.has(t.desc)&&seen.add(t.desc)).sort((a,b)=>(a.warn?1:0)-(b.warn?1:0)||ord[a.kind]-ord[b.kind]||b.save-a.save||a.d-b.d).slice(0,8)}
 function saverHTML(mt,P){const sv=SAVER[mt];const pr=+SET.mats[mt].price||0;
   const AR=S.artik||{},arL=(R.parts||[]).filter(p=>p.mat===mt&&AR[p.key]);
-  const head=`<div class="saverbar"><span>Gereken ${fmt(P.need,2)} levha · son levha %${fmt((P.last||0)*100)} dolu${P.runs?" · "+P.runs+" yerleşim denendi":""}</span><span class="btns" style="margin:0">${P.sheets.length>1&&!(sv&&sv.sig===partsSig(R.parts))?`<button class="btn small ${P.last<.45?"":"ghost"}" data-saver="${mt}">${P.last<.45?"Son levhayı kurtar":"Levha azaltma önerisi"}</button>`:""}${P.sheets.length>1?`<button class="btn small ghost" data-whatif="${mt}">Kendim karar vereceğim</button>`:""}</span></div>
+  const head=`<div class="saverbar"><span>Gereken ${fmt(P.need,2)} levha · son levha %${fmt((P.last||0)*100)} dolu${P.runs?" · "+P.runs+" yerleşim denendi":""}</span><span class="btns" style="margin:0">${P.sheets.length>1&&!(sv&&sv.sig===partsSig(R.parts))?`<button class="btn small ${P.last<.45?"":"ghost"}" data-saver="${mt}">${P.last<.45?"Son levhayı kurtar":"Levha azaltma önerisi"}</button>`:""}${P.sheets.length>1?`<button class="btn small ghost" data-whatif="${mt}">Kendim karar vereceğim</button>`:""}${P.sheets.length>(P.lb||0)&&!P.deep?`<button class="btn small ghost" data-deep="${mt}">En iyisini ara</button>`:""}</span></div>
+   ${P.deep?`<div class="note">${P.sheets.length<=P.lb?"✓ En az levha: bu listeden daha azı mümkün değil.":"Derin arama yapıldı; alt sınır "+P.lb+" levha (pratikte her zaman ulaşılamaz)."}</div>`:""}
    ${arL.length?`<div class="note artikn">Artıktan kesilecek (levha planı dışında): ${arL.map(p=>AR[p.key]+" × "+p.id+" "+esc(p.name)+" "+p.a+"×"+p.b+` <button class="btn small ghost" data-artik="${esc(p.key)}:0">geri al</button>`).join(" · ")}</div>`:""}${whatifHTML(mt)}`;
   const lastSh=P.sheets[P.sheets.length-1],lastNote=P.sheets.length>1&&P.last<.3&&lastSh?(()=>{const c={};lastSh.placed.forEach(q=>{c[q.id]=(c[q.id]||0)+1});const ps=(R.parts||[]);
     return `<div class="note">Son levhada yalnız: ${Object.entries(c).map(([id,n])=>{const p=ps.find(x=>x.id===id);return n+" × "+id+(p?" "+esc(p.name)+" "+p.a+"×"+p.b:"")}).join(", ")}. Bunları atölyedeki artık parçadan kesmek de bir levha kazandırır.</div>`})():"";
@@ -2193,6 +2247,7 @@ function bandEdit(p){const e=(t,i,on)=>`<button class="edge ${t} ${on?"on":""}" 
   const ch=p.bl!==p.bl0||p.bs!==p.bs0;
   return `<span class="pbox" title="Kenara dokunarak bant ekle/kaldır">${e("l",0,p.bl>0)}${e("s",0,p.bs>0)}<i></i>${e("s",1,p.bs>1)}${e("l",1,p.bl>1)}</span>${ch?`<small style="color:var(--accent)">değişti</small>`:""}`}
 function bandHTML(p){const on=k=>`<i class="${k?"on":""}"></i>`;return `<span class="bnd">${on(p.bl>0)}${on(p.bl>1)}<span style="width:4px"></span>${on(p.bs>0)}${on(p.bs>1)}</span>`}
+function sheetUse(sh,m){const T=+SET.trim;const a=sh.placed.reduce((q,p)=>q+p.w*p.h,0);return a/((m.L-2*T)*(m.W-2*T))}
 function sheetSVG(sh,m,mat){const fs=m.L/42;
   let s=`<svg viewBox="0 0 ${m.L} ${m.W}" role="img" aria-label="Plaka yerleşimi"><rect x="0" y="0" width="${m.L}" height="${m.W}" fill="var(--bg)" stroke="var(--muted)" stroke-width="6"/>`;
   sh.placed.forEach(p=>{const big=p.w>fs*5&&p.h>fs*2.2;
@@ -2219,7 +2274,7 @@ function renderSonuc(){
   if(S.resTab==="plaka"){h+=`<p class="note">Testere payı ${SET.kerf} mm, kenar temizleme ${SET.trim} mm. Numaralar parça listesindeki No ile aynı.</p>`;
     matsUsed(R.parts).forEach(mt=>{const P=pack(R.parts,mt);
       h+=`<div class="matbar"><span class="sw ${mt!=="sunta"&&mt!=="kapak"?"back":""}" style="${mt==="sunta"?"background:"+bodyFill():mt==="kapak"?"background:"+frontFill():""}"></span>${esc(matLabel(mt))} · ${P.sheets.length} plaka · fire %${fmt(P.fire*100)}</div>`+saverHTML(mt,P);
-      P.sheets.forEach((sh,i)=>{h+=`<div class="sheet"><span class="lbl">Plaka ${i+1} / ${P.sheets.length} · ${P.m.L}×${P.m.W}</span>${sheetSVG(sh,P.m,mt)}</div>`});
+      P.sheets.forEach((sh,i)=>{h+=`<div class="sheet"><span class="lbl">Plaka ${i+1} / ${P.sheets.length} · %${fmt(sheetUse(sh,P.m)*100)} dolu · ${P.m.L}×${P.m.W}</span>${sheetSVG(sh,P.m,mt)}</div>`});
       if(P.un.length)h+=`<div class="note" style="color:var(--warn)">Sığmayan parça: ${P.un.map(u=>u.id).join(", ")}</div>`})}
   if(S.resTab==="hw"){const items=hardware(S.mods,R);const op=S.opener||"kulp";let cat="";const tot=hwCost(items);
     h+=`<div class="panel"><span class="lbl">Kapak ve çekmece nasıl açılsın?</span><div class="chips"><button class="chip" data-opener="kulp" aria-pressed="${op==="kulp"}">Kulplu</button><button class="chip" data-opener="cekbas" aria-pressed="${op==="cekbas"}">Çekbas (bas-aç)</button></div>
@@ -2426,6 +2481,7 @@ const APPVER="2026.10.20b";
 const NEWS=[
  {d:"20 Ekim 2026 · akşam",t:"Levha tasarrufu, müşteri klasörleri, fotoğrafla ölçü",items:[
   ["Daha iyi levha yerleşimi","Her kesim için 190'a yakın yerleşim deneniyor (panel testeresine uygun şerit kesim dahil); en az levhalı olan seçiliyor.",null],
+  ["Kesim optimizasyonu yenilendi","Levhalar sırayla, her biri en dolu olacak şekilde doldurulur; aynı ölçüdeki parçalar aynı şeride dizilir (panel testeresine uygun 3 aşamalı giyotin kesim); kötü dolan levhadaki parçalara öncelik verilip plan tekrar kurulur. 'En iyisini ara' 15 saniyeye kadar arar. Her levhada kendi doluluk oranı yazar.",null],
   ["3D'yi gönder","3D ekranında 'Paylaş' → 'Bağlantı olarak gönder': WhatsApp'ta bağlantıya dokunan müşteri iPhone'da da Android'de de tarayıcıda açıp çevirir. Ayrıca döndürülebilir 3D sayfa (müşteri tarayıcıda çevirir, ölçüler ve kapak aç/kapa içinde), 3D model dosyası (.glb) ya da resim.",null],
   ["Mutfak cihazları","Eviye, bulaşık, buzdolabı ve ocak tesisat şeridinde üst üste gelmez. Pişirme: ankastre fırın + ocak, set üstü ocak ya da fırın boy dolapta; mikrodalga üst dolapta, boy dolapta ya da tezgahta.",null],
   ["Bu modülde ne var?","Düzen'de mutfak dolabına dokunun: dolap, çekmeceli, eviye, bulaşık, ocak, boy dolap, buzdolabı; üst dolapta açık raf, mikrodalga nişi, davlumbaz. Ocak konunca üstü davlumbaz olur.",null],
@@ -2696,9 +2752,9 @@ function flRowHTML(r,i){const u=FL.unit;
 function flResultsHTML(){const parts=flParts();if(!parts.length)return `<div class="note">Ölçü yazdıkça levha yerleşimi burada çıkar.</div>`;
   const band=parts.reduce((q,p)=>q+p.qty*(p.bl*p.a0+p.bs*p.b0),0)/1000;let h=`<div class="stat"><b>${matsUsed(parts).map(k=>pack(parts,k).sheets.length+" "+esc(SET.mats[k].name)).join(" · ")}</b><span>${parts.reduce((q,p)=>q+p.qty,0)} parça · ${fmt(band,1)} m bant · testere payı ${SET.kerf} mm</span></div>`;
   matsUsed(parts).forEach(k=>{const P=pack(parts,k);h+=`<div class="matbar"><span class="sw ${k!=="sunta"&&k!=="kapak"?"back":""}"></span>${esc(SET.mats[k].name)} · ${P.sheets.length} levha · fire %${fmt(P.fire*100)}</div>`;
-    h+=`<div class="saverbar"><span>Gereken ${fmt(P.need,2)} levha · son levha %${fmt((P.last||0)*100)} dolu</span>${P.sheets.length>1?`<button class="btn small ${P.last<.45?"":"ghost"}" data-flsaver="${k}">${P.last<.45?"Son levhayı kurtar":"Levha azaltma önerisi"}</button>`:""}</div>`;
+    h+=`<div class="saverbar"><span>Gereken ${fmt(P.need,2)} levha · son levha %${fmt((P.last||0)*100)} dolu</span><span class="btns" style="margin:0">${P.sheets.length>1?`<button class="btn small ${P.last<.45?"":"ghost"}" data-flsaver="${k}">${P.last<.45?"Son levhayı kurtar":"Levha azaltma önerisi"}</button>`:""}${P.sheets.length>(P.lb||0)&&!P.deep?`<button class="btn small ghost" data-fldeep="${k}">En iyisini ara</button>`:""}</span></div>${P.deep?`<div class="note">${P.sheets.length<=P.lb?"✓ En az levha: daha azı mümkün değil.":"Derin arama yapıldı; alt sınır "+P.lb+" levha."}</div>`:""}`;
     if(FLSAVER&&FLSAVER.mt===k&&FLSAVER.sig===partsSig(parts))h+=FLSAVER.tips.length?`<ul class="saver">${FLSAVER.tips.map((t,i)=>`<li><div><b>−${t.save} levha</b> · ${esc(t.desc)}</div><button class="btn small" data-flsapply="${i}">Uygula</button></li>`).join("")}</ul>`:`<div class="note">1–2 cm'lik kısaltmayla levha düşmüyor.</div>`;
-    P.sheets.forEach((sh,i)=>{h+=`<div class="sheet"><span class="lbl">Levha ${i+1} / ${P.sheets.length} · ${P.m.L}×${P.m.W}</span>${sheetSVG(sh,P.m,k)}</div>`});
+    P.sheets.forEach((sh,i)=>{h+=`<div class="sheet"><span class="lbl">Levha ${i+1} / ${P.sheets.length} · %${fmt(sheetUse(sh,P.m)*100)} dolu · ${P.m.L}×${P.m.W}</span>${sheetSVG(sh,P.m,k)}</div>`});
     if(P.un.length)h+=`<div class="note" style="color:var(--warn)">Levhaya sığmayan: ${[...new Set(P.un.map(u=>u.id))].join(", ")} (desen yönünü kapatıp döndürmeyi deneyin)</div>`});
   return h}
 let flT;function flResults(){clearTimeout(flT);flT=setTimeout(()=>{const el=document.getElementById("flres");if(el)el.innerHTML=flResultsHTML()},250)}
@@ -2726,7 +2782,7 @@ function cutDoc(name,parts){const band=parts.reduce((q,p)=>q+p.qty*(p.bl*p.a0+p.
   matsUsed(parts).forEach(k=>{const P=pack(parts,k);h+=`<h2>${esc(SET.mats[k].name)} · ${SET.mats[k].L}×${SET.mats[k].W} · ${P.sheets.length} levha</h2><table><thead><tr><th>No</th><th>Parça</th><th>Boy</th><th>En</th><th>Adet</th><th>Bant</th><th>Desen</th></tr></thead><tbody>
     ${parts.filter(p=>p.mat===k).map(p=>`<tr${P.un.some(u=>u.id===p.id)?' style="color:#b42318"':""}><td>${p.id}</td><td>${esc(p.name)}${P.un.some(u=>u.id===p.id)?" — levhaya sığmıyor":""}</td><td class="n">${p.a}</td><td class="n">${p.b}</td><td class="n">${p.qty}</td><td><span class="bd">${bandMini(p)}</span> ${[p.bl?p.bl+" boy":"",p.bs?p.bs+" en":""].filter(Boolean).join(" + ")||"—"}</td><td>${p.free?"döner":"⟷"}</td></tr>`).join("")}</tbody></table>`;
     if(P.un.length)h+=`<p style="color:#b42318;font-weight:600">Levhaya sığmayan parça: ${[...new Set(P.un.map(u=>u.id))].join(", ")} — ölçüyü kontrol edin ya da ek yerli yapın.</p>`;
-    P.sheets.forEach((sh,i)=>{h+=`<div class="sh"><b>Levha ${i+1}/${P.sheets.length}</b> · fire %${fmt(P.fire*100)}${sheetSVG(sh,P.m,k).replace(/var\(--ink\)/g,"#16181d").replace(/var\(--muted\)/g,"#5b6170")}</div>`})});
+    P.sheets.forEach((sh,i)=>{h+=`<div class="sh"><b>Levha ${i+1}/${P.sheets.length}</b> · %${fmt(sheetUse(sh,P.m)*100)} dolu, fire %${fmt(100-sheetUse(sh,P.m)*100)}${sheetSVG(sh,P.m,k).replace(/var\(--ink\)/g,"#16181d").replace(/var\(--muted\)/g,"#5b6170")}</div>`})});
   return h+`</main></body></html>`}
 /* ====================== DIŞA AKTARMA ====================== */
 function slug(t){return (t||"proje").toLocaleLowerCase("tr").replace(/ç/g,"c").replace(/ğ/g,"g").replace(/ı/g,"i").replace(/ö/g,"o").replace(/ş/g,"s").replace(/ü/g,"u").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"proje"}
@@ -2862,6 +2918,8 @@ document.addEventListener("click",e=>{
   if(d.fmdel!==undefined){FM.meas.splice(+d.fmdel,1);renderFoto();return}
   if(d.fmuse){const[i,k]=d.fmuse.split(":");const L=fmLen(FM.meas[+i].a,FM.meas[+i].b);if(L==null)return;const v=Math.round(L)/10;S.inp[k]=v;S.mods=[];persist();toast((fmUseTargets().find(t=>t[0]===k)||[,k])[1]+" = "+nv(v)+" cm aktarıldı");return}
   if(d.fmcopy){const t=FM.meas.map((m,i)=>(i+1)+": "+nv(Math.round(fmLen(m.a,m.b)||0)/10)+" cm").join("\n");(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Kopyalandı")).catch(()=>toast("Kopyalanamadı"));return}
+  if(d.deep||d.fldeep){const mt=d.deep||d.fldeep,isF=!!d.fldeep;toast("En iyi yerleşim aranıyor (en fazla 15 sn)…");setTimeout(()=>{const parts=isF?flParts():computeAll(S.mods).parts;const n0=pack(parts,mt).sheets.length;const P=pack(parts,mt,{deep:true});
+      if(isF)renderListe();else{SAVER={};WHATIF={};renderSonuc()}toast(P.sheets.length<n0?"Bulundu: "+(n0-P.sheets.length)+" levha az ("+P.sheets.length+" levha)":"Daha az levhalı yerleşim bulunamadı ("+P.sheets.length+" levha)")},60);return}
   if(d.whatif){const mt=d.whatif;toast("Parçalar deneniyor…");setTimeout(()=>{const W=whatifCalc(mt);W.sig=partsSig(R.parts)+JSON.stringify(S.artik||{});WHATIF[mt]=W;renderSonuc();toast(W.rows.filter(r=>r.a!=null||r.b!=null||r.artik).length+" parçada levha düşürme imkanı")},40);return}
   if(d.artik){const i=d.artik.lastIndexOf(":"),k=d.artik.slice(0,i),n=+d.artik.slice(i+1);S.artik=Object.assign({},S.artik||{});if(n>0)S.artik[k]=n;else delete S.artik[k];const openW=Object.keys(WHATIF);WHATIF={};SAVER={};persist();R=computeAll(S.mods);openW.forEach(mt=>{const W=whatifCalc(mt);W.sig=partsSig(R.parts)+JSON.stringify(S.artik||{});WHATIF[mt]=W});renderSonuc();toast(n>0?"Artıktan kesilecek olarak işaretlendi":"Levha planına geri alındı");return}
   if(d.gomod){const m=S.mods.find(x=>x.label===d.gomod&&!x.gap);if(m){S.step="duzen";S.view=null;S.sel=m.id;S.band=null;S.col=0;if(S.type==="mutfak")S.wall=m.wall;render();window.scrollTo(0,0);toast(m.label+" seçildi; ölçüyü değiştirince levha sayacını izleyin")}return}
