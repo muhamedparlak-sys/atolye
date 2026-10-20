@@ -305,6 +305,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .carousel>.vcard{flex:0 0 92%}.vcard .pic{position:relative;cursor:zoom-in}.vzoomhint{position:absolute;right:10px;top:10px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--muted);z-index:1}
 .carousel .body{padding:10px 12px;gap:6px}.carousel .body p{-webkit-line-clamp:1}
 .fmzoom .sp{flex:1}
+.sharerow{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:12px 14px;font:inherit;cursor:pointer}.sharerow b{font-size:16px}.sharerow span{color:var(--muted);font-size:13px}
 </style>
 </head>
 <body>
@@ -1778,7 +1779,7 @@ function dims3D(boxes){const g=new THREE.Group();const kitchen=S.type==="mutfak"
   const label=(txt,p)=>{const c=document.createElement("canvas");c.width=256;c.height=96;const x=c.getContext("2d");x.fillStyle="rgba(255,255,255,.92)";x.strokeStyle="#C2410C";x.lineWidth=5;
     const r=18;x.beginPath();x.moveTo(r,4);x.arcTo(252,4,252,92,r);x.arcTo(252,92,4,92,r);x.arcTo(4,92,4,4,r);x.arcTo(4,4,252,4,r);x.closePath();x.fill();x.stroke();
     x.fillStyle="#9A3412";x.font="bold 58px Arial";x.textAlign="center";x.textBaseline="middle";x.fillText(txt,128,50);
-    const tx=new THREE.CanvasTexture(c);const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,depthTest:false,transparent:true}));sp.scale.set(U*1.25,U*.47,1);sp.position.copy(p);sp.renderOrder=20;g.add(sp)};
+    const tx=new THREE.CanvasTexture(c);const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,depthTest:false,transparent:true}));sp.scale.set(U*1.25,U*.47,1);sp.position.copy(p);sp.renderOrder=20;sp.userData.t=txt;g.add(sp)};
   const line=(a,b)=>{const L=new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),lm);L.renderOrder=19;g.add(L)};
   const dim=(a,b,txt,tick)=>{line(a,b);const tk=tick.clone().multiplyScalar(U*.18);[a,b].forEach(p=>line(p.clone().sub(tk),p.clone().add(tk)));label(txt,a.clone().add(b).multiplyScalar(.5).add(tick.clone().multiplyScalar(U*.45)))};
   const frame=(m)=>{const w=walls[m.wall||"A"];if(!w)return null;const p0=toPlan(w,m.x,0),p1=toPlan(w,m.x+m.W,0),pf=toPlan(w,m.x,m.D||1);
@@ -1794,7 +1795,54 @@ function dims3D(boxes){const g=new THREE.Group();const kitchen=S.type==="mutfak"
     const rx=x1+U*.6;dim(F.P(rx,maxD,bot),F.P(rx,maxD,top),cm(top-bot),F.al.clone());
     // derinlik: sağ uçta üstte
     const mr=ms.reduce((a,m)=>m.x+m.W>a.x+a.W?m:a);dim(F.P(x1+U*.2,0,mr.mount+mr.H+U*.3),F.P(x1+U*.2,mr.D,mr.mount+mr.H+U*.3),cm(mr.D),up)});
-  return g}
+  g.userData.U=U;return g}
+function dimsData(boxes){const g=dims3D(boxes),out={lines:[],labels:[],U:g.userData.U||300};const r=v=>Math.round(v);
+  g.children.forEach(o=>{if(o.isLine){const a=o.geometry.attributes.position.array;out.lines.push([r(a[0]),r(a[1]),r(a[2]),r(a[3]),r(a[4]),r(a[5])])}else if(o.isSprite)out.labels.push([o.userData.t,r(o.position.x),r(o.position.y),r(o.position.z)])});return out}
+function boxesData(bs){return bs.map(b=>[Math.round(b.x0),Math.round(b.x1),Math.round(b.y0),Math.round(b.y1),Math.round(b.z0),Math.round(b.z1),b.col,b.op!=null?b.op:1,b.kind==="wall"?1:0])}
+function viewerHTML(){R=computeAll(S.mods);const v3=S.v3||{};const cl=sceneBoxes(S.mods,R,{open:false,walls:v3.walls!==false}),op=sceneBoxes(S.mods,R,{open:true,walls:v3.walls!==false});
+  const data={name:S.name,closed:boxesData(cl),open:boxesData(op),dims:dimsData(cl),date:new Date().toLocaleDateString("tr-TR")};
+  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>${esc(S.name)} — 3D</title>
+<style>html,body{margin:0;height:100%;font-family:Arial,Helvetica,sans-serif;background:#f4f2ee;overflow:hidden}#c{position:fixed;inset:0}#bar{position:fixed;left:0;right:0;top:0;display:flex;gap:6px;padding:10px 12px;align-items:center;flex-wrap:wrap;background:linear-gradient(#f4f2eeee,#f4f2ee00)}#bar b{flex:1;font-size:17px;color:#16181d}
+button{border:1px solid #c9ccd3;background:#fff;color:#16181d;border-radius:999px;padding:8px 13px;font:600 13px Arial}button.on{background:#2747A6;color:#fff;border-color:#2747A6}#hint{position:fixed;bottom:10px;left:0;right:0;text-align:center;color:#6b6f78;font-size:12px}#err{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:30px;text-align:center;color:#444}</style></head>
+<body><div id="c"></div><div id="bar"><b>${esc(S.name)}</b><button id="bd" class="on">Ölçüler</button><button id="bo">Kapaklar kapalı</button><button id="bf">Önden</button><button id="bp" class="on">Perspektif</button></div><div id="hint">Döndürmek için sürükleyin · iki parmakla yakınlaştırın · ${data.date}</div><div id="err">3D için internet bağlantısı gerekiyor. Bağlanıp sayfayı yenileyin.</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>
+<script>const D=${JSON.stringify(data)};
+if(!window.THREE||!THREE.OrbitControls){document.getElementById("err").style.display="flex"}else{
+const el=document.getElementById("c"),rd=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});rd.setPixelRatio(Math.min(devicePixelRatio||1,2));el.appendChild(rd.domElement);
+const sc=new THREE.Scene();sc.background=new THREE.Color("#f4f2ee");const cam=new THREE.PerspectiveCamera(38,1,20,200000),ct=new THREE.OrbitControls(cam,rd.domElement);ct.enableDamping=true;ct.maxPolarAngle=Math.PI*.52;
+sc.add(new THREE.HemisphereLight(0xffffff,0x8a8172,.85));const dl=new THREE.DirectionalLight(0xffffff,.55);dl.position.set(3000,6000,5000);sc.add(dl);
+const fl=new THREE.Mesh(new THREE.PlaneGeometry(40000,40000),new THREE.MeshLambertMaterial({color:0xDCD7CC}));fl.rotation.x=-Math.PI/2;fl.position.y=-1;sc.add(fl);
+let G=null,DG=null;const em=new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true,opacity:.28}),mc={};const mat=(c,o)=>mc[c+o]||(mc[c+o]=new THREE.MeshLambertMaterial({color:new THREE.Color(c),transparent:o<1,opacity:o}));
+function build(list){if(G)sc.remove(G);G=new THREE.Group();list.forEach(b=>{const g=new THREE.BoxGeometry(b[1]-b[0],b[3]-b[2],b[5]-b[4]),m=new THREE.Mesh(g,mat(b[6],b[7]));m.position.set((b[0]+b[1])/2,(b[2]+b[3])/2,(b[4]+b[5])/2);G.add(m);if(!b[8]){const e=new THREE.LineSegments(new THREE.EdgesGeometry(g),em);e.position.copy(m.position);G.add(e)}});sc.add(G)}
+function dims(){DG=new THREE.Group();const lm=new THREE.LineBasicMaterial({color:0xC2410C,depthTest:false,transparent:true}),U=D.dims.U;
+ D.dims.lines.forEach(l=>{const L=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(l[0],l[1],l[2]),new THREE.Vector3(l[3],l[4],l[5])]),lm);L.renderOrder=19;DG.add(L)});
+ D.dims.labels.forEach(([t,x,y,z])=>{const c=document.createElement("canvas");c.width=256;c.height=96;const g=c.getContext("2d");g.fillStyle="rgba(255,255,255,.92)";g.strokeStyle="#C2410C";g.lineWidth=5;g.beginPath();g.moveTo(18,4);g.arcTo(252,4,252,92,18);g.arcTo(252,92,4,92,18);g.arcTo(4,92,4,4,18);g.arcTo(4,4,252,4,18);g.closePath();g.fill();g.stroke();g.fillStyle="#9A3412";g.font="bold 58px Arial";g.textAlign="center";g.textBaseline="middle";g.fillText(t,128,50);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));sp.scale.set(U*1.25,U*.47,1);sp.position.set(x,y,z);sp.renderOrder=20;DG.add(sp)});sc.add(DG)}
+function fit(front){const bb=new THREE.Box3().setFromObject(G),c=bb.getCenter(new THREE.Vector3()),s=bb.getSize(new THREE.Vector3()),asp=innerWidth/innerHeight,t=Math.tan(19*Math.PI/180),r=Math.max(s.y/(2*t),Math.max(s.x,s.z)/(2*t*asp))*1.25+Math.max(s.x,s.z)*.5;if(front)cam.position.set(c.x,c.y+r*.05,c.z+r*1.35);else cam.position.set(c.x+r*.55,c.y+r*.38,c.z+r*.95);ct.target.copy(c);ct.update()}
+const size=()=>{rd.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener("resize",size);size();
+let open=false;build(D.closed);dims();fit(false);
+(function loop(){ct.update();rd.render(sc,cam);requestAnimationFrame(loop)})();
+const $=i=>document.getElementById(i);
+$("bd").onclick=()=>{DG.visible=!DG.visible;$("bd").classList.toggle("on",DG.visible)};
+$("bo").onclick=()=>{open=!open;build(open?D.open:D.closed);$("bo").textContent=open?"Kapaklar açık":"Kapaklar kapalı";$("bo").classList.toggle("on",open)};
+$("bf").onclick=()=>{fit(true);$("bf").classList.add("on");$("bp").classList.remove("on")};$("bp").onclick=()=>{fit(false);$("bp").classList.add("on");$("bf").classList.remove("on")}}
+<\/script></body></html>`}
+function loadGLTFExp(){return new Promise((res,rej)=>{if(window.THREE&&THREE.GLTFExporter)return res();const e=document.createElement("script");e.src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js";e.onload=res;e.onerror=()=>rej(new Error("yüklenemedi"));document.head.appendChild(e)})}
+async function glbBlob(){await load3D();await loadGLTFExp();R=computeAll(S.mods);const bs=sceneBoxes(S.mods,R,{open:false,walls:false});const sc=new THREE.Scene(),g=new THREE.Group();g.scale.set(.001,.001,.001);const mc={};
+  bs.forEach(b=>{if(b.kind==="wall")return;const c=b.col;const m=mc[c]||(mc[c]=new THREE.MeshStandardMaterial({color:new THREE.Color(c),roughness:.8,metalness:0}));const ms=new THREE.Mesh(new THREE.BoxGeometry(b.x1-b.x0,b.y1-b.y0,b.z1-b.z0),m);ms.position.set((b.x0+b.x1)/2,(b.y0+b.y1)/2,(b.z0+b.z1)/2);ms.name=(b.label?b.label+" ":"")+(b.name||"");g.add(ms)});
+  sc.add(g);return new Promise((res,rej)=>{try{new THREE.GLTFExporter().parse(sc,r=>res(new Blob([r],{type:"model/gltf-binary"})),{binary:true})}catch(e){rej(e)}})}
+async function share3D(kind){const nm=slug(S.name);let blob,fn;
+  try{if(kind==="png"){if(!T3){toast("Önce 3D görünümü açın");return}blob=await new Promise(r=>T3.renderer.domElement.toBlob(r,"image/png"));fn=nm+"-3d.png"}
+    else if(kind==="html"){await load3D();blob=new Blob([viewerHTML()],{type:"text/html"});fn=nm+"-3d.html"}
+    else{toast("3D model hazırlanıyor…");blob=await glbBlob();fn=nm+"-3d.glb"}}catch(e){toast("Hazırlanamadı: internet bağlantısını kontrol edin");return}
+  const file=new File([blob],fn,{type:blob.type});
+  if(canShareFile(file)){try{await navigator.share({files:[file],title:S.name+" — 3D"});return}catch(e){if(e&&e.name==="AbortError")return}}
+  saveFile(blob,fn)}
+function share3DSheet(){openSheet(`<div class="ed-head"><b>3D'yi paylaş</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+  <button class="sharerow" data-v3exp="html"><b>Döndürülebilir 3D sayfa</b><span>Tek dosya (.html). Müşteri tarayıcıda açıp parmakla çevirir; ölçüler ve kapak aç/kapa içinde. Açmak için internet gerekir.</span></button>
+  <button class="sharerow" data-v3exp="glb"><b>3D model dosyası (.glb)</b><span>Standart 3D dosya: Android'in 3D görüntüleyicisi, Windows 3D Görüntüleyici, Mac ve SketchUp/Blender açar. Ölçüler gerçek boyutta (metre).</span></button>
+  <button class="sharerow" data-v3exp="png"><b>Resim (.png)</b><span>Ekrandaki görünüş; her telefonda açılır.</span></button>
+  <div class="note">Telefonda paylaşım menüsü açılırsa doğrudan WhatsApp'a gönderebilirsiniz; açılmazsa dosya indirilir, oradan gönderin. iPhone'da HTML dosyasını WhatsApp içinden değil, "Dosyalar"a kaydedip Safari ile açın.</div>`)}
 function partIds(mod,names){if(!R)return[];return R.parts.filter(p=>names.some(n=>p.name.startsWith(n))&&(!mod||p.mods.includes(mod.label))).map(p=>p.id+" "+p.name+" ×"+p.qty)}
 function montajText(st,m){const hw=m?hardware([m],R):hardware(S.mods,R),q=n=>{const i=hw.find(i=>i.name.startsWith(n)&&!i.off);return i?fmt(i.qty,i.unit==="m"?1:0)+" "+i.unit:null};const F=floorOf(),bk=backOf();
   return [
@@ -1825,7 +1873,7 @@ function render3D(){relabel();R=computeAll(S.mods);document.querySelector("main"
   const used=matsUsed(R.parts),packs=used.map(k=>pack(R.parts,k));
   $("#view").innerHTML=`
    <div class="dz-top"><button class="chip" data-v3="dims" aria-pressed="${S.v3.dims!==false}">Ölçüler</button><button class="chip" data-v3="open" aria-pressed="${S.v3.open}">Kapaklar ${S.v3.open?"açık":"kapalı"}</button>${S.type==="mutfak"?`<button class="chip" data-v3="walls" aria-pressed="${S.v3.walls}">Duvarlar</button>`:""}<span class="sp"></span>
-    <button class="icobtn" data-v3shot="1" aria-label="Görüntüyü resim olarak al"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M7 10l5 5 5-5M5 19h14"/></svg></button></div>
+    <button class="chip" data-v3shot="1" aria-label="3D'yi paylaş ya da indir">Paylaş</button><button class="icobtn" data-v3shot="1" aria-label="3D'yi indir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M7 10l5 5 5-5M5 19h14"/></svg></button></div>
    <div class="dz-draw" id="v3d"><div class="hint" style="margin:auto">3D yükleniyor…</div></div>
    <div class="dz-bottom"><div class="sumrow"><span class="sumbtn">${S.mods.filter(m=>!m.gap).length} gövde</span><span class="sumbtn">${packs.map((P,i)=>P.sheets.length+" "+({sunta:"gövde",kapak:"kapak"}[used[i]]||"arkalık")).join(" · ")} plaka</span><button class="sumbtn" data-rtgo="teklif">${quote().rounded>0?fmt(quote().rounded)+" ₺":"Teklif"}</button></div>
    <div class="chips" style="justify-content:center">${[["persp","Perspektif"],["front","Önden"],["side","Yandan"],["top","Üstten"]].map(([k,l])=>`<button class="chip sm" data-v3cam="${k}" aria-pressed="${(S.v3.cam||"persp")===k}">${l}</button>`).join("")}</div>
@@ -2367,6 +2415,7 @@ const APPVER="2026.10.20b";
 const NEWS=[
  {d:"20 Ekim 2026 · akşam",t:"Levha tasarrufu, müşteri klasörleri, fotoğrafla ölçü",items:[
   ["Daha iyi levha yerleşimi","Her kesim için 190'a yakın yerleşim deneniyor (panel testeresine uygun şerit kesim dahil); en az levhalı olan seçiliyor.",null],
+  ["3D'yi gönder","3D ekranında 'Paylaş': döndürülebilir 3D sayfa (müşteri tarayıcıda çevirir, ölçüler ve kapak aç/kapa içinde), 3D model dosyası (.glb) ya da resim.",null],
   ["Mutfak cihazları","Eviye, bulaşık, buzdolabı ve ocak tesisat şeridinde üst üste gelmez. Pişirme: ankastre fırın + ocak, set üstü ocak ya da fırın boy dolapta; mikrodalga üst dolapta, boy dolapta ya da tezgahta.",null],
   ["Bu modülde ne var?","Düzen'de mutfak dolabına dokunun: dolap, çekmeceli, eviye, bulaşık, ocak, boy dolap, buzdolabı; üst dolapta açık raf, mikrodalga nişi, davlumbaz. Ocak konunca üstü davlumbaz olur.",null],
   ["Öneri ayrıntısı","Öneri kartına dokunun: tüm duvarlar büyük ve yakınlaştırılabilir, levha, fiyat, cihazlar ve uyarılar tek ekranda.",null],
@@ -2912,7 +2961,8 @@ document.addEventListener("click",e=>{
   if(d.msel){S.mSel=d.msel;if(T3)T3.fitted=false;persist();renderMontaj();return}
   if(d.v3){if(d.v3==="dims")S.v3.dims=S.v3.dims===false;else S.v3[d.v3]=!S.v3[d.v3];persist();render3D();return}
   if(d.v3cam){S.v3=S.v3||{};S.v3.cam=d.v3cam;S.v3.camGo=true;render3D();return}
-  if(d.v3shot&&T3){T3.renderer.domElement.toBlob(b=>{if(b)saveFile(b,slug(S.name)+"-3d.png")},"image/png");return}
+  if(d.v3shot){share3DSheet();return}
+  if(d.v3exp){closeSheet();share3D(d.v3exp);return}
   if(d.sheet){({notes:notesSheet,back:backSheet,plan:planSheet,color:colorSheet,tzu:tzuSheet,tac:tacSheet})[d.sheet]();return}
   if(d.tact){tacOf().type=d.tact;const n=applyTac(S.mods);S.sel=null;S.band=null;persist();renderDuzen();tacSheet();if(n.length)toast(n[0]);return}
   if(d.tacy){tacOf().yan=d.tacy;applyTac(S.mods);persist();renderDuzen();tacSheet();return}
