@@ -14,6 +14,33 @@ Duvardaki kolon ve tavandaki kiriş Ölçü adımında girilir; kolonun önü bo
 
 Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf aralığı, kapak genişliği (60 cm üstü otomatik çift kapak), kapak boyu (220 cm üstü tavan dolabı), tezgah 85–95 cm, menteşe sayısı, raf sehimi.
 
+## Hızlı başlangıç
+
+- **Tasarımla:** Ne? → türü seç → Ölçü → Öneri'den bir düzen seç → Düzen'de göze dokunup ayarla → Kesim sekmesinden listeyi kesimhaneye, teklifi müşteriye gönder.
+- **Sadece fiyat:** Ne yapıyoruz? ekranında *Hızlı fiyat*: dolap ölçüsü, bölme/çekmece/raf sayısı → levha sayısı, yerleşim ve fiyat.
+- **Ölçüler hazırsa:** *Ölçüden levha planı*: boy × en × adet yaz → levha yerleşimi → PDF / Excel / metin olarak fasoncuya gönder.
+- Uygulama içinde: Ne yapıyoruz? ekranındaki **? Nasıl kullanılır** ve **★ Yenilikler**.
+
+## Yenilikler
+
+**20 Ekim 2026**
+- Hızlı fiyat (dolap ölçüsüyle levha + fiyat)
+- Ölçü tipi: dolabın kendisi ya da duvar/niş (montaj payı düşülür)
+- Eviye gider önünde sabit kalır; diğer cihazlar kayar, köşede kör köşe bırakılır
+- Mutfak yenileme: eviyesiz sıra, mevcut tezgah, üst dolapsız
+- Ölçüden levha planı (PDF / CSV / metin)
+- Taç (kuşaklı, profilli, tavana kapama), kapağı dikeyde bölme, tavana kadar iki kademeli üst dolap (LED payı)
+- Uygulama içi rehber ve yenilikler
+
+**18 Ekim 2026**
+- Bölmeler içine göre genişlikte; ara dikme parmakla kaydırılır
+- Tezgah üstü: niş rafı, cihaz dolabı, askı rayı, kaplama
+- Delik planı (konfirmat / minifix / vida) ve parça etiketleri
+
+**17 Ekim 2026**
+- Fiyat kütüphanesi, montaj şeması, 3D görünüm
+- PVC bant kenar düzenleme, süpürgelik payı, ayak tipleri, hırdavat aksesuarları
+
 ## Varsayılanlar
 
 - Gövde: Suntalam 18 mm, plaka 2800 × 2100 mm

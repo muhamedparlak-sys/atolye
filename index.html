@@ -275,6 +275,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .qhtot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0}.qhtot>div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
 .qhtot small{color:var(--muted);font-size:12px}.qhtot b{font:700 22px var(--f-display);letter-spacing:.01em}
 .qtab{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}.qtab td{padding:5px 2px;border-bottom:1px solid var(--line)}.qtab td.num{text-align:right;font-family:var(--f-mono)}
+.helprow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:4px 0 8px}
+.guide summary{cursor:pointer;font-size:16px}.guide ol{margin:4px 0 0;padding-left:0;list-style:none;counter-reset:g;display:grid;gap:10px}
+.guide ol li{counter-increment:g;display:grid;grid-template-columns:28px 1fr;column-gap:8px;font-size:14px;line-height:1.4}.guide ol li::before{content:counter(g);grid-row:1/3;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 13px var(--f-mono);display:grid;place-items:center}
+.guide ol li span{color:var(--muted)}
+.news ul{margin:0;padding-left:18px;display:grid;gap:8px;font-size:14px;line-height:1.4}.news .prow{justify-content:space-between;align-items:center}
+.wsteps{margin:4px 0;padding-left:20px;display:grid;gap:6px;font-size:15px}
 </style>
 </head>
 <body>
@@ -1607,7 +1613,7 @@ function renderSteps(){const ci=stepIdx();
 function render(){
   renderSteps();$("#projName").value=S.name;closeSheet&&document.getElementById("sheet")?.remove();
   const main=document.querySelector("main");main.className="";main.scrollTop=0;
-  if(S.view==="ayar")return renderAyar();if(S.view==="lib")return renderLib();if(S.view==="liste")return renderListe();if(S.view==="hizli")return renderHizli();if(S.view==="proj")return renderProj();
+  if(S.view==="ayar")return renderAyar();if(S.view==="lib")return renderLib();if(S.view==="liste")return renderListe();if(S.view==="hizli")return renderHizli();if(S.view==="yardim")return renderYardim();if(S.view==="proj")return renderProj();
   if(S.step!=="montaj"&&S.step!=="d3"&&T3){T3.dispose();T3=null}
   ({tur:renderTur,olcu:renderOlcu,oneri:renderOneri,duzen:renderDuzen,sonuc:renderSonuc,montaj:renderMontaj,d3:render3D})[S.step]();
   persist();
@@ -1620,6 +1626,7 @@ function renderTur(){
   <button class="tcard wide qhentry" data-view="hizli"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="5" width="32" height="38" rx="2"/><path d="M24 5v38M20 22v5M28 22v5M8 34h32"/></svg><div style="display:flex;flex-direction:column;gap:2px"><b>Hızlı fiyat</b><span>Dolap ölçüsünü yaz, çekmece-raf sayısını seç: levha sayısı, yerleşim ve fiyat hemen</span></div></button>
   <div class="types">${Object.entries(TYPES).map(([k,v])=>`<button class="tcard ${k==="mutfak"?"wide":""}" data-type="${k}" aria-pressed="${S.type===k}">${ICONS[k]}<div style="display:flex;flex-direction:column;gap:2px"><b>${v.label}</b><span>${v.desc}</span></div></button>`).join("")}</div>
   <p class="hint">Türü seçin; ölçüyü girince uygulama hazır düzenler önerecek.</p>
+  <div class="helprow"><button class="btn small ghost" data-helpopen="rehber">? Nasıl kullanılır</button><button class="btn small ghost" data-helpopen="yeni">★ Yenilikler</button></div>
   <button class="tcard wide" data-view="liste"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="9" width="38" height="30" rx="2"/><path d="M5 22h20M25 9v30M25 28h18"/></svg><div style="display:flex;flex-direction:column;gap:2px"><b>Ölçüden levha planı</b><span>Tasarım yok, ölçüleri ben yazacağım: levha yerleşimi ve fasoncuya kesim listesi</span></div></button>`;
   setBar(null,"olcu","Ölçülere geç",!S.type);
 }
@@ -1943,7 +1950,7 @@ function renderAyar(){
     <div class="grid3"><label class="field"><span class="k">Plaka boyu mm</span><input type="number" id="m-${m}-L" data-mat="${m}:L" value="${SET.mats[m].L}"></label>
     <label class="field"><span class="k">Plaka eni mm</span><input type="number" id="m-${m}-W" data-mat="${m}:W" value="${SET.mats[m].W}"></label>
     <label class="field"><span class="k">Plaka fiyatı ₺</span><input type="number" id="m-${m}-price" data-mat="${m}:price" value="${SET.mats[m].price}"></label></div></div>`;
-  $("#view").innerHTML=`<h1>Atölye ayarları</h1><p class="lead">Bunlar tüm projelerde geçerlidir.</p>${mf("sunta")}${mf("kapak")}${mf("arka8")}${mf("arka3")}
+  $("#view").innerHTML=`<h1>Atölye ayarları</h1><p class="lead">Bunlar tüm projelerde geçerlidir.</p><div class="helprow" style="justify-content:flex-start"><button class="btn small ghost" data-helpopen="rehber">? Nasıl kullanılır</button><button class="btn small ghost" data-helpopen="yeni">★ Yenilikler · ${APPVER}</button></div>${mf("sunta")}${mf("kapak")}${mf("arka8")}${mf("arka3")}
    <div class="panel"><div class="grid3">${[["t","Gövde kalınlığı mm"],["bandT","Bant kalınlığı (kesimden düş) mm"],["kerf","Testere payı mm"],["trim","Kenar temizleme mm"],["gap","Kapak boşluğu mm"],["drawerMin","En alçak çekmece mm"],["bandPrice","Bant ₺/m"]].map(([k,l])=>`<label class="field"><span class="k">${l}</span><input type="number" id="set-${k}" data-set="${k}" value="${SET[k]}"></label>`).join("")}</div>
    <label class="check"><input type="checkbox" id="grain" ${SET.grain?"checked":""}><span>Suntalam desen yönü sabit<small>Parçalar plakada döndürülmez</small></span></label></div>`;
   $("#bar").innerHTML=`<button class="btn" data-back="1">Tamam</button>`;
@@ -2115,6 +2122,82 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
    <div class="lbgrid">${L.slice(0,24).map(labelCell).join("")}</div>${L.length>24?`<div class="note">İlk 24 etiket gösteriliyor; dosyada hepsi var.</div>`:""}`}
 
 
+
+/* ====================== YARDIM · YENİLİKLER ====================== */
+const APPVER="2026.10.20";
+const NEWS=[
+ {d:"20 Ekim 2026",t:"Hızlı fiyat ve mutfak yenileme",items:[
+  ["Hızlı fiyat","Dolabın kendi ölçüsünü yazın, bölme-çekmece-raf sayısını seçin: levha sayısı, yerleşim planı ve fiyat hemen çıkar. Birden çok dolap tek teklifte toplanır.","hizli"],
+  ["Dolap mı duvar mı?","Gardırop ve diğer mobilyalarda girdiğiniz ölçünün dolabın kendisi mi, duvar arası mı olduğunu seçin; duvar seçilirse montaj payı düşülür.",null],
+  ["Eviye sabit","Eviyeyi giderin önüne çektiğinizde artık o yerinde kalır; buzdolabı ve diğer cihazlar kenara kayar. Köşeye yaklaşınca köşe dolabı yerine kör köşe bırakılır.",null],
+  ["Mutfak yenileme","Eviyesiz dolap sırası (karşı duvar, kiler), 'Tezgah mevcut, değişmeyecek' ve 'Üst dolap yapılmayacak' seçenekleri: Mutfak → Ölçü → Cihaz.",null],
+  ["Ölçüden levha planı","Tasarım yapmadan parça ölçülerini yazın; levha yerleşimi çıkar, fasoncuya PDF, Excel ya da mesaj olarak gönderin.","liste"],
+  ["Taç","Düzen ekranında 'Taç': kuşaklı taç, profilli taç ya da tavana kapama. Parçalar kesim listesine eklenir.",null],
+  ["Kapağı bölme","Gövdeye dokunun → 'Kapak: Tek boy / 2 parça / 3 parça'. Ayrım yüksekliği yerden cm olarak girilebilir.",null],
+  ["İki kademeli üst dolap","Mutfakta üst dolap tavana kadar iki sıra; üst kademe derin yapılırsa altına LED çekilir.",null]]},
+ {d:"18 Ekim 2026",t:"Atölye çıktıları",items:[
+  ["Bölme genişlikleri","Askı bölmesi geniş, raf bölmesi dar gelir. Gövdeye dokunup ara dikmeyi parmakla kaydırın.",null],
+  ["Tezgah üstü","Niş rafı, cihaz dolabı, askı rayı ve tezgah arası kaplama (mutfak ve kahve köşesi).",null],
+  ["Delik planı","Konfirmat, minifix ya da vida seçin; her parçanın delikleri ölçülü çizilir, yazdırılır.",null],
+  ["Parça etiketleri","A4 etiket kağıdına ya da termal yazıcıya: parça no, ölçü, plaka, bant kenarları, delik kodu.",null]]},
+ {d:"17 Ekim 2026",t:"Fiyat ve montaj",items:[
+  ["Fiyat kütüphanesi","Plaka, bant, ebatlama ve hırdavat fiyatlarını bir kez girin (üstteki ₺); her projede kullanılır.","lib"],
+  ["Montaj şeması ve 3D","Kesimden sonra adım adım montaj ve parmakla çevrilen 3D görünüm.",null],
+  ["Bant, süpürgelik, ayak","Her kenarın bandı tek tek açılıp kapanır; süpürgelik payı ve plastik/metal ayak seçilir.",null]]},
+ {d:"Daha önce",t:"Temel özellikler",items:[
+  ["Mutfak planlayıcı","Oda ölçüsü, kapı ve pencereden I/L/U plan önerileri; kapı ve kapak açılma alanları denetlenir.",null],
+  ["Ergonomi uyarıları","Raf aralığı, askı boyu, kapak boyu ve menteşe sayısı standartlara göre denetlenir.",null],
+  ["Teklif","İşçilik, kâr, nakliye ve KDV ile müşteriye gönderilecek teklif metni.",null]]}];
+const GUIDE=[
+ {k:"ilk",t:"İlk projeniz (ör. gardırop)",go:{type:"gardirop"},steps:[
+  ["Ne?","Mobilya türünü seçin: gardırop, vestiyer, kitaplık, mutfak…"],
+  ["Ölçü","En, boy, derinliği cm yazın. 'Dolabın kendisi' mi 'Duvar / niş' mi seçin. Kolon ya da kiriş varsa ekleyin."],
+  ["Öneri","Uygulama 3 hazır düzen önerir; yana kaydırıp birini seçin."],
+  ["Düzen","Çizimde bir göze dokunun: ölçüsü ve ayarları açılır (raf sayısı, askı, çekmece, kapak). Bölme genişliğini ara dikmeyi kaydırarak değiştirin. Alttaki düğmelerle renk, arkalık, taç seçin; uyarıları 'Usta notları'nda okuyun."],
+  ["Kesim","Parça listesi, plaka yerleşimi, etiket, delik planı, hırdavat ve teklif burada. 'Gönder' sekmesinden kesimhaneye ve müşteriye gönderin."],
+  ["Montaj ve 3D","Montaj sırasını adım adım görün, en sonda 3D'de kontrol edin."]]},
+ {k:"mutfak",t:"Mutfak",go:{type:"mutfak"},steps:[
+  ["İki yol","'Odayı tarif et': oda ölçüsü, kapı ve pencere girersiniz, uygulama plan önerir. 'Planı ben seçerim': I/L/U ve duvar boylarını siz girersiniz."],
+  ["Tesisat","Planı ben seçerim → Tesisat: eviyeyi pis su giderinin önüne, buzdolabı ve fırını yerine parmakla kaydırın."],
+  ["Cihaz","Bulaşık makinesi, fırın, buzdolabı, eviye var mı; tezgah mevcut mu, üst dolap yapılacak mı; üst dolap tavana kadar iki kademe mi?"],
+  ["Düzen","Duvar düğmeleriyle (A, B, C) duvarlar arasında geçin. 'Tezgah üstü' ile niş rafı ya da cihaz dolabı ekleyin."]]},
+ {k:"hizli",t:"Hızlı fiyat",go:{view:"hizli"},steps:[
+  ["Aç","Ne yapıyoruz? ekranında en üstteki 'Hızlı fiyat'."],
+  ["Dolap ekle","Türü seçin, ölçüyü yazın, bölme-çekmece-raf sayısını +/− ile ayarlayın. Birden fazla dolap için '+ Dolap ekle'."],
+  ["Sonuç","Fiyat, levha sayısı ve yerleşim anında güncellenir. 'Teklifi kopyala' ile müşteriye, 'Kesim planı' ile fasoncuya gönderin; ayrıntı gerekirse 'Düzen'de aç'."]]},
+ {k:"liste",t:"Ölçüden levha planı",go:{view:"liste"},steps:[
+  ["Aç","Ne yapıyoruz? ekranının altındaki 'Ölçüden levha planı' ya da Projeler sayfası."],
+  ["Ölçü yaz","Her parçaya boy, en, adet; bantlı kenarlara parçanın resminde dokunun. Hızlı giriş için 'Metinden hızlı ekle': her satıra '2180 580 2 yan'."],
+  ["Gönder","Levha yerleşimi altta çıkar. Kesim planı (PDF), Excel (CSV) ya da metin olarak fasoncuya gönderin."]]},
+ {k:"fiyat",t:"Fiyatlar ve teklif",go:{view:"lib"},steps:[
+  ["Fiyat kütüphanesi","Üstteki ₺ düğmesi: plaka, bant, ebatlama, menteşe, ray, kulp fiyatlarını bir kez girin. '…' olan kalemlerde fiyat tüm boylara uygulanır."],
+  ["Teklif","Kesim → Teklif: işçilik, kâr, nakliye, KDV ve yuvarlama. Bu oranlar tüm projelerde ortaktır."],
+  ["Yedek","Projeler sayfasından 'Yedeği indir': tüm projeler, fiyatlar ve listeler tek dosyada. Telefon değiştirirken geri yükleyin."]]},
+ {k:"atolye",t:"Kesim, etiket, delik",go:null,steps:[
+  ["Etiket","Kesim → Etiket: A4 24'lü kağıda yazdırın; parçalar kesimden çıkınca plaka sırasıyla yapıştırın."],
+  ["Delik","Kesim → Delik: bağlantı tipini seçin (sahada konfirmat pratik). Her parçanın delikleri ölçülü çizilir; yazdırıp parçanın yanında tutun."],
+  ["Montaj","Montaj şeması hangi parçanın hangi sırayla takılacağını gösterir."]]},
+ {k:"ipucu",t:"İpuçları",go:null,steps:[
+  ["Kayıt","Her değişiklik telefona kendiliğinden kaydedilir. Projeyi adıyla saklamak için klasör simgesi → Kaydet."],
+  ["Ana ekrana ekle","Tarayıcının Paylaş menüsünden 'Ana Ekrana Ekle' ile uygulama gibi açın."],
+  ["Uyarılar","Turuncu ünlem: standart dışı ölçü. Dokununca nedenini ve önerilen düzeltmeyi gösterir."]]}];
+function newsHTML(n){return NEWS.slice(0,n||NEWS.length).map((v,vi)=>`<div class="panel news"><div class="prow"><b>${esc(v.t)}</b><span class="tag">${esc(v.d)}</span></div>
+  <ul>${v.items.map(([a,b,go])=>`<li><b>${esc(a)}.</b> ${esc(b)}${go?` <button class="btn small ghost" data-helpgo="${go}">Aç</button>`:""}</li>`).join("")}</ul></div>`).join("")}
+function renderYardim(){const tab=S.helpTab||"rehber";document.querySelector("main").className="";
+  $("#view").innerHTML=`<h1 class="c">${tab==="rehber"?"Nasıl kullanılır":"Yenilikler"}</h1>
+   <div class="chips"><button class="chip" data-helptab="rehber" aria-pressed="${tab==="rehber"}">Nasıl kullanılır</button><button class="chip" data-helptab="yeni" aria-pressed="${tab==="yeni"}">Yenilikler</button></div>
+   ${tab==="rehber"?GUIDE.map((g,gi)=>`<details class="panel guide" ${gi===0?"open":""}><summary><b>${esc(g.t)}</b></summary>
+     <ol>${g.steps.map(([a,b])=>`<li><b>${esc(a)}</b><span>${esc(b)}</span></li>`).join("")}</ol>
+     ${g.go?`<div class="btns"><button class="btn small" data-helpgo="${g.go.view||"type:"+g.go.type}">Dene</button></div>`:""}</details>`).join("")
+   :newsHTML()}
+   <p class="hint">Sürüm ${APPVER}</p>`;
+  $("#bar").innerHTML=`<button class="btn" data-back="1">Tamam</button>`}
+function welcomeSheet(first){LS.set("atolye2_seen",APPVER);
+  openSheet(`<div class="ed-head"><b>${first?"Atölye'ye hoş geldiniz":"Yenilikler"}</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+   ${first?`<p class="note">Mobilya ölçüsünü girin; uygulama düzen önersin, kesim listesi, levha yerleşimi, hırdavat ve teklifi çıkarsın.</p>
+     <ol class="wsteps"><li><b>Türü seçin</b> (gardırop, mutfak…)</li><li><b>Ölçüyü yazın</b>, hazır düzenlerden birini seçin</li><li><b>Kesim</b> sekmesinden listeyi kesimhaneye, teklifi müşteriye gönderin</li></ol>
+     <div class="note">Sadece fiyat lazımsa: <b>Hızlı fiyat</b>. Ölçüleri kendiniz yazacaksanız: <b>Ölçüden levha planı</b>.</div>`:newsHTML(1)}
+   <div class="btns"><button class="btn" data-helpopen="${first?"rehber":"yeni"}">${first?"Kısa rehberi aç":"Tüm yenilikler"}</button><button class="btn ghost" data-closesheet="1">${first?"Başla":"Tamam"}</button></div>`)}
 /* ====================== HIZLI FİYAT (dolap ölçüsüyle) ====================== */
 const QT={gardirop:{l:"Gardırop",W:100,H:220,D:58,bolme:2,aski:1,cek:2,raf:4,kapak:true},
   alt:{l:"Mutfak alt",W:60,H:86,D:56,bolme:1,aski:0,cek:0,raf:1,kapak:true},
@@ -2347,6 +2430,9 @@ document.addEventListener("click",e=>{
     if(d.go==="duzen"&&!S.mods.length)return;S.step=d.go;S.view=null;render();window.scrollTo(0,0);return}
   if(d.view){S.view=S.view===d.view?null:d.view;render();window.scrollTo(0,0);return}
   if(d.back){S.view=null;render();return}
+  if(d.helpopen){closeSheet();S.helpTab=d.helpopen;S.view="yardim";render();window.scrollTo(0,0);return}
+  if(d.helptab){S.helpTab=d.helptab;renderYardim();return}
+  if(d.helpgo){closeSheet();const g=d.helpgo;if(g.startsWith("type:")){const b2=document.createElement("button");b2.dataset.type=g.slice(5);S.view=null;document.body.appendChild(b2);b2.click();b2.remove()}else{S.view=g;render()}window.scrollTo(0,0);return}
   if(d.qhadd){QH.items.push(qhNew(QH.items.length?QH.items[QH.items.length-1].tip:"gardirop"));qhSave();renderHizli();return}
   if(d.qhdel!==undefined){QH.items.splice(+d.qhdel,1);qhSave();renderHizli();return}
   if(d.qht){const[i,k]=d.qht.split(":");const ad=QH.items[+i].adet;QH.items[+i]=Object.assign(qhNew(k),{adet:ad});qhSave();renderHizli();return}
@@ -2551,6 +2637,7 @@ document.addEventListener("pointerup",endDrag);document.addEventListener("pointe
 let tt;function toast(msg){document.querySelector(".toast")?.remove();const el=document.createElement("div");el.className="toast";el.setAttribute("role","status");el.textContent=msg;document.body.appendChild(el);clearTimeout(tt);tt=setTimeout(()=>el.remove(),2200)}
 if(!S.type)S.step="tur";
 render();
+{const seen=LS.get("atolye2_seen");if(!seen)setTimeout(()=>welcomeSheet(!(LS.get("atolye2_projeler")||[]).length&&!S.mods.length),400);else if(seen!==APPVER)setTimeout(()=>welcomeSheet(false),400)}
 </script>
 </body>
 </html>
