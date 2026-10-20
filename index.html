@@ -305,7 +305,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .carousel>.vcard{flex:0 0 92%}.vcard .pic{position:relative;cursor:zoom-in}.vzoomhint{position:absolute;right:10px;top:10px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--muted);z-index:1}
 .carousel .body{padding:10px 12px;gap:6px}.carousel .body p{-webkit-line-clamp:1}
 .fmzoom .sp{flex:1}
-.sharerow{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:12px 14px;font:inherit;cursor:pointer}.sharerow b{font-size:16px}.sharerow span{color:var(--muted);font-size:13px}
+.sharerow{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:12px 14px;font:inherit;cursor:pointer}.sharerow b{font-size:16px}.sharerow.rec{border:2px solid var(--accent)}.sharerow span{color:var(--muted);font-size:13px}
 </style>
 </head>
 <body>
@@ -1799,14 +1799,14 @@ function dims3D(boxes){const g=new THREE.Group();const kitchen=S.type==="mutfak"
 function dimsData(boxes){const g=dims3D(boxes),out={lines:[],labels:[],U:g.userData.U||300};const r=v=>Math.round(v);
   g.children.forEach(o=>{if(o.isLine){const a=o.geometry.attributes.position.array;out.lines.push([r(a[0]),r(a[1]),r(a[2]),r(a[3]),r(a[4]),r(a[5])])}else if(o.isSprite)out.labels.push([o.userData.t,r(o.position.x),r(o.position.y),r(o.position.z)])});return out}
 function boxesData(bs){return bs.map(b=>[Math.round(b.x0),Math.round(b.x1),Math.round(b.y0),Math.round(b.y1),Math.round(b.z0),Math.round(b.z1),b.col,b.op!=null?b.op:1,b.kind==="wall"?1:0])}
-function viewerHTML(){R=computeAll(S.mods);const v3=S.v3||{};const cl=sceneBoxes(S.mods,R,{open:false,walls:v3.walls!==false}),op=sceneBoxes(S.mods,R,{open:true,walls:v3.walls!==false});
-  const data={name:S.name,closed:boxesData(cl),open:boxesData(op),dims:dimsData(cl),date:new Date().toLocaleDateString("tr-TR")};
-  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>${esc(S.name)} — 3D</title>
+function viewerData(){R=computeAll(S.mods);const v3=S.v3||{};const cl=sceneBoxes(S.mods,R,{open:false,walls:v3.walls!==false}),op=sceneBoxes(S.mods,R,{open:true,walls:v3.walls!==false});
+  return{name:S.name,closed:boxesData(cl),open:boxesData(op),dims:dimsData(cl),date:new Date().toLocaleDateString("tr-TR")}}
+function viewerPage(N,DT,dataJS){return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>${N} — 3D</title>
 <style>html,body{margin:0;height:100%;font-family:Arial,Helvetica,sans-serif;background:#f4f2ee;overflow:hidden}#c{position:fixed;inset:0}#bar{position:fixed;left:0;right:0;top:0;display:flex;gap:6px;padding:10px 12px;align-items:center;flex-wrap:wrap;background:linear-gradient(#f4f2eeee,#f4f2ee00)}#bar b{flex:1;font-size:17px;color:#16181d}
 button{border:1px solid #c9ccd3;background:#fff;color:#16181d;border-radius:999px;padding:8px 13px;font:600 13px Arial}button.on{background:#2747A6;color:#fff;border-color:#2747A6}#hint{position:fixed;bottom:10px;left:0;right:0;text-align:center;color:#6b6f78;font-size:12px}#err{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:30px;text-align:center;color:#444}</style></head>
-<body><div id="c"></div><div id="bar"><b>${esc(S.name)}</b><button id="bd" class="on">Ölçüler</button><button id="bo">Kapaklar kapalı</button><button id="bf">Önden</button><button id="bp" class="on">Perspektif</button></div><div id="hint">Döndürmek için sürükleyin · iki parmakla yakınlaştırın · ${data.date}</div><div id="err">3D için internet bağlantısı gerekiyor. Bağlanıp sayfayı yenileyin.</div>
+<body><div id="c"></div><div id="bar"><b>${N}</b><button id="bd" class="on">Ölçüler</button><button id="bo">Kapaklar kapalı</button><button id="bf">Önden</button><button id="bp" class="on">Perspektif</button></div><div id="hint">Döndürmek için sürükleyin · iki parmakla yakınlaştırın · ${DT}</div><div id="err">3D için internet bağlantısı gerekiyor. Bağlanıp sayfayı yenileyin.</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>
-<script>const D=${JSON.stringify(data)};
+<script>let D=null;function start(){
 if(!window.THREE||!THREE.OrbitControls){document.getElementById("err").style.display="flex"}else{
 const el=document.getElementById("c"),rd=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});rd.setPixelRatio(Math.min(devicePixelRatio||1,2));el.appendChild(rd.domElement);
 const sc=new THREE.Scene();sc.background=new THREE.Color("#f4f2ee");const cam=new THREE.PerspectiveCamera(38,1,20,200000),ct=new THREE.OrbitControls(cam,rd.domElement);ct.enableDamping=true;ct.maxPolarAngle=Math.PI*.52;
@@ -1826,7 +1826,17 @@ const $=i=>document.getElementById(i);
 $("bd").onclick=()=>{DG.visible=!DG.visible;$("bd").classList.toggle("on",DG.visible)};
 $("bo").onclick=()=>{open=!open;build(open?D.open:D.closed);$("bo").textContent=open?"Kapaklar açık":"Kapaklar kapalı";$("bo").classList.toggle("on",open)};
 $("bf").onclick=()=>{fit(true);$("bf").classList.add("on");$("bp").classList.remove("on")};$("bp").onclick=()=>{fit(false);$("bp").classList.add("on");$("bf").classList.remove("on")}}
-<\/script></body></html>`}
+}
+${dataJS}<\/script></body></html>`}
+function viewerHTML(){const data=viewerData();return viewerPage(esc(S.name),data.date,"D="+JSON.stringify(data)+";start();")}
+function linkPageHTML(){return viewerPage("3D tasarım","","(async()=>{try{const h=location.hash.slice(1),v=h[0],b=h.slice(1).replace(/-/g,'+').replace(/_/g,'/');const bin=atob(b+'==='.slice((b.length+3)%4)),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);let txt;if(v==='1'){const ds=new DecompressionStream('deflate-raw');const w=ds.writable.getWriter();w.write(u);w.close();txt=await new Response(ds.readable).text()}else txt=new TextDecoder().decode(u);const c=JSON.parse(txt);const P=c.p,ex=b=>[b[0],b[1],b[2],b[3],b[4],b[5],P[b[6]],b[7]/100,b[8]];const cl=c.b.map(ex),op=c.f?[]:cl.slice();(c.o||[]).forEach(([i,...bb])=>{if(i<0)op.push(ex(bb));else op[i]=ex(bb)});D={name:c.n,closed:cl,open:op,dims:c.d,date:c.t};document.title=c.n+' — 3D';document.querySelector('#bar b').textContent=c.n;document.getElementById('hint').textContent='Döndürmek için sürükleyin · iki parmakla yakınlaştırın · '+c.t;start()}catch(e){const er=document.getElementById('err');er.textContent='Bağlantı eksik ya da bozuk; tasarımı gönderen kişiden yeniden isteyin.';er.style.display='flex'}})();")}
+const PAGES="https://muhamedparlak-sys.github.io/atolye/";let V3URL=null;
+async function link3D(){const D=viewerData(),P=[],pi=c=>{let i=P.indexOf(c);if(i<0){P.push(c);i=P.length-1}return i},cp=b=>[b[0],b[1],b[2],b[3],b[4],b[5],pi(b[6]),Math.round(b[7]*100),b[8]];
+  const cb=D.closed.map(cp),ob=D.open.map(cp),full=ob.length<cb.length,o=[];if(full)ob.forEach(b=>o.push([-1,...b]));else ob.forEach((b,i)=>{if(i>=cb.length)o.push([-1,...b]);else if(JSON.stringify(b)!==JSON.stringify(cb[i]))o.push([i,...b])});
+  const str=JSON.stringify({n:D.name,t:D.date,p:P,b:cb,o,f:full?1:0,d:D.dims});let bytes,v="0";
+  if(window.CompressionStream){try{const cs=new CompressionStream("deflate-raw");const w=cs.writable.getWriter();w.write(new TextEncoder().encode(str));w.close();bytes=new Uint8Array(await new Response(cs.readable).arrayBuffer());v="1"}catch(e){bytes=null}}
+  if(!bytes)bytes=new TextEncoder().encode(str);let bin="";for(let i=0;i<bytes.length;i+=8192)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));
+  return PAGES+"3d.html#"+v+btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
 function loadGLTFExp(){return new Promise((res,rej)=>{if(window.THREE&&THREE.GLTFExporter)return res();const e=document.createElement("script");e.src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js";e.onload=res;e.onerror=()=>rej(new Error("yüklenemedi"));document.head.appendChild(e)})}
 async function glbBlob(){await load3D();await loadGLTFExp();R=computeAll(S.mods);const bs=sceneBoxes(S.mods,R,{open:false,walls:false});const sc=new THREE.Scene(),g=new THREE.Group();g.scale.set(.001,.001,.001);const mc={};
   bs.forEach(b=>{if(b.kind==="wall")return;const c=b.col;const m=mc[c]||(mc[c]=new THREE.MeshStandardMaterial({color:new THREE.Color(c),roughness:.8,metalness:0}));const ms=new THREE.Mesh(new THREE.BoxGeometry(b.x1-b.x0,b.y1-b.y0,b.z1-b.z0),m);ms.position.set((b.x0+b.x1)/2,(b.y0+b.y1)/2,(b.z0+b.z1)/2);ms.name=(b.label?b.label+" ":"")+(b.name||"");g.add(ms)});
@@ -1839,6 +1849,7 @@ async function share3D(kind){const nm=slug(S.name);let blob,fn;
   if(canShareFile(file)){try{await navigator.share({files:[file],title:S.name+" — 3D"});return}catch(e){if(e&&e.name==="AbortError")return}}
   saveFile(blob,fn)}
 function share3DSheet(){openSheet(`<div class="ed-head"><b>3D'yi paylaş</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+  <button class="sharerow rec" data-v3link="1"><b>Bağlantı olarak gönder (önerilen)</b><span>WhatsApp'ta bağlantıya dokununca iPhone'da ve Android'de tarayıcıda açılır, parmakla çevrilir. Dosya indirmek gerekmez; açmak için internet yeterli.</span></button>
   <button class="sharerow" data-v3exp="html"><b>Döndürülebilir 3D sayfa</b><span>Tek dosya (.html). Müşteri tarayıcıda açıp parmakla çevirir; ölçüler ve kapak aç/kapa içinde. Açmak için internet gerekir.</span></button>
   <button class="sharerow" data-v3exp="glb"><b>3D model dosyası (.glb)</b><span>Standart 3D dosya: Android'in 3D görüntüleyicisi, Windows 3D Görüntüleyici, Mac ve SketchUp/Blender açar. Ölçüler gerçek boyutta (metre).</span></button>
   <button class="sharerow" data-v3exp="png"><b>Resim (.png)</b><span>Ekrandaki görünüş; her telefonda açılır.</span></button>
@@ -2963,6 +2974,14 @@ document.addEventListener("click",e=>{
   if(d.v3cam){S.v3=S.v3||{};S.v3.cam=d.v3cam;S.v3.camGo=true;render3D();return}
   if(d.v3shot){share3DSheet();return}
   if(d.v3exp){closeSheet();share3D(d.v3exp);return}
+  if(d.v3link){(async()=>{try{if(!T3)await load3D();const url=await link3D();const msg=S.name+" — 3D tasarım (dokunup açın, parmakla çevirin):\n"+url;
+      const ok=url.length<60000;openSheet(`<div class="ed-head"><b>3D bağlantısı hazır</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+       <a class="btn" style="text-align:center;text-decoration:none" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WhatsApp'ta gönder</a>
+       <div class="btns"><button class="btn ghost" data-v3lcopy="1">Bağlantıyı kopyala</button><a class="btn ghost" style="text-decoration:none" href="${esc(url)}" target="_blank" rel="noopener">Kendim açıp bakayım</a>${navigator.share?`<button class="btn ghost" data-v3lshare="1">Diğer uygulamalar</button>`:""}</div>
+       <textarea id="v3url" readonly style="min-height:70px;font-size:11px">${esc(url)}</textarea>
+       <div class="note">${ok?"Bağlantı "+Math.round(url.length/100)/10+" bin karakter; tasarımın tamamı bağlantının içinde, hiçbir sunucuya yüklenmez. Tasarımı değiştirirseniz yeni bağlantı gönderin.":"Tasarım çok büyük; bağlantı yerine 3D sayfa dosyasını gönderin."}</div>`);V3URL={url,msg}}catch(e){toast("Bağlantı hazırlanamadı")}})();return}
+  if(d.v3lcopy){const t=$("#v3url");(navigator.clipboard?navigator.clipboard.writeText(V3URL.url):Promise.reject()).then(()=>toast("Bağlantı kopyalandı")).catch(()=>{if(t){t.focus();t.select()}toast("Seçtim; uzun basıp kopyalayın")});return}
+  if(d.v3lshare){navigator.share({title:S.name+" — 3D",text:V3URL.msg.split("\n")[0],url:V3URL.url}).catch(()=>{});return}
   if(d.sheet){({notes:notesSheet,back:backSheet,plan:planSheet,color:colorSheet,tzu:tzuSheet,tac:tacSheet})[d.sheet]();return}
   if(d.tact){tacOf().type=d.tact;const n=applyTac(S.mods);S.sel=null;S.band=null;persist();renderDuzen();tacSheet();if(n.length)toast(n[0]);return}
   if(d.tacy){tacOf().yan=d.tacy;applyTac(S.mods);persist();renderDuzen();tacSheet();return}
