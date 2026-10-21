@@ -71,6 +71,7 @@ Bu dosya, uzayan oturumdaki işi yeni bir oturumda kaldığı yerden sürdürmek
   - `show3D(el,boxes,{upTo,fit,far,cam,dims})` — kutularda `x0..z1`, `col`, `step`, `ex`, `kind`, `rz`.
   - `sceneBoxes`, `link3D`, `share3D`, GLB dışa aktarma.
 - **Hazır modeller (divan, ev yatak, yer yatağı, karyola, kitaplık, öğrenme kulesi):**
+  - Toplu üretim (2026.10.21g): hazır modellerin hedefi levhayı doldurmak. `hzBuild` tek adet üretir; `hzRec(B)` ana malzemede 1–12 adet için levha sayısını (pack quick) hesaplar, önerilen = küçük partide (1 adedin levhası + 1, en az 2 levha) adet başı en az levha; `HZ.qty` 0 = otomatik. `hzCur()` = `hzBatch(hzBuild(HZ), hzQty)` — ekran, kılavuz, kesim listesine aktar ve hzFit bunu kullanır. Arayüz `hzQtyHTML`, `data-hzq`.
   - Kutulu saklama ünitesi (2026.10.21f): `o.m==="saklama"`, `sW,sH,sD,sC,sP,sR(alu|cita|cnc),sB`; notlara "bir levhaya N iskelet" (pack quick ile) yazılır; `data-hzsp` hazır ölçüler, `data-hzsr` ray tipi.
   - Divan (2026.10.21e): `o.m==="divan"`, parametreler `dvT` (sandik|cekmece|lata), `dvH`, `dvB`, `dvHB`, `dvC`, `dvK`; levhaya sığmayan büyük panel `big()` ile ikiye bölünür. Ana ekrandaki kart `data-hzgo="divan"`.
   - `hzBuild(o)` → `{parts(st=adım), hw, steps, prep, notes, G(3D kutular), size}`.

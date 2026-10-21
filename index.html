@@ -761,7 +761,7 @@ const HZM=[
  {k:"karyola",l:"Klasik karyola",d:"Baş ve ayak tahtalı, latalı kasa.",bed:true},
  {k:"kitap",l:"Ön yüzlü kitaplık",d:"Kitap kapakları önden görünür (Montessori).",bed:false},
  {k:"kule",l:"Öğrenme kulesi",d:"Tezgaha uzanmak için ayarlı basamak.",bed:false}];
-const HZDEF={sW:99,sH:57,sD:44,sC:3,sP:11.5,sR:"alu",sB:true,dvT:"sandik",dvH:35,dvB:true,dvHB:110,dvC:2,dvK:true,cati:true,ayak:true,hb:40,ha:20,lata:"L",m:"ev",mw:90,ml:190,mat:"kontra18",joint:"minifix",wall:100,fh:15,guard:true,dbl:true,hh:90,hf:35,rh:22,lift:12,bas:true,W:80,H:70,D:30,raf:3,kH:90,kW:40,kD:48};
+const HZDEF={qty:0,sW:99,sH:57,sD:44,sC:3,sP:11.5,sR:"alu",sB:true,dvT:"sandik",dvH:35,dvB:true,dvHB:110,dvC:2,dvK:true,cati:true,ayak:true,hb:40,ha:20,lata:"L",m:"ev",mw:90,ml:190,mat:"kontra18",joint:"minifix",wall:100,fh:15,guard:true,dbl:true,hh:90,hf:35,rh:22,lift:12,bas:true,W:80,H:70,D:30,raf:3,kH:90,kW:40,kD:48};
 let HZ=Object.assign({},HZDEF,LS.get("atolye2_hazir")||{});
 function hzSave(){LS.set("atolye2_hazir",HZ)}
 function hzIcon(k){const I={saklama:'<path d="M8 8h40v40H8zM21 8v40M35 8v40M10 20h9M23 20h10M37 20h9M10 34h9M23 34h10M37 34h9"/>',divan:'<path d="M6 46V30h44v16M6 30l4-12h36l4 12M6 38h44M10 46v3M46 46v3M4 18v28M4 18h4"/>',ev:'<path d="M8 46V22L28 6l20 16v24M8 46h40M12 40h32"/>',yer:'<path d="M6 40h44v6H6zM6 40v-8M50 40v-6M10 34h14"/>',karyola:'<path d="M6 46V18h8v28M42 46V30h8v16M14 36h28v6H14z"/>',kitap:'<path d="M10 46V10h36v36M10 22h36M10 34h36M14 22l4-8h8l-2 8M28 34l3-8h7l-1 8"/>',kule:'<path d="M14 48L18 8M42 48L38 8M17 20h22M16 32h24M15 42h26"/>'};
@@ -934,6 +934,27 @@ function hzBuild(o){const t=18,mat=o.mat,M=HZM.find(x=>x.k===o.m)||HZM[0];
   carSplit(parts,hw).forEach(x=>notes.push("Araba: "+x));hw.forEach(i=>{const e=hw.filter(j=>j.name===i.name);if(e.length>1&&e[0]===i){i.qty=e.reduce((q,j)=>q+j.qty,0);e.slice(1).forEach(j=>j.qty=0)}});for(let i=hw.length-1;i>=0;i--)if(!hw[i].qty)hw.splice(i,1);
   const real=G.filter(b=>b.kind!=="fix");const bx=hzBounds(real);
   return{M,o,parts:parts.map((p,i)=>Object.assign(p,{id:String(i+1),a:p.a0,b:p.b0,free:!(SET.grain&&GRAINY(p.mat)),mods:[]})),hw,steps:ST,prep,notes,G,size:{W:Math.round(bx.x1-bx.x0),L:Math.round(bx.z1-bx.z0),H:Math.round(bx.y1)}}}
+/* toplu üretim: bir levhadan en çok kaç adet; hazır modellerin hedefi tek tane değil, levhayı doldurmak */
+let HZREC=null;
+function hzMainMat(parts){const A={};parts.forEach(p=>{A[p.mat]=(A[p.mat]||0)+p.qty*p.a0*p.b0});return Object.keys(A).sort((x,y)=>A[y]-A[x])[0]}
+function hzRec(B){const sig=JSON.stringify([B.parts.map(p=>[p.mat,p.a0,p.b0,p.qty]),SET.mats,SET.kerf,SET.trim,SET.grain]);if(HZREC&&HZREC.sig===sig)return HZREC.res;
+  const mk=hzMainMat(B.parts),rows=[];
+  for(let c=1;c<=12;c++){const pp=B.parts.filter(p=>p.mat===mk).map((p,i)=>({id:"r"+i,a:p.a0,b:p.b0,qty:p.qty*c,mat:mk,free:p.free}));const P=pack(pp,mk,{quick:true,noArtik:true});
+    if(c>1&&P.sheets.length>4)break;rows.push({c,n:P.sheets.length,per:P.sheets.length/c,fire:P.fire})}
+  const lim=Math.max(2,rows[0].n+1);let best=rows[0];rows.forEach(r=>{if(r.n<=lim&&r.per<best.per-1e-6)best=r}); // küçük partide (1 adedin levhası + 1, en az 2 levha) adet başı en az levha
+  const res={mk,rows,best:best.c};HZREC={sig,res};return res}
+function hzQty(B){const q=Math.round(HZ.qty)||0;return q>0?q:hzRec(B).best}
+function hzBatch(B,q){if(q<=1)return Object.assign({},B,{q:1,unit:B});
+  const parts=B.parts.map(p=>Object.assign({},p,{qty:p.qty*q})),hw=B.hw.map(h=>Object.assign({},h,{qty:/tutkal/i.test(h.name)?Math.ceil(h.qty*q/2):Math.round(h.qty*q*10)/10}));
+  return Object.assign({},B,{parts,hw,q,unit:B,notes:["Kesim listesi, levha planı ve hırdavat "+q+" adet içindir (ölçüler ve montaj tek adet için)."].concat(B.notes)})}
+function hzCur(){const B=hzBuild(HZ);return hzBatch(B,hzQty(B))}
+function hzQtyHTML(B){const R=hzRec(B.unit),q=B.q,auto=!(Math.round(HZ.qty)>0),pr=+SET.mats[R.mk].price||0;
+  return `<div class="panel"><span class="lbl">Kaç adet yapalım? · ${esc(SET.mats[R.mk].name)}</span>
+   <div class="note">Hedef tek tane değil, levhayı doldurmak. Önerilen: <b>${R.best} adet</b>, adet başı ${fmt(R.rows.find(r=>r.c===R.best).per,2)} levha.</div>
+   ${SET.grain&&GRAINY(R.mk)?`<div class="note">Desen yönü korunuyor, parçalar dönmez. Düz renk plakada daha çok sığar (Ayarlar → Desen yönü).</div>`:""}
+   <div class="chips wrap"><button class="chip sm" data-hzq="0" aria-pressed="${auto}">Levhayı doldur (${R.best})</button>${R.rows.slice(0,6).map(r=>`<button class="chip sm" data-hzq="${r.c}" aria-pressed="${!auto&&q===r.c}">${r.c} adet · ${r.n} levha${r.c===R.best?" ★":""}</button>`).join("")}</div>
+   <table class="qtab">${R.rows.slice(0,6).map(r=>`<tr${r.c===q?' style="font-weight:600"':""}><td>${r.c} adet</td><td class="num">${r.n} levha</td><td class="num">adet başı ${fmt(r.per,2)}</td><td class="num">fire %${fmt(r.fire*100)}</td>${pr?`<td class="num">${fmt(r.n*pr/r.c)} ₺/adet</td>`:""}</tr>`).join("")}</table>
+   <label class="field"><span class="k">Başka adet</span><input type="number" inputmode="numeric" data-hz="qty" value="${auto?"":q}" placeholder="${R.best}" min="1" max="99"></label></div>`}
 function hzCorners(b){const cx=(b.x0+b.x1)/2,cy=(b.y0+b.y1)/2,c=Math.cos(b.rz||0),s=Math.sin(b.rz||0);return[[b.x0,b.y0],[b.x1,b.y0],[b.x1,b.y1],[b.x0,b.y1]].map(([x,y])=>[cx+(x-cx)*c-(y-cy)*s,cy+(x-cx)*s+(y-cy)*c])}
 function hzBounds(bs){const r={x0:1e9,x1:-1e9,y0:1e9,y1:-1e9,z0:1e9,z1:-1e9};bs.forEach(b=>{hzCorners(b).forEach(([x,y])=>{r.x0=Math.min(r.x0,x);r.x1=Math.max(r.x1,x);r.y0=Math.min(r.y0,y);r.y1=Math.max(r.y1,y)});r.z0=Math.min(r.z0,b.z0);r.z1=Math.max(r.z1,b.z1)});return r}
 function hzDraw(B){const G=B.G;const view=(front,lbl)=>{const bx=hzBounds(G.filter(b=>b.kind!=="fix"));const u0=front?bx.x0:bx.z0,u1=front?bx.x1:bx.z1,y1=bx.y1,span=Math.max(u1-u0,y1),pad=span*.12,fs=span/16;
@@ -955,7 +976,7 @@ function hzFit(B){/* aynı levhalardan başka ne çıkar */const base={};const k
   if(S.mods.length){const pp=computeAll(S.mods).parts;const all=pp.concat(B.parts.map(p=>Object.assign({},p,{id:"H"+p.id,key:"hz|"+p.id})));let extra=0;matsUsed(B.parts).forEach(k=>{extra+=pack(all,k,{quick:true}).sheets.length-(pp.some(p=>p.mat===k)?pack(pp,k).sheets.length:0)});res.push({proj:S.name||"Açık proje",extra})}
   return res}
 function carSheet(){return `<div class="ed-head"><div><b>Arabamla taşıyacağım</b></div><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>${carPickHTML()}<div class="btns"><button class="btn" data-closesheet="1">Tamam</button></div>`}
-function renderHazir(){document.querySelector("main").className="";const o=HZ,B=hzBuild(o),St=hzStats(B),M=B.M,adv=MATADV[o.mat];
+function renderHazir(){document.querySelector("main").className="";const o=HZ,B=hzCur(),St=hzStats(B),M=B.M,adv=MATADV[o.mat];
   const num=(k,l,min,max)=>`<label class="field"><span class="k">${l}</span><input type="number" inputmode="decimal" data-hz="${k}" value="${o[k]}" min="${min}" max="${max}"></label>`;
   const chk=(k,l,sm)=>`<label class="check"><input type="checkbox" data-hzc="${k}" ${o[k]?"checked":""}><span>${l}${sm?`<small>${sm}</small>`:""}</span></label>`;
   let fields="";
@@ -982,10 +1003,11 @@ function renderHazir(){document.querySelector("main").className="";const o=HZ,B=
    <div class="hz3wrap"><div id="hz3d" class="hz3d"><div class="note" style="padding:20px">3D yükleniyor…</div></div>
     <div class="hz3bar"><button class="btn small ghost" data-hz3="prev" aria-label="Önceki adım">‹</button><div id="hz3t" class="hz3t"></div><button class="btn small ghost" data-hz3="next" aria-label="Sonraki adım">›</button></div>
     <div class="chips"><button class="chip sm" data-hz3="all">Bitmiş hali</button><button class="chip sm" data-hz3="0">Montajı adım adım izle</button></div></div>
-   <div class="panel hzsum"><b>Kısaca</b><p>${esc(M.l)}${M.bed?", "+o.mw+"×"+o.ml+" cm şilteye göre":""}. Dış ölçü ${cm(B.size.W)} × ${cm(B.size.L)} × ${cm(B.size.H)} cm (en × boy × yükseklik).</p><p>${St.out.map(x=>x.n+" levha "+esc(SET.mats[x.k].name)).join(" + ")} gerekir. ${B.parts.reduce((q,p)=>q+p.qty,0)} parça, ${B.steps.length} adımda kurulur.</p></div>
+   <div class="panel hzsum"><b>Kısaca</b><p>${esc(M.l)}${M.bed?", "+o.mw+"×"+o.ml+" cm şilteye göre":""}. Dış ölçü ${cm(B.size.W)} × ${cm(B.size.L)} × ${cm(B.size.H)} cm (en × boy × yükseklik).</p><p><b>${B.q} adet</b> için ${St.out.map(x=>x.n+" levha "+esc(SET.mats[x.k].name)).join(" + ")} gerekir; ${B.parts.reduce((q,p)=>q+p.qty,0)} parça. Bir tanesi ${B.steps.length} adımda kurulur.${St.cost+St.hw>0?` Adet başı malzeme ~${fmt((St.cost+St.hw)/B.q)} ₺.`:""}</p></div>
+   ${hzQtyHTML(B)}
    <div class="panel">${fields}</div>
    <details class="panel" ${carOf().on?"open":""}><summary style="cursor:pointer;font-weight:600">Arabamla taşıyacağım${carOf().on?" · "+esc((CARS[carOf().p]||{l:"özel"}).l)+" "+carOf().L+" cm":""}</summary>${carPickHTML()}</details>
-   <div class="vstats">${St.out.map(x=>`<div><small>${esc(SET.mats[x.k].name)}</small><b>${x.n} levha</b><small>doluluk %${fmt(x.use*100)}${x.n>1?" · son levha %"+fmt(x.last*100):""}</small></div>`).join("")}<div><small>Ölçü (en × boy × yük.)</small><b>${cm(B.size.W)}×${cm(B.size.L)}×${cm(B.size.H)}</b></div>${St.cost>0?`<div><small>Levha</small><b>${fmt(St.cost)} ₺</b></div>`:""}${St.hw>0?`<div><small>Hırdavat</small><b>${fmt(St.hw)} ₺</b></div>`:""}</div>
+   <div class="vstats">${St.out.map(x=>`<div><small>${esc(SET.mats[x.k].name)}</small><b>${x.n} levha</b><small>doluluk %${fmt(x.use*100)}${x.n>1?" · son levha %"+fmt(x.last*100):""}</small></div>`).join("")}<div><small>Ölçü (en × boy × yük.)</small><b>${cm(B.size.W)}×${cm(B.size.L)}×${cm(B.size.H)}</b></div>${St.cost>0?`<div><small>Levha (${B.q} adet)</small><b>${fmt(St.cost)} ₺</b></div>`:""}${St.hw>0?`<div><small>Hırdavat (${B.q} adet)</small><b>${fmt(St.hw)} ₺</b></div>`:""}${St.cost+St.hw>0&&B.q>1?`<div><small>Adet başı</small><b>${fmt((St.cost+St.hw)/B.q)} ₺</b></div>`:""}</div>
    <h2>Malzeme</h2><div class="panel"><div class="chips wrap">${HZMATS.map(k=>`<button class="chip" data-hzmat="${k}" aria-pressed="${o.mat===k}">${MATADV[k].t.split(" (")[0]}</button>`).join("")}</div>
     <div class="hzadv"><b>${esc(adv.best)}</b> <span class="pill">${adv.f}</span><p><b>Artı:</b> ${esc(adv.p)}</p><p><b>Eksi:</b> ${esc(adv.c)}</p><p><b>Sağlık:</b> ${esc(adv.h)}</p></div>
     <details class="more"><summary>Çocuk odası için hangisi?</summary><table class="hzt"><tr><th></th><th>Görünüm</th><th>Dayanım</th><th>Fiyat</th></tr>${HZMATS.map(k=>`<tr><td><b>${MATADV[k].t.split(" (")[0]}</b></td><td>${{kontra18:"doğal, katmanlı kenar",masif18:"en doğal",sunta:"düz, renkli",mdf18:"boyalı",sukontra18:"kaba"}[k]}</td><td>${{kontra18:"★★★",masif18:"★★★",sunta:"★★",mdf18:"★★",sukontra18:"★★★"}[k]}</td><td>${MATADV[k].f}</td></tr>`).join("")}</table>
@@ -3180,8 +3202,11 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
 
 
 /* ====================== YARDIM · YENİLİKLER ====================== */
-const APPVER="2026.10.21f";
+const APPVER="2026.10.21g";
 const NEWS=[
+ {d:"21 Ekim 2026 · gece",t:"Hazır modellerde levhayı doldur",items:[
+  ["Kaç adet yapalım?","Hazır modeller artık tek tane değil, levhayı dolduracak adetle hesaplanır. 'Levhayı doldur' önerilen adedi seçer; 1–6 adet için levha sayısı, adet başı levha ve fire yan yana görünür, istediğiniz adedi seçebilirsiniz.","hazir"],
+  ["Toplu liste","Kesim listesi, levha planı, hırdavat, maliyet ve üretim kılavuzu seçilen adet için çıkar; adet başı maliyet ayrıca yazar. 3D, ölçüler ve montaj tek adet içindir.",null]]},
  {d:"21 Ekim 2026 · gece",t:"Kutulu saklama ünitesi",items:[
   ["Kutulu saklama ünitesi","Hazır modellerde yeni: oyuncak kutuları raylara kayan, bölmeli saklama ünitesi. En, yükseklik, derinlik, bölme sayısı ve kademe aralığı ayarlı; hazır ölçüler 99×44×57, 99×44×94, 66×44×94, 132×44×57. Bir levhaya kaç iskelet sığdığını kendisi yazar (99×44×57 düz renkte 3 tane).","hazir"],
   ["Kutu rayı","Alüminyum L profil (metrajı hırdavata), suntalam çıta (kesim listesine) ya da CNC kanal (kanal yükseklikleri hazırlığa yazılır). Arkalık ve duvar gönyesi dahil.",null]]},
@@ -3676,11 +3701,12 @@ document.addEventListener("click",e=>{
   if(d.hzsz){const[w,l]=d.hzsz.split("x").map(Number);HZ.mw=w;HZ.ml=l;HZFIT=null;hzSave();renderHazir();return}
   if(d.hzmat){HZ.mat=d.hzmat;HZFIT=null;hzSave();renderHazir();return}
   if(d.hzj){HZ.joint=d.hzj;hzSave();renderHazir();return}
-  if(d.hzfit){toast("Hesaplanıyor…");setTimeout(()=>{HZFIT={sig:JSON.stringify(HZ),res:hzFit(hzBuild(HZ))};renderHazir()},50);return}
-  if(d.hzdoc){const B=hzBuild(HZ);toast("Kılavuz hazırlanıyor…");(async()=>{let im=[];try{im=await hzShots(B)}catch(e){}if(S.view==="hazir"&&HZ.tab!=="oda")renderHazir();saveFile(new Blob([hzDoc(B,im)],{type:"text/html"}),slug(B.M.l)+"-uretim-kilavuzu.html")})();return}
+  if(d.hzfit){toast("Hesaplanıyor…");setTimeout(()=>{HZFIT={sig:JSON.stringify(HZ),res:hzFit(hzCur())};renderHazir()},50);return}
+  if(d.hzq!==undefined){HZ.qty=+d.hzq;HZFIT=null;hzSave();renderHazir();return}
+  if(d.hzdoc){const B=hzCur();toast("Kılavuz hazırlanıyor…");(async()=>{let im=[];try{im=await hzShots(B)}catch(e){}if(S.view==="hazir"&&HZ.tab!=="oda")renderHazir();saveFile(new Blob([hzDoc(B,im)],{type:"text/html"}),slug(B.M.l)+"-uretim-kilavuzu.html")})();return}
   if(d.hz3){const N=HZB?HZB.steps.length:0;if(d.hz3==="all")HZ3=null;else if(d.hz3==="prev")HZ3=HZ3==null?N-1:Math.max(0,HZ3-1);else if(d.hz3==="next")HZ3=HZ3==null?0:HZ3>=N-1?null:HZ3+1;else HZ3=+d.hz3;hz3Show(false);return}
   if(d.hzl){HZ.lata=d.hzl;hzSave();renderHazir();return}
-  if(d.hzlist){const B=hzBuild(HZ);const lbl=B.M.l+(B.M.bed?" "+HZ.mw+"×"+HZ.ml:"");if(!FL.rows.length)FL.name=lbl;
+  if(d.hzlist){const B=hzCur();const lbl=B.M.l+(B.M.bed?" "+HZ.mw+"×"+HZ.ml:"")+(B.q>1?" ×"+B.q:"");if(!FL.rows.length)FL.name=lbl;
     B.parts.forEach(p=>FL.rows.push(flNew({ad:lbl+" · "+p.name,boy:p.a0,en:p.b0,adet:p.qty,mat:p.mat,bl:p.bl,bs:p.bs,desen:!!SET.grain&&GRAINY(p.mat)})));FL.net=false;flSave();S.view="liste";render();window.scrollTo(0,0);toast(B.parts.length+" parça kesim listesine eklendi");return}
   if(d.artikne){const isF=d.artikne==="f";toast("Artık alan hesaplanıyor…");setTimeout(()=>{const parts=isF?flParts():computeAll(S.mods).parts;ARTIKR={sig:partsSig(parts)+JSON.stringify(S.artik||{}),res:artikCalc(parts)};if(isF)renderListe();else renderSonuc();toast(ARTIKR.res.list.length?ARTIKR.res.list.length+" ürün artığa sığıyor":"Artığa sığan ürün yok")},60);return}
   if(d.artikadd){const[w,k,n]=d.artikadd.split(":");const c=ARTIK.find(x=>x.k===k);if(!c)return;

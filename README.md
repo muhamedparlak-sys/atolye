@@ -23,6 +23,9 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 
 ## Yenilikler
 
+**21 Ekim 2026 · gece (3)**
+- Hazır modellerde "Levhayı doldur": önerilen üretim adedi, 1–6 adet için levha/fire karşılaştırması; kesim listesi, levha planı, hırdavat, maliyet ve kılavuz seçilen adet için, adet başı maliyetle
+
 **21 Ekim 2026 · gece (2)**
 - Kutulu saklama ünitesi (hazır model): bölme, kademe, ray tipi (alüminyum L, suntalam çıta, CNC kanal) ayarlı; bir levhaya kaç tane sığdığını hesaplar
 
