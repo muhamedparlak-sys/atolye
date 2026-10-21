@@ -24,6 +24,8 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 ## Yenilikler
 
 **21 Ekim 2026**
+- Hazır modellerde 3D ve adım adım montaj (kılavuzda her adımın resmi)
+- Ev yatak: metal L profil lata taşıyıcı, sökülebilir çatı modülü, başlık / ayak ucu paneli, iki yanda korkuluk
 - Hazır modeller: Montessori ev yatak, Montessori yer yatağı, klasik karyola, ön yüzlü kitaplık, öğrenme kulesi (ölçüye göre, fire dostu)
 - Üretim kılavuzu (PDF): çizim, malzeme, ebatlama listesi, levha yerleşimi, hırdavat, alet, delik, montaj, yüzey işlemi, güvenlik kontrolü
 - Çocuk odası planla: oda ölçüsü + kapı + pencere → 3 yerleşim, oyun alanı, takımın levha sayısı

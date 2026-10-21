@@ -312,9 +312,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .hzdraw{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hzv{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px}.hzv svg{width:100%;height:auto;max-height:240px;display:block}
 .hzadv p{margin:6px 0;font-size:14px}.hzadv{margin-top:8px}.hzt{width:100%;border-collapse:collapse;font-size:13px}.hzt th,.hzt td{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}.hzt td small{display:block;color:var(--muted);font-size:11px}
 .chips.wrap{flex-wrap:wrap}.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:1px 8px;font-size:12px}.pill.ok{border-color:#2F8A4B;color:#2F8A4B}
-@media (max-width:520px){.hzm .tcard span{display:block!important;font-size:11px}.hzdraw{grid-template-columns:1fr}}
+.hzm{display:flex!important;overflow-x:auto;gap:8px;scrollbar-width:none}.hzm .tcard{flex:0 0 132px}.hzm .tcard span{display:none}.hzm .tcard svg{width:34px;height:34px}.hzm .tcard b{font-size:14px!important}
+@media (max-width:520px){.hzdraw{grid-template-columns:1fr}}
 .carp{border-left:4px solid #2747A6}.carp .prow{display:flex;justify-content:space-between;align-items:center;gap:8px}.carp .prow small{display:block;color:var(--muted);font-size:12px}.warnc{color:#b42318}
 .hztab{display:flex;gap:6px;margin:4px 0 8px}.rmsvg svg{width:100%;height:auto;max-height:420px;display:block;margin:8px 0}.warnp{border-left:4px solid #b42318}
+.hz3wrap{display:flex;flex-direction:column;gap:8px}.hz3d{height:340px;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.hz3bar{display:flex;align-items:center;gap:8px}.hz3bar .btn{min-width:44px;font-size:20px}.hz3t{flex:1;font-size:15px;line-height:1.35}.hz3t small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.hzsum p{margin:6px 0;font-size:15px}
 </style>
 </head>
 <body>
@@ -711,85 +715,117 @@ const HZM=[
  {k:"karyola",l:"Klasik karyola",d:"Baş ve ayak tahtalı, latalı kasa.",bed:true},
  {k:"kitap",l:"Ön yüzlü kitaplık",d:"Kitap kapakları önden görünür (Montessori).",bed:false},
  {k:"kule",l:"Öğrenme kulesi",d:"Tezgaha uzanmak için ayarlı basamak.",bed:false}];
-const HZDEF={m:"ev",mw:90,ml:190,mat:"kontra18",joint:"minifix",wall:100,fh:15,guard:true,dbl:true,hh:90,hf:35,rh:22,lift:12,bas:true,W:80,H:70,D:30,raf:3,kH:90,kW:40,kD:48};
+const HZDEF={cati:true,ayak:true,hb:40,ha:20,lata:"L",m:"ev",mw:90,ml:190,mat:"kontra18",joint:"minifix",wall:100,fh:15,guard:true,dbl:true,hh:90,hf:35,rh:22,lift:12,bas:true,W:80,H:70,D:30,raf:3,kH:90,kW:40,kD:48};
 let HZ=Object.assign({},HZDEF,LS.get("atolye2_hazir")||{});
 function hzSave(){LS.set("atolye2_hazir",HZ)}
 function hzIcon(k){const I={ev:'<path d="M8 46V22L28 6l20 16v24M8 46h40M12 40h32"/>',yer:'<path d="M6 40h44v6H6zM6 40v-8M50 40v-6M10 34h14"/>',karyola:'<path d="M6 46V18h8v28M42 46V30h8v16M14 36h28v6H14z"/>',kitap:'<path d="M10 46V10h36v36M10 22h36M10 34h36M14 22l4-8h8l-2 8M28 34l3-8h7l-1 8"/>',kule:'<path d="M14 48L18 8M42 48L38 8M17 20h22M16 32h24M15 42h26"/>'};
   return `<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">${I[k]}</svg>`}
 /* bir model → parçalar, hırdavat, adımlar, çizim */
-function hzBuild(o){const t=18,mat=o.mat,M=HZM.find(x=>x.k===o.m)||HZM[0];const band=mat==="sunta"||mat==="kapak";
-  const parts=[],hw=[],steps=[],notes=[],F=[],SD=[];
+function hzBuild(o){const t=18,mat=o.mat,M=HZM.find(x=>x.k===o.m)||HZM[0];
+  const parts=[],hw=[],ST=[],notes=[],G=[],prep=[];let cur=-1;
+  const WC={kontra18:"#E3C99E",masif18:"#D6A86F",sunta:"#ECE7DD",mdf18:"#F2EFE8",sukontra18:"#C99E6A"}[mat]||"#E3C99E",MET="#8E959C";
   const P=(name,L,W,q,x={})=>{L=Math.round(L);W=Math.round(W);if(L<=0||W<=0||q<=0)return;const pm=x.mat||mat;const bnd=x.band!==false&&(pm==="sunta"||pm==="kapak");
     let a=L,b=W,bl=bnd?(x.bl??2):0,bs=bnd?(x.bs??2):0;if(b>a&&!x.keep){[a,b]=[b,a];[bl,bs]=[bs,bl]}
-    parts.push({name,a0:a,b0:b,qty:q,mat:pm,bl,bs,note:x.note||""})};
+    parts.push({name,a0:a,b0:b,qty:q,mat:pm,bl,bs,note:x.note||"",st:cur})};
   const H=(name,q,u="ad",note="")=>{q=Math.round(q*10)/10;if(q<=0)return;const e=hw.find(i=>i.name===name);if(e)e.qty+=q;else hw.push({cat:"Bağlantı",name,qty:q,unit:u,note})};
-  const J=o.joint;
+  const step=x=>{ST.push(x);cur=ST.length-1;return cur};
+  const GB=(x0,x1,y0,y1,z0,z1,st,g={})=>G.push({x0,x1,y0,y1,z0,z1,step:st,col:g.col||WC,ex:g.ex||[0,0,0],kind:g.kind||"p",rz:g.rz||0,op:g.op});
+  const J=o.joint,JL=HZJ[J].l.toLowerCase();
   const joinLoad=(n,where)=>{if(J==="civata"){H("Karyola cıvatası M6 × 100 mm",n*2,"ad",where);H("Silindir (karyola) somunu M6",n*2,"ad",where);H("Kavela 8×35",n*2)}
     else if(J==="minifix"){H("Minifix (eksantrik) takımı",n*3,"ad",where);H("Kavela 8×35",n*2)}else{H("Ahşap vidası 5×60",n*3,"ad",where);H("Kavela 8×35",n*2)}};
   const joinLight=(n,where)=>{if(J==="vida"){H("Ahşap vidası 4×50",n*2,"ad",where)}else H("Minifix (eksantrik) takımı",n,"ad",where);H("Kavela 8×35",n*2)};
-  const mw=o.mw*10,ml=o.ml*10,Wi=mw+20,Li=ml+20;
-  const slats=(Ls,leg)=>{const lw=80,gap=50;const n=Math.ceil((Ls+gap)/(lw+gap));const g=Math.round((Ls-n*lw)/(n-1));
-    const sm=(mat==="sunta"||mat==="mdf18")?"kontra18":mat;
-    P("Taban latası",Wi-4,lw,n,{mat:sm,band:false,note:"uçları yuvarlat; ara "+cm(g)+" cm"});P("Lata taşıyıcı çıta",Ls,45,2,{mat:sm,band:false,note:"yan kasanın iç yüzüne, tutkal + vida"});
+  const mw=o.mw*10,ml=o.ml*10,Wi=mw+20,Li=ml+20,Lp=o.lata!=="cita";
+  const sm=(mat==="sunta"||mat==="mdf18")?"kontra18":mat;
+  /* lata taşıyıcı (L profil ya da çıta) */
+  const support=(x0,x1,z0,Ls,yb,st)=>{if(Lp){H("Metal L profil 30×30×2 mm",Math.ceil(Ls/100)/10*2,"m","yan kasaların iç yüzüne; boyuna kesin");H("Ahşap vidası 4×25",2*Math.ceil(Ls/250),"ad","L profil ↔ yan kasa");
+      GB(x0,x0+30,yb-30,yb,z0,z0+Ls,st,{col:MET,ex:[0,-1,0]});GB(x1-30,x1,yb-30,yb,z0,z0+Ls,st,{col:MET,ex:[0,-1,0]})}
+    else{P("Lata taşıyıcı çıta",Ls,45,2,{mat:sm,band:false,note:"yan kasanın iç yüzüne, tutkal + vida"});H("Ahşap vidası 4×40",2*Math.ceil(Ls/200),"ad","lata taşıyıcı çıta");
+      GB(x0,x0+t,yb-45,yb,z0,z0+Ls,st,{ex:[0,-1,0]});GB(x1-t,x1,yb-45,yb,z0,z0+Ls,st,{ex:[0,-1,0]})}};
+  const slats=(x0,x1,z0,Ls,yb,st,floorY)=>{const lw=80,gap=50,n=Math.ceil((Ls+gap)/(lw+gap)),g=Math.round((Ls-n*lw)/(n-1));
+    P("Taban latası",Wi-4,lw,n,{mat:sm,band:false,note:"uçları yuvarlat; ara "+cm(g)+" cm"});H(Lp?"Ahşap vidası 3.5×16":"Ahşap vidası 4×30",n*2,"ad",Lp?"her lata L profile 2 vida":"her lata 2 vida");
+    for(let i=0;i<n;i++){const z=z0+i*(lw+g);GB(x0+2,x1-2,yb,yb+t,z,z+lw,st,{ex:[0,1,0]})}
     if(sm!==mat)notes.push("Latalar "+SET.mats[sm].name+": suntalam ve MDF lata olarak esner ve kırılır.");
-    if(Wi>1050){P("Orta kiriş",Ls,120,1,{mat:sm,band:false});P("Orta ayak",leg-120,70,2,{mat:sm,band:false,note:"kirişin altına, yere basar"});H("Kiriş taşıyıcı köşebent",2,"ad","orta kiriş uçları")}
-    H("Ahşap vidası 4×30",n*2,"ad","her lata 2 vida (ya da lata tutucu)");H("Ahşap vidası 4×40",2*Math.ceil(Ls/200),"ad","lata taşıyıcı çıta");return{n,g}};
-  const guard=(Ltot,fh,side)=>{if(!o.guard)return;const Lg=Math.round(Ltot*.5/10)*10;P("Korkuluk tahtası",Lg,120,2,{note:"üst kenar R5 yuvarlat"});P("Korkuluk dikmesi",fh+170,70,4,{note:"yan kasanın iç yüzüne vidalanır"});H("Ahşap vidası 4×40",16,"ad","korkuluk");
-    notes.push("Korkuluk baş tarafta "+cm(Lg)+" cm; ayak tarafı açık kalır, çocuk kendi iner. Korkuluk ile kasa arasında 9–23 cm'lik boşluk bırakmayın (baş sıkışması).");return Lg};
-  let size={};
-  if(o.m==="ev"||o.m==="yer"){const fh=Math.round(o.fh*10);
-    P("Yan kasa",Li+2*t,fh,2,{bl:1,bs:0});P("Baş / ayak kasası",Wi,fh,2,{bl:1,bs:0});
-    const sl=slats(Li,fh-25);joinLoad(4,"kasa köşeleri");const Wo=Wi+2*t,Lo=Li+2*t;
-    if(o.m==="ev"){const wall=Math.round(o.wall*10),Tp=o.dbl?2*t:t,half=Wo/2,raf=Math.round(half*Math.SQRT2+50),peak=wall+Math.round(half);
-      P("Dikme",wall,70,o.dbl?8:4,{note:o.dbl?"ikişer ikişer tutkalla yapıştır (36 mm)":""});P("Çatı kirişi",raf,70,o.dbl?8:4,{note:"iki ucu 45° kesilir"+(o.dbl?"; ikişer yapıştır":"")});
-      P("Üst kuşak",Lo,70,2);P("Mahya (tepe kirişi)",Lo,70,1);
-      joinLoad(4,"dikme ↔ kasa");joinLight(5,"üst kuşak ve mahya uçları");H("Ahşap vidası 4×50",12,"ad","çatı kirişi ↔ dikme ve tepe");if(o.dbl)H("Ahşap vidası 4×30",4*Math.ceil(wall/150)+4*Math.ceil(raf/150),"ad","çift kat yapıştırmayı sıkıştırmak için");
-      size={W:Wo,L:Lo+2*Tp,H:peak};
-      F.push({r:[0,0,Wo,fh]},{r:[0,0,70,wall]},{r:[Wo-70,0,70,wall]},{p:[[0,wall],[70,wall],[half,wall+half-50],[half,wall+half+20],[0,wall+20]]},{p:[[Wo,wall],[Wo-70,wall],[half,wall+half-50],[half,wall+half+20],[Wo,wall+20]]},{r:[0,fh-25-18,Wo,18],c:"m"});
-      SD.push({r:[0,0,Lo+2*Tp,fh]},{r:[0,0,Tp,wall]},{r:[Lo+Tp,0,Tp,wall]},{r:[0,wall-70,Lo+2*Tp,70]},{r:[0,peak-70,Lo+2*Tp,70]});
-      steps.push("Dikme ve çatı kirişlerini ikişer tutkallayıp vidayla sıkıştırın, bir gece bekletin"+(o.dbl?"":" (tek kat seçildi; atlayın)")+".","Çatı kirişlerinin uçlarını 45° kesin; iki dikme + iki kiriş ile baş ve ayak çerçevesini yerde kurun, köşeleri kavela + tutkal + vida ile birleştirin.","Taban kasasını (2 yan + baş/ayak) "+HZJ[J].l.toLowerCase()+" ile kurun; köşegenleri ölçüp gönyeye alın.","Baş ve ayak çerçevesini kasanın uçlarına bağlayın.","Üst kuşakları ve mahyayı çerçeveler arasına takın; çatının sallanmadığını kontrol edin.","Lata taşıyıcı çıtaları kasa üst kenarından "+cm(25+18)+" cm aşağıya tutkal + vida ile sabitleyin, latayı dizin.");
-      notes.push("Çatı tırmanma ve asılma için hesaplanmadı; salıncak, hamak bağlamayın.","Tepe yüksekliği "+cm(peak)+" cm; tavan ve kapı/pencere ile çakışmasın.")}
-    else{if(o.bas){P("Başlık",Wo,350,1,{bl:1,bs:2,note:"üst köşeler R30 yuvarlat"});joinLoad(2,"başlık ↔ kasa")}
-      P("Köşe takozu",fh-30,70,4,{band:false,note:"kasa iç köşelerine tutkal + vida"});H("Ahşap vidası 4×40",16,"ad","köşe takozu");
-      size={W:Wo,L:Lo,H:o.bas?350:fh};F.push({r:[0,0,Wo,fh]},{r:[0,fh-25-18,Wo,18],c:"m"});if(o.bas)F.push({r:[0,0,Wo,350],c:"o"});SD.push({r:[0,0,Lo,fh]});
-      steps.push("Taban kasasını (2 yan + baş/ayak) "+HZJ[J].l.toLowerCase()+" ile kurun; köşegenleri ölçüp gönyeye alın.","Köşe takozlarını içten tutkallayıp vidalayın.",o.bas?"Başlığı baş kasaya bağlayın.":"","Lata taşıyıcı çıtaları kasa üst kenarından "+cm(25+18)+" cm aşağıya sabitleyin, latayı dizin.")}
-    const Lg=guard(Lo,fh);if(Lg){SD.push({r:[0,fh,Lg,120+50],c:"o"});steps.push("Korkuluk dikmelerini yan kasanın iç yüzüne vidalayın, korkuluk tahtasını takın.")}
-    steps.push("Tüm kenarları zımparalayın, köşeleri yuvarlatın; yüzey işlemini yapın.");
-    notes.push("Yatak ölçüsü "+o.mw+"×"+o.ml+" cm; kasanın içi "+cm(Wi)+"×"+cm(Li)+" cm (her yandan 1 cm boşluk). Yatakla kasa arasında 3 cm'den büyük boşluk olmamalı.","Lata arası "+cm(sl.g)+" cm; "+sl.n+" lata.")}
-  else if(o.m==="karyola"){const hh=Math.round(o.hh*10),hf=Math.round(o.hf*10),rh=Math.round(o.rh*10),lift=Math.round(o.lift*10),Wo=Wi+2*t;
-    P("Baş tahtası",Wo,hh,1,{bl:1,bs:2,keep:true});P("Ayak tahtası",Wo,hf,1,{bl:1,bs:2,keep:true});P("Yan kasa",Li,rh,2,{bl:1,bs:0});
-    const sl=slats(Li,lift+rh-25-18);joinLoad(4,"yan kasa ↔ baş / ayak tahtası");H("Keçe ayak altı",4);
-    size={W:Wo,L:Li+2*t,H:hh};F.push({r:[0,0,Wo,hh],c:"o"},{r:[t,lift,Wi,rh]},{r:[t,lift+rh-25-18,Wi,18],c:"m"});SD.push({r:[0,0,t,hh]},{r:[Li+t,0,t,hf]},{r:[t,lift,Li,rh]});
-    steps.push("Yan kasaların uçlarına ve baş/ayak tahtalarına bağlantı deliklerini açın (yan kasa alt kenarı yerden "+cm(lift)+" cm).","Lata taşıyıcı çıtaları yan kasaların iç yüzüne, üst kenardan "+cm(25+18)+" cm aşağıya tutkal + vida ile sabitleyin.","Baş tahtası, iki yan kasa, ayak tahtası sırasıyla "+HZJ[J].l.toLowerCase()+" ile birleştirin; köşegenleri eşitleyin.",Wi>1050?"Orta kirişi ayaklarıyla birlikte köşebentle baş ve ayak tahtasına bağlayın.":"","Latayı dizin, uçlarından vidalayın.","Kenarları zımparalayın; keçeleri yapıştırın.");
-    notes.push("Yatak ölçüsü "+o.mw+"×"+o.ml+" cm; kasanın içi "+cm(Wi)+"×"+cm(Li)+" cm.","Lata arası "+cm(sl.g)+" cm; "+sl.n+" lata.","Yatak üstü yerden yaklaşık "+cm(lift+rh-25+180)+" cm (18 cm yatakla).")}
-  else if(o.m==="kitap"){const W=Math.round(o.W*10),Hh=Math.round(o.H*10),D=Math.round(o.D*10),n=Math.max(1,Math.min(5,o.raf|0)),Wi2=W-2*t;
-    P("Yan",Hh,D,2,{bl:1,bs:1,note:"ön üst köşe R30 yuvarlat"});P("Alt tabla",Wi2,D,1,{bl:1,bs:0});P("Üst kuşak",Wi2,80,1,{bl:1,bs:0});P("Kitap rafı",Wi2,140,n,{bl:1,bs:0});P("Ön çıta",Wi2,70,n,{bl:2,bs:0,note:"üst kenar yuvarlat"});
-    P("Arkalık",W-4,Hh-60,1,{mat:"arka8",band:false});joinLight(2*(n+2),"raf ve tablalar ↔ yanlar");H("Ahşap vidası 3.5×25",n*6,"ad","ön çıta ↔ raf");H("Duvara sabitleme gönyesi",2,"ad","devrilmeye karşı");
-    const gap=Math.round((Hh-60-80)/(n));size={W,L:D,H:Hh};F.push({r:[0,0,t,Hh]},{r:[W-t,0,t,Hh]},{r:[t,60,Wi2,t]},{r:[t,Hh-80,Wi2,80]});for(let i=1;i<=n;i++){const y=60+t+gap*i-gap+Math.round(gap*.15);F.push({r:[t,y,Wi2,70],c:"o"})}
-    SD.push({r:[0,0,D,Hh]});steps.push("Ön çıtaları kitap raflarının ön kenarına tutkal + vida ile alttan bağlayın (L kesit oluşur).","Yanlara raf ve tabla deliklerini açın; en alttaki tabla yerden 6 cm.","Alt tabla, raflar ve üst kuşağı yanlar arasına "+(J==="vida"?"vida + kavela":"minifix + kavela")+" ile bağlayın.","Arkalığı gönyeye alarak vidalayın; dolap kendiliğinden kare olur.","Duvara iki gönye ile sabitleyin.");
-    notes.push("Raf arası "+cm(gap)+" cm; çocuğun göz hizasında kapak gösterir. Raf derinliği 14 cm, ön çıta 7 cm.","Mutlaka duvara sabitleyin: çocuk tırmanırsa devrilebilir.")}
-  else if(o.m==="kule"){const Hh=Math.round(o.kH*10),Wi2=Math.round(o.kW*10),D=Math.round(o.kD*10);
-    P("Yan",Hh,D,2,{bl:2,bs:2,note:"tutma boşluğu dekupajla; tüm köşeler R30"});P("Platform",Wi2,D-100,1,{bl:1,bs:0});P("Basamak",Wi2,220,1,{bl:1,bs:0});P("Korkuluk çıtası",Wi2,80,3,{bl:2,bs:0});P("Alt bağlantı",Wi2,100,2,{bl:1,bs:0});
-    if(J==="vida"){H("Ahşap vidası 5×60",20,"ad","sabit parçalar")}else H("Minifix (eksantrik) takımı",14,"ad","sabit parçalar");H("Kavela 8×35",28);H("Karyola cıvatası M6 × 70 mm",4,"ad","platform (yeri değişir)");H("Silindir (karyola) somunu M6",4);
-    size={W:Wi2+2*t,L:D,H:Hh};F.push({r:[0,0,t,Hh]},{r:[Wi2+t,0,t,Hh]},{r:[t,Math.round(Hh*.5),Wi2,t],c:"o"},{r:[t,Math.round(Hh*.25),Wi2,t]},{r:[t,Hh-80,Wi2,80]});
-    SD.push({p:[[0,0],[D,0],[D-60,Hh],[60,Hh]]});
-    steps.push("Yanlara tutma boşluklarını ve platform ayar deliklerini (3 kademe, 10 cm ara) şablonla aynı anda çizin, dekupajla kesin.","Alt bağlantılar, basamak ve korkuluk çıtalarını yanlar arasına bağlayın.","Platformu çocuğun boyuna göre bir kademeye karyola cıvatasıyla takın: dirsek tezgah hizasında olmalı.","Tüm kenarları yuvarlatıp zımparalayın.");
-    notes.push("Taban geniş tutuldu ("+cm(D)+" cm) ki öne devrilmesin. 3 tarafta korkuluk var; arka çıta inip çıkış içindir.","Çocuk kulede tek başına bırakılmaz.")}
-  if(J==="minifix"&&(mat==="masif18"))notes.push("Masifte minifix olur ama zamanla gevşeyebilir; yük alan köşelerde karyola cıvatası daha sağlam.");
+    if(Wi>1050){const leg=yb-120-floorY;P("Orta kiriş",Ls,120,1,{mat:sm,band:false});P("Orta ayak",leg,70,2,{mat:sm,band:false,note:"kirişin altına, yere basar"});H("Kiriş taşıyıcı köşebent",2,"ad","orta kiriş uçları");
+      const cx=(x0+x1)/2;GB(cx-t/2,cx+t/2,yb-120,yb,z0,z0+Ls,st,{ex:[0,-1,0]});[z0+Ls*.33,z0+Ls*.67].forEach(z=>GB(cx-35,cx+35,floorY,yb-120,z,z+t,st,{ex:[0,-1,0]}))}
+    return{n,g}};
+  const mattress=(x0,x1,y0,z0,z1,th)=>{step("Şilteyi yerleştirin. Kenarlarda 3 cm'den büyük boşluk kalmamalı.");GB(x0+8,x1-8,y0,y0+th,z0+8,z1-8,cur,{col:"#F6F7F9",kind:"fix",ex:[0,1,0]})};
+  if(o.m==="ev"||o.m==="yer"){const fh=Math.round(o.fh*10),ev=o.m==="ev",Tp=ev?(o.dbl?2*t:t):0,Wo=Wi+2*t,Lo=Li+2*t,zb=ev?Tp:(o.bas?t:0),yb=fh-25-t,hb=Math.round((o.hb||40)*10),ha=Math.round((o.ha||20)*10);
+    if(ev&&o.dbl)prep.push("Dikme"+(o.cati?" ve çatı kirişlerini":"leri")+" ikişer tutkallayıp işkenceyle sıkıştırın, vidayla destekleyin; bir gece bekletin.");
+    step("Taban kasasını kurun: 2 uzun yan tahta, baş ve ayak kasası. Köşeleri "+JL+" ile birleştirin; iki köşegeni ölçüp eşitleyin.");
+    P("Yan kasa",Lo,fh,2,{bl:1,bs:0});P("Baş / ayak kasası",Wi,fh,2,{bl:1,bs:0});joinLoad(4,"kasa köşeleri");
+    GB(0,t,0,fh,zb,zb+Lo,cur,{ex:[-1,0,0]});GB(Wo-t,Wo,0,fh,zb,zb+Lo,cur,{ex:[1,0,0]});GB(t,Wo-t,0,fh,zb,zb+t,cur,{ex:[0,0,-1]});GB(t,Wo-t,0,fh,zb+Lo-t,zb+Lo,cur,{ex:[0,0,1]});
+    step(Lp?"Metal L profilleri iki uzun yan tahtanın iç yüzüne, üst kenardan "+cm(25+t)+" cm aşağıya vidalayın.":"Lata taşıyıcı çıtaları iki uzun yan tahtanın iç yüzüne, üst kenardan "+cm(25+t)+" cm aşağıya tutkal + vida ile sabitleyin.");support(t,Wo-t,zb+t,Li,yb,cur);
+    step("Lataları eşit aralıkla dizin, her birini iki küçük vidayla sabitleyin.");const sl=slats(t,Wo-t,zb+t,Li,yb,cur,0);
+    let H3=fh,Ltot=zb+Lo+(!ev&&o.ayak?t:0);
+    if(ev){const wall=Math.round(o.wall*10),half=Wo/2,L2=Math.round(half*Math.SQRT2),peak=wall+Math.round(half);Ltot=Lo+2*Tp;H3=o.cati?peak:wall;
+      step("Dört köşeye dikmeleri (direkleri) koyun, taban kasasına "+(J==="civata"?"karyola cıvatasıyla":JL+" ile")+" bağlayın.");
+      P("Dikme",wall,70,o.dbl?8:4,{note:o.dbl?"ikişer tutkalla yapıştır (36 mm)":""});joinLoad(4,"dikme ↔ kasa");
+      [[0,0],[Wo-70,0],[0,Tp+Lo],[Wo-70,Tp+Lo]].forEach(([x,z])=>GB(x,x+70,0,wall,z,z+Tp,cur,{ex:[x?1:-1,0,z?1:-1]}));
+      if(o.bas||o.ayak){step((o.bas&&o.ayak?"Başlık ve ayak ucu panellerini":o.bas?"Başlık panelini":"Ayak ucu panelini")+" iki dikmenin arasına, kasanın üstüne takın.");
+        if(o.bas){P("Başlık paneli",Wi,hb,1,{bl:1,bs:2,keep:true,note:"üst köşeler R30 yuvarlat"});joinLight(2,"başlık ↔ dikmeler");GB(t,Wo-t,fh,fh+hb,Tp,Tp+t,cur,{ex:[0,0,-1]})}
+        if(o.ayak){P("Ayak ucu paneli",Wi,ha,1,{bl:1,bs:2,keep:true,note:"üst köşeler R30 yuvarlat"});joinLight(2,"ayak ucu ↔ dikmeler");GB(t,Wo-t,fh,fh+ha,Tp+Lo-t,Tp+Lo,cur,{ex:[0,0,1]})}}
+      step("Üst kuşakları iki yandan dikmelerin tepesine bağlayın. Yatak artık çatısız da kullanılabilir.");P("Üst kuşak",Lo,70,2);joinLight(4,"üst kuşak uçları");
+      GB(0,t,wall-70,wall,Tp,Tp+Lo,cur,{ex:[-1,0,0]});GB(Wo-t,Wo,wall-70,wall,Tp,Tp+Lo,cur,{ex:[1,0,0]});
+      if(o.cati){step("Çatıyı yerde kurun: iki kirişi tepeden birleştirip 'A' yapın (iki tane), aralarına mahyayı takın. Çatıyı dikmelerin üstüne oturtup metal lamalarla bağlayın. Lamaları sökünce çatı kalkar.");
+        P("Çatı kirişi",L2+40,70,o.dbl?8:4,{note:"iki ucu 45° kesilir"+(o.dbl?"; ikişer yapıştır":"")});P("Mahya (tepe kirişi)",Lo,70,1);
+        H("Ahşap vidası 4×50",4,"ad","çatı tepesi (A birleşimi)");H("Kavela 8×35",4);H("Düz bağlantı laması (metal, 4 delikli)",4,"ad","çatı ↔ dikme; sökülebilir");H("Ahşap vidası 4×25",16,"ad","bağlantı laması");joinLight(2,"mahya uçları");
+        [0,Tp+Lo].forEach(z=>{const ez=z?1:-1;GB(Wo/4-L2/2,Wo/4+L2/2,wall+half/2-35,wall+half/2+35,z,z+Tp,cur,{rz:Math.PI/4,ex:[0,1,ez]});GB(3*Wo/4-L2/2,3*Wo/4+L2/2,wall+half/2-35,wall+half/2+35,z,z+Tp,cur,{rz:-Math.PI/4,ex:[0,1,ez]})});
+        GB(half-t/2,half+t/2,peak-70,peak,Tp,Tp+Lo,cur,{ex:[0,1,0]});
+        notes.push("Çatı ayrı modül: 4 metal lama sökülünce kalkar, yatak çerçeve yatak olarak kullanılır. Dikmeler de sökülürse yer yatağı kalır.","Çatı tırmanma ve asılma için hesaplanmadı; salıncak, hamak bağlamayın.","Tepe yüksekliği "+cm(peak)+" cm; tavan ve pencere ile çakışmasın.")}}
+    else{if(o.bas||o.ayak){step((o.bas&&o.ayak?"Başlık ve ayak ucunu":o.bas?"Başlığı":"Ayak ucunu")+" kasanın ucuna "+JL+" ile bağlayın.");
+        if(o.bas){P("Başlık",Wo,fh+hb,1,{bl:1,bs:2,keep:true,note:"üst köşeler R30 yuvarlat"});joinLoad(2,"başlık ↔ kasa");GB(0,Wo,0,fh+hb,0,t,cur,{ex:[0,0,-1]});H3=fh+hb}
+        if(o.ayak){P("Ayak ucu",Wo,fh+ha,1,{bl:1,bs:2,keep:true,note:"üst köşeler R30 yuvarlat"});joinLoad(2,"ayak ucu ↔ kasa");GB(0,Wo,0,fh+ha,zb+Lo,zb+Lo+t,cur,{ex:[0,0,1]});H3=Math.max(H3,fh+ha)}}}
+    if(o.guard){step("Korkulukları iki yana takın: baş tarafta yarım boy; ayak tarafı açık kalır, çocuk kendi iner.");const Lg=Math.round(Lo*.5/10)*10,nu=ev?2:4;
+      P("Korkuluk tahtası",Lg,120,2,{bl:2,bs:2,note:"kenarları R5 yuvarlat"});P("Korkuluk dikmesi",fh+180,70,nu,{bl:1,bs:1,note:"yan kasanın dış yüzüne cıvatayla"});H("Karyola cıvatası M6 × 50 mm",nu*2,"ad","korkuluk dikmesi ↔ yan kasa");H("Silindir (karyola) somunu M6",nu*2);H("Ahşap vidası 4×40",ev?8:8,"ad","korkuluk tahtası");
+      [[-t,0,-1],[Wo,Wo+t,1]].forEach(([x0,x1,ex])=>{GB(x0,x1,fh+60,fh+180,zb,zb+Lg,cur,{ex:[ex,0,0]});GB(x0,x1,0,fh+180,zb+Lg-70,zb+Lg,cur,{ex:[ex,0,0]});if(!ev)GB(x0,x1,0,fh+180,zb,zb+70,cur,{ex:[ex,0,0]})});
+      notes.push("Korkuluk baş tarafta "+cm(Lg)+" cm; altında 6 cm boşluk var. Hiçbir yerde 9–23 cm'lik açıklık bırakmayın (baş sıkışması).")}
+    mattress(t,Wo-t,yb+t,zb+t,zb+Lo-t,ev?120:120);
+    notes.push("Şilte "+o.mw+"×"+o.ml+" cm; kasanın içi "+cm(Wi)+"×"+cm(Li)+" cm (her yandan 1 cm boşluk).","Lata arası "+cm(sl.g)+" cm; "+sl.n+" lata.")}
+  else if(o.m==="karyola"){const hh=Math.round(o.hh*10),hf=Math.round(o.hf*10),rh=Math.round(o.rh*10),lift=Math.round(o.lift*10),Wo=Wi+2*t,yb=lift+rh-25-t;
+    step("Baş tahtasını dik tutun; iki yan kasayı "+JL+" ile bağlayın, sonra ayak tahtasını takın. Yan kasaların alt kenarı yerden "+cm(lift)+" cm.");
+    P("Baş tahtası",Wo,hh,1,{bl:1,bs:2,keep:true});P("Ayak tahtası",Wo,hf,1,{bl:1,bs:2,keep:true});P("Yan kasa",Li,rh,2,{bl:1,bs:0});joinLoad(4,"yan kasa ↔ baş / ayak tahtası");H("Keçe ayak altı",4);
+    GB(0,Wo,0,hh,0,t,cur,{ex:[0,0,-1]});GB(0,Wo,0,hf,t+Li,2*t+Li,cur,{ex:[0,0,1]});GB(0,t,lift,lift+rh,t,t+Li,cur,{ex:[-1,0,0]});GB(Wo-t,Wo,lift,lift+rh,t,t+Li,cur,{ex:[1,0,0]});
+    step(Lp?"Metal L profilleri yan kasaların iç yüzüne, üst kenardan "+cm(25+t)+" cm aşağıya vidalayın.":"Lata taşıyıcı çıtaları yan kasaların iç yüzüne, üst kenardan "+cm(25+t)+" cm aşağıya sabitleyin.");support(t,Wo-t,t,Li,yb,cur);
+    step("Lataları dizin, uçlarından vidalayın."+(Wi>1050?" Orta kirişi ayaklarıyla birlikte baş ve ayak tahtasına köşebentle bağlayın.":""));const sl=slats(t,Wo-t,t,Li,yb,cur,0);
+    mattress(t,Wo-t,yb+t,t,t+Li,180);
+    notes.push("Şilte "+o.mw+"×"+o.ml+" cm; kasanın içi "+cm(Wi)+"×"+cm(Li)+" cm.","Lata arası "+cm(sl.g)+" cm; "+sl.n+" lata.","18 cm şilteyle yatak üstü yerden yaklaşık "+cm(yb+t+180)+" cm.")}
+  else if(o.m==="kitap"){const W=Math.round(o.W*10),Hh=Math.round(o.H*10),D=Math.round(o.D*10),n=Math.max(1,Math.min(5,o.raf|0)),Wi2=W-2*t,gap=Math.round((Hh-60-t-80)/n);
+    prep.push("Ön çıtaları kitap raflarının ön kenarına alttan tutkal + vida ile bağlayın (L kesit olur).");
+    step("Yanları, alt tablayı ve üst kuşağı "+(J==="vida"?"vida + kavela":"minifix + kavela")+" ile birleştirin; alt tabla yerden 6 cm.");
+    P("Yan",Hh,D,2,{bl:1,bs:1,note:"ön üst köşe R30 yuvarlat"});P("Alt tabla",Wi2,D,1,{bl:1,bs:0});P("Üst kuşak",Wi2,80,1,{bl:1,bs:0});
+    GB(0,t,0,Hh,0,D,cur,{ex:[-1,0,0]});GB(W-t,W,0,Hh,0,D,cur,{ex:[1,0,0]});GB(t,W-t,60,60+t,0,D,cur,{ex:[0,-1,0]});GB(t,W-t,Hh-80,Hh,8,8+t,cur,{ex:[0,1,0]});
+    step("Kitap raflarını (ön çıtaları takılı) yanlara bağlayın.");P("Kitap rafı",Wi2,140,n,{bl:1,bs:0});P("Ön çıta",Wi2,70,n,{bl:2,bs:0,note:"üst kenar yuvarlat"});joinLight(2*(n+2),"raf ve tablalar ↔ yanlar");H("Ahşap vidası 3.5×25",n*6,"ad","ön çıta ↔ raf");
+    for(let i=1;i<=n;i++){const y=60+t+gap*i-Math.round(gap*.85);GB(t,W-t,y,y+t,8,148,cur,{ex:[0,0,1]});GB(t,W-t,y,y+t+70,148-t,148,cur,{ex:[0,0,1]})}
+    step("Arkalığı gönyeye alarak vidalayın; dolap kendiliğinden kare olur.");P("Arkalık",W-4,Hh-60,1,{mat:"arka8",band:false});GB(2,W-2,60,Hh,0,8,cur,{col:"#CFC7B8",ex:[0,0,-1]});
+    step("Duvara iki gönye ile sabitleyin: çocuk tırmanırsa devrilmesin.");H("Duvara sabitleme gönyesi",2,"ad","devrilmeye karşı");GB(W/4-20,W/4+20,Hh-60,Hh-20,-2,0,cur,{col:MET});GB(3*W/4-20,3*W/4+20,Hh-60,Hh-20,-2,0,cur,{col:MET});
+    notes.push("Raf arası "+cm(gap)+" cm; kitap kapakları çocuğun göz hizasında görünür.","Mutlaka duvara sabitleyin.")}
+  else if(o.m==="kule"){const Hh=Math.round(o.kH*10),Wi2=Math.round(o.kW*10),D=Math.round(o.kD*10),W=Wi2+2*t;
+    prep.push("Yanlara tutma boşluklarını ve platform ayar deliklerini (3 kademe, 10 cm ara) şablonla aynı anda çizin, dekupajla kesin, kenarları yuvarlatın.");
+    step("İki yanı alt bağlantı tahtalarıyla birleştirin.");P("Yan",Hh,D,2,{bl:2,bs:2,note:"tutma boşluğu dekupajla; tüm köşeler R30"});P("Alt bağlantı",Wi2,100,2,{bl:1,bs:0});
+    if(J==="vida")H("Ahşap vidası 5×60",20,"ad","sabit parçalar");else H("Minifix (eksantrik) takımı",14,"ad","sabit parçalar");H("Kavela 8×35",28);
+    GB(0,t,0,Hh,0,D,cur,{ex:[-1,0,0]});GB(W-t,W,0,Hh,0,D,cur,{ex:[1,0,0]});GB(t,W-t,0,100,0,t,cur,{ex:[0,0,-1]});GB(t,W-t,0,100,D-t,D,cur,{ex:[0,0,1]});
+    step("Basamağı sabit, platformu karyola cıvatasıyla takın. Platform yüksekliği çocuğun dirseği tezgah hizasına gelecek kademede.");P("Basamak",Wi2,220,1,{bl:1,bs:0});P("Platform",Wi2,D-100,1,{bl:1,bs:0});H("Karyola cıvatası M6 × 70 mm",4,"ad","platform (yeri değişir)");H("Silindir (karyola) somunu M6",4);
+    GB(t,W-t,Math.round(Hh*.25),Math.round(Hh*.25)+t,D-220,D,cur,{ex:[0,0,1]});GB(t,W-t,Math.round(Hh*.5),Math.round(Hh*.5)+t,50,D-50,cur,{ex:[0,1,0]});
+    step("Korkuluk çıtalarını takın: arkada iki, önde bir. Ön taraf tezgaha bakar.");P("Korkuluk çıtası",Wi2,80,3,{bl:2,bs:0});
+    GB(t,W-t,Hh-80,Hh,0,t,cur,{ex:[0,0,-1]});GB(t,W-t,Math.round(Hh*.75),Math.round(Hh*.75)+80,0,t,cur,{ex:[0,0,-1]});GB(t,W-t,Hh-80,Hh,D-t,D,cur,{ex:[0,0,1]});
+    notes.push("Taban geniş ("+cm(D)+" cm) ki devrilmesin. Çocuk kulede tek başına bırakılmaz.")}
+  if(J==="minifix"&&mat==="masif18")notes.push("Masifte minifix zamanla gevşeyebilir; yük alan köşelerde karyola cıvatası daha sağlam.");
   if(J==="vida"&&(mat==="sunta"||mat==="mdf18"))notes.push("Suntalam ve MDF kenarındaki vida sökülüp takılınca tutmaz; minifix ya da karyola cıvatası seçin.");
   H("Ahşap tutkalı D3 (500 g)",1,"şişe");
   carSplit(parts,hw).forEach(x=>notes.push("Araba: "+x));hw.forEach(i=>{const e=hw.filter(j=>j.name===i.name);if(e.length>1&&e[0]===i){i.qty=e.reduce((q,j)=>q+j.qty,0);e.slice(1).forEach(j=>j.qty=0)}});for(let i=hw.length-1;i>=0;i--)if(!hw[i].qty)hw.splice(i,1);
-  return{M,o,parts:parts.map((p,i)=>Object.assign(p,{id:String(i+1),a:p.a0,b:p.b0,free:!(SET.grain&&GRAINY(p.mat)),mods:[]})),hw,steps:steps.filter(Boolean),notes,F,SD,size}}
-function hzDraw(B){const view=(sh,lbl,W,Hh)=>{if(!sh.length)return"";let xs=[],ys=[];sh.forEach(q=>{if(q.r){xs.push(q.r[0],q.r[0]+q.r[2]);ys.push(q.r[1],q.r[1]+q.r[3])}else q.p.forEach(([x,y])=>{xs.push(x);ys.push(y)})});
-    const x0=Math.min(...xs),x1=Math.max(...xs),y1=Math.max(...ys),pad=Math.max(x1-x0,y1)*.12,fs=Math.max(x1-x0,y1)/16;
-    const Y=y=>y1-y;let g=`<svg viewBox="${x0-pad} ${-pad} ${x1-x0+2*pad} ${y1+2*pad}" role="img" aria-label="${lbl}">`;
-    g+=`<line x1="${x0-pad}" y1="${y1}" x2="${x1+pad}" y2="${y1}" stroke="var(--muted)" stroke-width="${fs/8}"/>`;
-    sh.forEach(q=>{const fill=q.c==="m"?"var(--back)":q.c==="o"?"none":"var(--wood)",st=q.c==="o"?"var(--wood-edge)":"var(--wood-edge)",dash=q.c==="o"?` stroke-dasharray="${fs/3}"`:"";
-      if(q.r)g+=`<rect x="${q.r[0]}" y="${Y(q.r[1]+q.r[3])}" width="${q.r[2]}" height="${q.r[3]}" fill="${fill}" stroke="${st}" stroke-width="${fs/8}"${dash}/>`;
-      else g+=`<polygon points="${q.p.map(([x,y])=>x+","+Y(y)).join(" ")}" fill="${fill}" stroke="${st}" stroke-width="${fs/8}"/>`});
-    g+=`<text x="${(x0+x1)/2}" y="${y1+pad*.75}" text-anchor="middle" font-size="${fs}" fill="var(--ink)">${cm(W)} cm</text><text x="${x1+pad*.5}" y="${y1/2}" font-size="${fs}" fill="var(--ink)" text-anchor="middle" transform="rotate(-90 ${x1+pad*.5} ${y1/2})">${cm(Hh)} cm</text>`;
+  const real=G.filter(b=>b.kind!=="fix");const bx=hzBounds(real);
+  return{M,o,parts:parts.map((p,i)=>Object.assign(p,{id:String(i+1),a:p.a0,b:p.b0,free:!(SET.grain&&GRAINY(p.mat)),mods:[]})),hw,steps:ST,prep,notes,G,size:{W:Math.round(bx.x1-bx.x0),L:Math.round(bx.z1-bx.z0),H:Math.round(bx.y1)}}}
+function hzCorners(b){const cx=(b.x0+b.x1)/2,cy=(b.y0+b.y1)/2,c=Math.cos(b.rz||0),s=Math.sin(b.rz||0);return[[b.x0,b.y0],[b.x1,b.y0],[b.x1,b.y1],[b.x0,b.y1]].map(([x,y])=>[cx+(x-cx)*c-(y-cy)*s,cy+(x-cx)*s+(y-cy)*c])}
+function hzBounds(bs){const r={x0:1e9,x1:-1e9,y0:1e9,y1:-1e9,z0:1e9,z1:-1e9};bs.forEach(b=>{hzCorners(b).forEach(([x,y])=>{r.x0=Math.min(r.x0,x);r.x1=Math.max(r.x1,x);r.y0=Math.min(r.y0,y);r.y1=Math.max(r.y1,y)});r.z0=Math.min(r.z0,b.z0);r.z1=Math.max(r.z1,b.z1)});return r}
+function hzDraw(B){const G=B.G;const view=(front,lbl)=>{const bx=hzBounds(G.filter(b=>b.kind!=="fix"));const u0=front?bx.x0:bx.z0,u1=front?bx.x1:bx.z1,y1=bx.y1,span=Math.max(u1-u0,y1),pad=span*.12,fs=span/16;
+    const Y=y=>y1-y;let g=`<svg viewBox="${u0-pad} ${-pad} ${u1-u0+2*pad} ${y1+2*pad}" role="img" aria-label="${lbl}"><line x1="${u0-pad}" y1="${y1}" x2="${u1+pad}" y2="${y1}" stroke="var(--muted)" stroke-width="${fs/8}"/>`;
+    const order=G.slice().sort((a,b)=>front?(b.z1-a.z1):(b.x1-a.x1));
+    order.forEach(b=>{const fill=b.kind==="fix"?"#F6F7F9":b.col;let pts;
+      if(front)pts=hzCorners(b);else{const c=hzCorners(b),ys=c.map(q=>q[1]);pts=[[b.z0,Math.min(...ys)],[b.z1,Math.min(...ys)],[b.z1,Math.max(...ys)],[b.z0,Math.max(...ys)]]}
+      g+=`<polygon points="${pts.map(([u,y])=>u+","+Y(y)).join(" ")}" fill="${fill}" stroke="var(--wood-edge)" stroke-width="${fs/10}"/>`});
+    g+=`<text x="${(u0+u1)/2}" y="${y1+pad*.75}" text-anchor="middle" font-size="${fs}" fill="var(--ink)">${cm(u1-u0)} cm</text><text x="${u1+pad*.5}" y="${y1/2}" font-size="${fs}" fill="var(--ink)" text-anchor="middle" transform="rotate(-90 ${u1+pad*.5} ${y1/2})">${cm(y1)} cm</text>`;
     return `<div class="hzv"><span class="lbl">${lbl}</span>${g}</svg></div>`};
-  return `<div class="hzdraw">${view(B.F,B.M.bed?"Baş taraftan":"Önden",B.size.W,B.size.H)}${view(B.SD,"Yandan",B.size.L,B.size.H)}</div>`}
+  return `<div class="hzdraw">${view(true,B.M.bed?"Baş taraftan":"Önden")}${view(false,"Yandan")}</div>`}
 function hzStats(B){const out=matsUsed(B.parts).map(k=>{const P=pack(B.parts,k);const use=P.sheets.reduce((q,sh)=>q+sheetUse(sh,P.m),0)/Math.max(1,P.sheets.length);
   const last=P.sheets.length?sheetUse(P.sheets[P.sheets.length-1],P.m):0;return{k,P,n:P.sheets.length,use,last,cost:P.sheets.length*(+SET.mats[k].price||0)}});
   return{out,cost:out.reduce((q,x)=>q+x.cost,0),hw:hwCost(B.hw)}}
@@ -805,9 +841,11 @@ function renderHazir(){document.querySelector("main").className="";const o=HZ,B=
   const chk=(k,l,sm)=>`<label class="check"><input type="checkbox" data-hzc="${k}" ${o[k]?"checked":""}><span>${l}${sm?`<small>${sm}</small>`:""}</span></label>`;
   let fields="";
   if(M.bed)fields+=`<div class="row"><span>Yatak (şilte) ölçüsü</span></div><div class="chips wrap">${BEDSZ.map(([w,l])=>`<button class="chip sm" data-hzsz="${w}x${l}" aria-pressed="${o.mw===w&&o.ml===l}">${w}×${l}</button>`).join("")}</div><div class="grid3">${num("mw","Şilte eni cm",60,200)}${num("ml","Şilte boyu cm",120,220)}</div>`;
-  if(o.m==="ev")fields+=`<div class="grid3">${num("wall","Duvar yüksekliği cm",60,140)}${num("fh","Kasa yüksekliği cm",10,30)}</div>${chk("dbl","Dikme ve çatı çift kat (36 mm)","Çok daha sağlam; levha ekler ama şerit parça, fire düşük")}${chk("guard","Korkuluk","Baş tarafta yarım boy; ayak tarafı açık")}`;
-  if(o.m==="yer")fields+=`<div class="grid3">${num("fh","Kasa yüksekliği cm",10,35)}</div>${chk("guard","Korkuluk","Baş tarafta yarım boy")}${chk("bas","Başlık","35 cm yüksek")}`;
-  if(o.m==="karyola")fields+=`<div class="grid3">${num("hh","Baş tahtası cm",50,130)}${num("hf","Ayak tahtası cm",20,90)}${num("rh","Kasa yüksekliği cm",15,35)}${num("lift","Kasa yerden cm",5,30)}</div>`;
+  const lata=`<div class="row"><span>Latalar neye oturur</span><div class="chips"><button class="chip sm" data-hzl="L" aria-pressed="${o.lata!=="cita"}">Metal L profil</button><button class="chip sm" data-hzl="cita" aria-pressed="${o.lata==="cita"}">Ahşap çıta</button></div></div>`;
+  const babk=`${chk("bas","Başlık paneli")}${o.bas?`<div class="grid3">${num("hb","Başlık kasadan yüksek cm",10,80)}</div>`:""}${chk("ayak","Ayak ucu paneli")}${o.ayak?`<div class="grid3">${num("ha","Ayak ucu kasadan yüksek cm",5,60)}</div>`:""}${chk("guard","Korkuluk (iki yanda)","Baş tarafta yarım boy; ayak tarafı açık, çocuk kendi iner")}`;
+  if(o.m==="ev")fields+=`<div class="grid3">${num("wall","Dikme (duvar) yüksekliği cm",60,140)}${num("fh","Kasa yüksekliği cm",10,30)}</div>${chk("cati","Çatı","Ayrı modül; metal lamalarla takılır, sonra sökülüp çatısız kullanılır")}${chk("dbl","Dikme ve çatı çift kat (36 mm)","Çok daha sağlam; fire düşük şerit parça")}${babk}${lata}`;
+  if(o.m==="yer")fields+=`<div class="grid3">${num("fh","Kasa yüksekliği cm",10,35)}</div>${babk}${lata}`;
+  if(o.m==="karyola")fields+=`<div class="grid3">${num("hh","Baş tahtası cm",50,130)}${num("hf","Ayak tahtası cm",20,90)}${num("rh","Kasa yüksekliği cm",15,35)}${num("lift","Kasa yerden cm",5,30)}</div>${lata}`;
   if(o.m==="kitap")fields+=`<div class="grid3">${num("W","En cm",40,160)}${num("H","Yükseklik cm",40,120)}${num("D","Derinlik cm",20,40)}${num("raf","Raf sayısı",1,5)}</div>`;
   if(o.m==="kule")fields+=`<div class="grid3">${num("kH","Yükseklik cm",70,100)}${num("kW","İç en cm",30,50)}${num("kD","Taban derinliği cm",35,60)}</div>`;
   const fitH=HZFIT&&HZFIT.sig===JSON.stringify(o)?`<ul class="artikl">${HZFIT.res.map(r=>`<li><div><b>${r.proj?"Açık proje: "+esc(r.proj):esc(r.m.l)}</b><small>${r.proj?(r.extra<=0?"Bu model projenin artığından çıkar":"Projeye eklerseniz +"+r.extra+" levha"):(r.extra<=0?"Aynı levhalardan ek levha almadan çıkar":"+"+r.extra+" levha ile birlikte")}</small></div>${r.extra<=0?'<span class="pill ok">fire yok</span>':""}</li>`).join("")}</ul>`:`<button class="btn small" data-hzfit="1">Hesapla</button>`;
@@ -815,9 +853,12 @@ function renderHazir(){document.querySelector("main").className="";const o=HZ,B=
   if(HZ.tab==="oda"){$("#view").innerHTML=`<h1 class="c">Çocuk odası planla</h1><p class="lead">Odanın ölçüsünü, kapı ve pencereyi girin: takım odaya sığar mı, nasıl yerleşir, kaç levhadan çıkar.</p>${tabs}${roomHTML()}`;$("#bar").innerHTML=`<button class="btn ghost" data-back="1">Geri</button>`;return}
   $("#view").innerHTML=`<h1 class="c">Hazır modeller</h1><p class="lead">Ölçüye göre kendini kuran, fire dostu modeller. Ebatlamaya kesim listesi, ustaya üretim kılavuzu çıkar.</p>${tabs}
    <div class="types hzm">${HZM.map(m=>`<button class="tcard" data-hzm="${m.k}" aria-pressed="${o.m===m.k}">${hzIcon(m.k)}<div style="display:flex;flex-direction:column;gap:2px"><b>${m.l}</b><span>${m.d}</span></div></button>`).join("")}</div>
+   <div class="hz3wrap"><div id="hz3d" class="hz3d"><div class="note" style="padding:20px">3D yükleniyor…</div></div>
+    <div class="hz3bar"><button class="btn small ghost" data-hz3="prev" aria-label="Önceki adım">‹</button><div id="hz3t" class="hz3t"></div><button class="btn small ghost" data-hz3="next" aria-label="Sonraki adım">›</button></div>
+    <div class="chips"><button class="chip sm" data-hz3="all">Bitmiş hali</button><button class="chip sm" data-hz3="0">Montajı adım adım izle</button></div></div>
+   <div class="panel hzsum"><b>Kısaca</b><p>${esc(M.l)}${M.bed?", "+o.mw+"×"+o.ml+" cm şilteye göre":""}. Dış ölçü ${cm(B.size.W)} × ${cm(B.size.L)} × ${cm(B.size.H)} cm (en × boy × yükseklik).</p><p>${St.out.map(x=>x.n+" levha "+esc(SET.mats[x.k].name)).join(" + ")} gerekir. ${B.parts.reduce((q,p)=>q+p.qty,0)} parça, ${B.steps.length} adımda kurulur.</p></div>
    <div class="panel">${fields}</div>
    <details class="panel" ${carOf().on?"open":""}><summary style="cursor:pointer;font-weight:600">Arabamla taşıyacağım${carOf().on?" · "+esc((CARS[carOf().p]||{l:"özel"}).l)+" "+carOf().L+" cm":""}</summary>${carPickHTML()}</details>
-   ${hzDraw(B)}
    <div class="vstats">${St.out.map(x=>`<div><small>${esc(SET.mats[x.k].name)}</small><b>${x.n} levha</b><small>doluluk %${fmt(x.use*100)}${x.n>1?" · son levha %"+fmt(x.last*100):""}</small></div>`).join("")}<div><small>Ölçü (en × boy × yük.)</small><b>${cm(B.size.W)}×${cm(B.size.L)}×${cm(B.size.H)}</b></div>${St.cost>0?`<div><small>Levha</small><b>${fmt(St.cost)} ₺</b></div>`:""}${St.hw>0?`<div><small>Hırdavat</small><b>${fmt(St.hw)} ₺</b></div>`:""}</div>
    <h2>Malzeme</h2><div class="panel"><div class="chips wrap">${HZMATS.map(k=>`<button class="chip" data-hzmat="${k}" aria-pressed="${o.mat===k}">${MATADV[k].t.split(" (")[0]}</button>`).join("")}</div>
     <div class="hzadv"><b>${esc(adv.best)}</b> <span class="pill">${adv.f}</span><p><b>Artı:</b> ${esc(adv.p)}</p><p><b>Eksi:</b> ${esc(adv.c)}</p><p><b>Sağlık:</b> ${esc(adv.h)}</p></div>
@@ -827,26 +868,36 @@ function renderHazir(){document.querySelector("main").className="";const o=HZ,B=
    ${B.notes.length?`<div class="panel"><span class="lbl">Usta notları</span><ul class="vlist">${B.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`:""}
    <h2>Parçalar (${B.parts.reduce((q,p)=>q+p.qty,0)})</h2><div class="panel"><table class="hzt"><tr><th>Parça</th><th>Boy × en mm</th><th>Ad.</th><th>Malzeme</th></tr>${B.parts.map(p=>`<tr><td>${esc(p.name)}${p.note?`<small>${esc(p.note)}</small>`:""}</td><td>${p.a0} × ${p.b0}</td><td>${p.qty}</td><td>${esc(SET.mats[p.mat].name.replace(/ 18 mm.*$/,""))}</td></tr>`).join("")}</table></div>
    <h2>Hırdavat</h2><div class="panel"><ul class="vlist">${B.hw.map(i=>`<li>${esc(i.name)}: <b>${fmt(i.qty,i.unit==="m"?1:0)} ${i.unit}</b>${i.note?` <small class="note">${esc(i.note)}</small>`:""}</li>`).join("")}</ul></div>
-   <details class="panel"><summary style="cursor:pointer;font-weight:600">Montaj sırası (${B.steps.length} adım)</summary><ol class="vlist">${B.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></details>
+   <details class="panel"><summary style="cursor:pointer;font-weight:600">Montaj sırası (${B.steps.length} adım)</summary>${B.prep.length?`<p class="note"><b>Önce:</b> ${esc(B.prep.join(" "))}</p>`:""}<ol class="vlist">${B.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></details>
+   <details class="panel"><summary style="cursor:pointer;font-weight:600">Ölçülü çizim</summary>${hzDraw(B)}</details>
    <h2>Fire dostu</h2><div class="panel artikp"><b>Aynı levhalardan başka ne çıkar?</b><div class="note">Diğer modellerin ve açık projenizin bu levhalarla birlikte kaç levha tuttuğu.</div>${fitH}</div>
    <div class="panel"><span class="lbl">Fotoğraftan model</span><div class="note">Bir mobilyanın fotoğrafından ölçülü model çıkarma sonraki sürümde gelecek. Şimdilik: Fotoğrafla ölçü ile ölçüyü alın, en yakın hazır modeli seçip ölçüleri girin.</div></div>
    <div class="btns"><button class="btn" data-hzlist="1">Kesim listesine aktar</button><button class="btn ghost" data-hzdoc="1">Üretim kılavuzu (PDF)</button></div>`;
-  $("#bar").innerHTML=`<button class="btn ghost" data-back="1">Geri</button><button class="btn" data-hzdoc="1">Üretim kılavuzu</button>`}
-function hzDoc(B){const St=hzStats(B),o=B.o,adv=MATADV[o.mat],cs=getComputedStyle(document.documentElement);
-  const css=`${PRINT_CSS}:root{--bg:#fff;--ink:#16181d;--wood:#E4D2AE;--wood-edge:#A9864A;--back:#C9D4CF;--back-edge:#6F837B}@page{size:A4;margin:12mm}main{padding:0 14px 24px;max-width:780px;margin:auto}h1{font-size:22px;margin:14px 0 2px}h2{font-size:15px;margin:18px 0 6px;border-bottom:2px solid #16181d;padding-bottom:3px}.sub{color:#5b6170}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #c9ccd3;padding:4px 6px;text-align:left;vertical-align:top}td small{display:block;color:#5b6170}ol,ul{padding-left:20px}li{margin:3px 0}.hzdraw{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hzv svg{width:100%;height:auto;max-height:260px}.hzv .lbl{font-weight:700;font-size:11px}.sh{break-inside:avoid;margin:8px 0}.sh svg{width:100%;height:auto}.box{border:1px solid #c9ccd3;border-radius:6px;padding:8px 10px;margin:6px 0}.chk li{list-style:"☐  "}h2{break-after:avoid}`;
+  $("#bar").innerHTML=`<button class="btn ghost" data-back="1">Geri</button><button class="btn" data-hzdoc="1">Üretim kılavuzu</button>`;HZB=B;hz3Show(true)}
+let HZ3=null,HZB=null;
+function hz3Text(B){const N=B.steps.length;if(HZ3==null)return `<b>Bitmiş hali</b> · parmağınızla çevirin, iki parmakla yakınlaştırın. Kurulum ${N} adım: ‹ › ile izleyin.`;
+  const pp=B.parts.filter(p=>p.st===HZ3);return `<b>Adım ${HZ3+1}/${N}</b> · ${esc(B.steps[HZ3])}${pp.length?`<small>Bu adımda: ${pp.map(p=>esc(p.name)+" ×"+p.qty).join(", ")}</small>`:""}`}
+function hz3Show(fresh){const el=document.getElementById("hz3d"),tx=document.getElementById("hz3t");if(!el||!HZB)return;tx.innerHTML=hz3Text(HZB);
+  load3D().then(()=>{if(!document.body.contains(el))return;show3D(el,HZB.G,{upTo:HZ3,fit:!!fresh,far:1.6})}).catch(()=>{el.innerHTML=`<div class="note" style="padding:16px">3D yüklenemedi (internet yok). Ölçülü çizime bakın.</div>`})}
+async function hzShots(B){await load3D();const el=document.createElement("div");el.style.cssText="position:fixed;left:-2000px;top:0;width:640px;height:480px";document.body.appendChild(el);const out=[];
+  try{for(let k=-1;k<B.steps.length;k++){show3D(el,B.G,{upTo:k<0?null:k,fit:true,far:1.35});T3.controls.update();T3.renderer.render(T3.scene,T3.camera);out.push(T3.renderer.domElement.toDataURL("image/jpeg",.8))}}
+  finally{if(T3){T3.dispose();T3=null}el.remove()}return out}
+function hzDoc(B,imgs){imgs=imgs||[];const St=hzStats(B),o=B.o,adv=MATADV[o.mat],cs=getComputedStyle(document.documentElement);
+  const css=`${PRINT_CSS}:root{--bg:#fff;--ink:#16181d;--wood:#E4D2AE;--wood-edge:#A9864A;--back:#C9D4CF;--back-edge:#6F837B}@page{size:A4;margin:12mm}main{padding:0 14px 24px;max-width:780px;margin:auto}h1{font-size:22px;margin:14px 0 2px}h2{font-size:15px;margin:18px 0 6px;border-bottom:2px solid #16181d;padding-bottom:3px}.sub{color:#5b6170}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #c9ccd3;padding:4px 6px;text-align:left;vertical-align:top}td small{display:block;color:#5b6170}ol,ul{padding-left:20px}li{margin:3px 0}.hzdraw{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hzv svg{width:100%;height:auto;max-height:260px}.hzv .lbl{font-weight:700;font-size:11px}.sh{break-inside:avoid;margin:8px 0}.sh svg{width:100%;height:auto}.box{border:1px solid #c9ccd3;border-radius:6px;padding:8px 10px;margin:6px 0}.chk li{list-style:"☐  "}h2{break-after:avoid}img.hero{width:100%;max-height:360px;object-fit:contain;margin:8px 0}.steps{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stp{border:1px solid #c9ccd3;border-radius:6px;padding:6px;break-inside:avoid}.stp img{width:100%;display:block;border-radius:4px}.stp small{display:block;color:#5b6170;margin-top:3px}`;
   const tools=["Matkap + 8 mm kavela ucu, 15 mm forstner (minifix çanağı) ve kavela/minifix delik şablonu","Gönye testere ya da daire testere (45° kesimler)","Dekupaj testere (tutma boşluğu, yuvarlak köşe)","Üst freze + R3/R5 radyus bıçağı (kenar yuvarlatma)","Eksantrik zımpara, 120 ve 180 kum","İşkence (en az 4 adet), metre, gönye, köşegen için şerit metre","Tutkal fırçası, nemli bez"];
   if(o.joint==="civata")tools.splice(1,0,"6.5 mm uzun matkap ucu (cıvata kanalı) ve 10 mm uç (silindir somun)");
   const fin={kontra18:"Kenarları 120 → 180 kum zımparalayın, toz alın. 2 kat su bazlı mat vernik (aralarda 240 kum) ya da gıda/oyuncak uyumlu mobilya yağı.",masif18:"120 → 180 kum, su ile nemlendirip lifleri kaldırın, kuruyunca 240 ile alın. Doğal yağ (2 kat) ya da su bazlı vernik.",sunta:"Bant kenarlarını eğeleyip köşelerini yuvarlatın; yüzey işlemi gerekmez. Vida başlarını kapak ile kapatın.",mdf18:"Kenarları R3 frezeleyin, MDF astarı (kenara 2 kat), 240 kum, 2 kat EN 71-3 uyumlu su bazlı boya.",sukontra18:"Kenar boşluklarını ahşap macunla doldurun, 120 → 180 zımpara, 2 kat su bazlı vernik."}[o.mat];
   let h=`<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(B.M.l)} — üretim kılavuzu</title><style>${css}</style></head><body><div class="np"><button onclick="print()">Yazdır / PDF</button><span>Yazdır → Hedef: PDF olarak kaydet</span></div><main>
    <h1>${esc(B.M.l)} — üretim kılavuzu</h1><div class="sub">${new Date().toLocaleDateString("tr-TR")} · ${cm(B.size.W)} × ${cm(B.size.L)} × ${cm(B.size.H)} cm (en × boy × yükseklik)${B.M.bed?" · şilte "+o.mw+"×"+o.ml+" cm":""} · ${esc(SET.mats[o.mat].name)} · ${esc(HZJ[o.joint].l)}</div>
    ${hzDraw(B).replace(/var\(--ink\)/g,"#16181d").replace(/var\(--muted\)/g,"#5b6170").replace(/var\(--([\w-]+)\)/g,(m,k)=>({wood:"#E4D2AE","wood-edge":"#A9864A",back:"#C9D4CF"})[k]||"#888")}
+   ${imgs[0]?`<img class="hero" src="${imgs[0]}" alt="Bitmiş hali">`:""}
    <h2>1. Malzeme</h2><div class="box"><b>${esc(adv.t)}</b> — ${esc(adv.best)}<br>${esc(adv.p)}<br><i>Dikkat:</i> ${esc(adv.c)}<br><i>Sağlık:</i> ${esc(adv.h)}</div>
    <h2>2. Ebatlama (fasoncuya) kesim listesi</h2><p class="sub">Ölçüler mm, boy × en; boy plakanın desen / lif yönünde. Testere payı ${SET.kerf} mm.</p><table><tr><th>No</th><th>Parça</th><th>Malzeme</th><th>Boy</th><th>En</th><th>Adet</th><th>Bant</th></tr>${B.parts.map(p=>`<tr><td>${p.id}</td><td>${esc(p.name)}${p.note?`<small>${esc(p.note)}</small>`:""}</td><td>${esc(SET.mats[p.mat].name)}</td><td>${p.a0}</td><td>${p.b0}</td><td>${p.qty}</td><td>${[p.bl?p.bl+" boy":"",p.bs?p.bs+" en":""].filter(Boolean).join(" + ")||"—"}</td></tr>`).join("")}</table>
    <h2>3. Levha yerleşimi</h2>${St.out.map(x=>`<p><b>${esc(SET.mats[x.k].name)}</b> ${SET.mats[x.k].L}×${SET.mats[x.k].W} · ${x.n} levha · ortalama doluluk %${fmt(x.use*100)}</p>${x.P.sheets.map((sh,i)=>`<div class="sh">Levha ${i+1}/${x.n} · %${fmt(sheetUse(sh,x.P.m)*100)} dolu${sheetSVG(sh,x.P.m,x.k).replace(/var\(--ink\)/g,"#16181d").replace(/var\(--muted\)/g,"#5b6170")}</div>`).join("")}`).join("")}
    <h2>4. Hırdavat ve sarf</h2><table><tr><th>Malzeme</th><th>Miktar</th><th>Nerede</th></tr>${B.hw.map(i=>`<tr><td>${esc(i.name)}</td><td>${fmt(i.qty,i.unit==="m"?1:0)} ${i.unit}</td><td>${esc(i.note||"")}</td></tr>`).join("")}</table>
    <h2>5. Alet listesi</h2><ul>${tools.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
-   <h2>6. Kesimden sonra atölye işleri</h2><ol><li>Parçaları listeye göre sayın, kalem ile numarasını iç yüze yazın.</li><li>45° kesim, dekupaj ve köşe yuvarlatma notu olan parçaları işleyin.</li><li>${o.joint==="minifix"?"Minifix çanaklarını (Ø15, 13 mm derin, kenardan 34 mm) ve kenar deliklerini (Ø8) şablonla açın; kavela delikleri Ø8, 18 mm.":o.joint==="civata"?"Yük alan köşelerde cıvata kanalını (Ø6.5) dikmeden rayın içine, silindir somun deliğini (Ø10) raydan uca 50 mm içeride açın; kavela delikleri Ø8.":"Kavela deliklerini (Ø8) şablonla, vida deliklerine Ø3 kılavuz ve havşa açın."}</li><li>Kuru montaj: tutkalsız bir kez kurup hizayı görün, sonra sökün.</li><li>Kenar ve yüzeyleri zımparalayın (montajdan önce zımparalamak çok daha kolay).</li></ol>
-   <h2>7. Montaj</h2><ol>${B.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>
+   <h2>6. Kesimden sonra atölye işleri</h2><ol><li>Parçaları listeye göre sayın, kalem ile numarasını iç yüze yazın.</li><li>45° kesim, dekupaj ve köşe yuvarlatma notu olan parçaları işleyin.</li><li>${o.joint==="minifix"?"Minifix çanaklarını (Ø15, 13 mm derin, kenardan 34 mm) ve kenar deliklerini (Ø8) şablonla açın; kavela delikleri Ø8, 18 mm.":o.joint==="civata"?"Yük alan köşelerde cıvata kanalını (Ø6.5) dikmeden rayın içine, silindir somun deliğini (Ø10) raydan uca 50 mm içeride açın; kavela delikleri Ø8.":"Kavela deliklerini (Ø8) şablonla, vida deliklerine Ø3 kılavuz ve havşa açın."}</li>${B.prep.map(x=>`<li>${esc(x)}</li>`).join("")}<li>Kuru montaj: tutkalsız bir kez kurup hizayı görün, sonra sökün.</li><li>Kenar ve yüzeyleri zımparalayın (montajdan önce zımparalamak çok daha kolay).</li></ol>
+   <h2>7. Montaj — adım adım</h2><div class="steps">${B.steps.map((x,i)=>{const pp=B.parts.filter(p=>p.st===i);return `<div class="stp">${imgs[i+1]?`<img src="${imgs[i+1]}" alt="Adım ${i+1}">`:""}<div><b>Adım ${i+1}.</b> ${esc(x)}${pp.length?`<small>Parçalar: ${pp.map(p=>p.id+" "+esc(p.name)+" ×"+p.qty).join(", ")}</small>`:""}</div></div>`}).join("")}</div><p class="sub">Resimlerde o adımda takılan parçalar mavi ve hafif ayrık gösterilir.</p>
    <h2>8. Yüzey işlemi</h2><p>${esc(fin)}</p>
    ${B.notes.length?`<h2>9. Notlar</h2><ul>${B.notes.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
    <h2>10. Teslimden önce güvenlik kontrolü</h2><ul class="chk"><li>Tüm köşe ve kenarlar yuvarlatıldı, kıymık yok.</li><li>Vida başı, cıvata ucu dışarı taşmıyor; sivri uç yok.</li><li>9–23 cm arası açıklık yok (baş sıkışması); parmak sıkışacak 5–12 mm aralık yok.</li><li>Ürün sallanmıyor; köşegenler eşit.</li>${B.M.bed?"<li>Şilte kasaya tam oturuyor; kenarda 3 cm'den büyük boşluk yok.</li>":"<li>Duvara sabitlendi / devrilme denendi.</li>"}<li>Boya ya da vernik tam kurudu (en az 72 saat havalandırma).</li><li>Müşteriye bakım notu verildi.</li></ul>
@@ -870,7 +921,7 @@ function carSplit(parts,hw){if(!carOf().on)return[];const out=[],msg=[];
     if(ml<300){out.push(p);msg.push(p.name+" ("+cm(p.a0)+"×"+cm(p.b0)+" cm) arabaya en geniş haliyle sığmıyor; bu parçayı genişliğinden ikiye bölün ya da kesimhaneden teslim aldırın.");return}
     const n=Math.ceil(p.a0/ml),L=Math.ceil(p.a0/n);
     out.push(Object.assign({},p,{a0:L,qty:p.qty*n,name:p.name+" · "+n+" parçalı",note:((p.note?p.note+"; ":"")+"ek lamıyla birleşir").trim(),bs:Math.min(p.bs,1)}));
-    out.push({name:"Ek lamı ("+p.name+")",a0:300,b0:Math.max(50,p.b0-30),qty:p.qty*(n-1),mat:p.mat,bl:0,bs:0,note:"ek yerinin iç yüzüne"});
+    out.push({name:"Ek lamı ("+p.name+")",a0:300,b0:Math.max(50,p.b0-30),qty:p.qty*(n-1),mat:p.mat,bl:0,bs:0,note:"ek yerinin iç yüzüne",st:p.st});
     hw.push({cat:"Bağlantı",name:"Gömme somun (insert) M6",qty:p.qty*(n-1)*4,unit:"ad",note:"ek lamı"},{cat:"Bağlantı",name:"Allen cıvata M6 × 40",qty:p.qty*(n-1)*4,unit:"ad",note:"ek lamı"});
     msg.push(p.name+" "+cm(p.a0)+" cm → "+n+" × "+cm(L)+" cm; yerinde ek lamı + 4 cıvata ile birleşir (tutkal yok, sökülür).")});
   parts.length=0;out.forEach(p=>parts.push(p));return msg}
@@ -2142,12 +2193,12 @@ function show3D(el,boxes,o={}){
   boxes.forEach(b=>{if(o.upTo!=null&&b.step>o.upTo)return;const cur=o.upTo!=null&&b.step===o.upTo;
     const w=b.x1-b.x0,h=b.y1-b.y0,d=b.z1-b.z0;const geo=new THREE.BoxGeometry(w,h,d);
     const c=cur&&b.kind!=="fix"?acc:b.col;const op=b.op!=null?b.op:(o.upTo!=null&&!cur&&b.step>=0?.55:1);
-    const mesh=new THREE.Mesh(geo,mat(c,op));const k=cur?140:0;mesh.position.set((b.x0+b.x1)/2+b.ex[0]*k,(b.y0+b.y1)/2+b.ex[1]*k,(b.z0+b.z1)/2+b.ex[2]*k);g.add(mesh);
-    if(b.kind!=="wall"){const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),edgeM);e.position.copy(mesh.position);g.add(e)}});
+    const mesh=new THREE.Mesh(geo,mat(c,op));const k=cur?140:0;mesh.position.set((b.x0+b.x1)/2+b.ex[0]*k,(b.y0+b.y1)/2+b.ex[1]*k,(b.z0+b.z1)/2+b.ex[2]*k);if(b.rz)mesh.rotation.z=b.rz;g.add(mesh);
+    if(b.kind!=="wall"){const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),edgeM);e.position.copy(mesh.position);e.rotation.copy(mesh.rotation);g.add(e)}});
   T3.scene.add(g);T3.group=g;
   if(T3.dims){T3.scene.remove(T3.dims);T3.dims.traverse(x=>{x.geometry&&x.geometry.dispose();x.material&&x.material.map&&x.material.map.dispose()});T3.dims=null}
   if(o.dims){try{T3.dims=dims3D(boxes);T3.scene.add(T3.dims)}catch(e){}}
-  if(o.fit||!T3.fitted||o.cam){const bb=new THREE.Box3().setFromObject(g);if(!bb.isEmpty()){const c=bb.getCenter(new THREE.Vector3()),sz=bb.getSize(new THREE.Vector3());const r=Math.max(sz.x,sz.y,sz.z)*(o.dims?1.5:1.25)+600;
+  if(o.fit||!T3.fitted||o.cam){const bb=new THREE.Box3().setFromObject(g);if(!bb.isEmpty()){const c=bb.getCenter(new THREE.Vector3()),sz=bb.getSize(new THREE.Vector3());const r=Math.max(sz.x,sz.y,sz.z)*(o.dims?1.5:o.far||1.25)+600;
     const cam=o.cam||"persp";if(cam==="front")T3.camera.position.set(c.x,c.y+r*.05,c.z+r*1.35);else if(cam==="top")T3.camera.position.set(c.x,c.y+r*1.7,c.z+r*.02);else if(cam==="side")T3.camera.position.set(c.x+r*1.35,c.y+r*.05,c.z);else T3.camera.position.set(c.x+r*.55,c.y+r*.38,c.z+r*.95);
     T3.controls.target.copy(c);T3.controls.update();T3.fitted=true}}}
 
@@ -2805,9 +2856,11 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
 
 
 /* ====================== YARDIM · YENİLİKLER ====================== */
-const APPVER="2026.10.21";
+const APPVER="2026.10.21b";
 const NEWS=[
  {d:"21 Ekim 2026",t:"Hazır modeller, çocuk odası, arabama sığsın",items:[
+  ["3D adım adım montaj","Hazır modellerde 3D görünüm: parmakla çevirin; ‹ › ile her adımda hangi parçanın takıldığını mavi ve ayrık görün. Üretim kılavuzunda her adımın resmi var.","hazir"],
+  ["Ev yatak yenilendi","Latalar metal L profile oturur (istenirse ahşap çıta). Çatı ayrı modül: metal lamalarla takılır, sökülünce çerçeve yatak kalır. Başlık ve ayak ucu paneli, iki yanda korkuluk seçimli.","hazir"],
   ["Hazır modeller","Ana sayfa → Hazır modeller: Montessori ev yatak, Montessori yer yatağı, klasik karyola, ön yüzlü kitaplık, öğrenme kulesi. Şilte ölçüsünü seçin; parça listesi, levha sayısı, hırdavat ve montaj sırası kendiliğinden çıkar. Parçaların çoğu şerit, levhaya sıkı yerleşir.","hazir"],
   ["Üretim kılavuzu (PDF)","Her hazır model için ustaya kılavuz: çizim, malzeme, ebatlama listesi, levha yerleşimi, hırdavat, alet listesi, delik ölçüleri, montaj sırası, yüzey işlemi ve teslim öncesi güvenlik kontrolü. Açılan sayfada Yazdır → PDF olarak kaydet.","hazir"],
   ["Çocuk odası planla","Oda ölçüsü, kapı ve pencereyi girin: yatak, dolap, kitaplık ve oyuncak rafı odaya sığar mı, 3 farklı yerleşim, kalan oyun alanı ve takımın kaç levhadan çıktığı.","hazir"],
@@ -3269,12 +3322,14 @@ document.addEventListener("click",e=>{
   if(d.rmlist){const P=RMRES&&RMRES.res.plans[+d.rmlist];if(!P)return;if(!FL.rows.length)FL.name="Çocuk odası takımı";P.parts.forEach(p=>FL.rows.push(flNew({ad:p.name,boy:p.a0,en:p.b0,adet:p.qty,mat:p.mat,bl:p.bl,bs:p.bs,desen:!!SET.grain&&GRAINY(p.mat)})));FL.net=false;flSave();S.view="liste";render();window.scrollTo(0,0);toast(P.parts.length+" parça kesim listesine eklendi");return}
   if(d.carp){const c=carOf();c.p=d.carp;Object.assign(c,{L:CARS[d.carp].L,W:CARS[d.carp].W,H:CARS[d.carp].H});c.on=true;persist();const op=!!document.getElementById("sheet");render();if(op)openSheet(carSheet());return}
   if(d.carask){openSheet(carSheet());return}
-  if(d.hzm){HZ.m=d.hzm;HZFIT=null;hzSave();renderHazir();return}
+  if(d.hzm){HZ3=null;HZ.m=d.hzm;HZFIT=null;hzSave();renderHazir();return}
   if(d.hzsz){const[w,l]=d.hzsz.split("x").map(Number);HZ.mw=w;HZ.ml=l;HZFIT=null;hzSave();renderHazir();return}
   if(d.hzmat){HZ.mat=d.hzmat;HZFIT=null;hzSave();renderHazir();return}
   if(d.hzj){HZ.joint=d.hzj;hzSave();renderHazir();return}
   if(d.hzfit){toast("Hesaplanıyor…");setTimeout(()=>{HZFIT={sig:JSON.stringify(HZ),res:hzFit(hzBuild(HZ))};renderHazir()},50);return}
-  if(d.hzdoc){const B=hzBuild(HZ);saveFile(new Blob([hzDoc(B)],{type:"text/html"}),slug(B.M.l)+"-uretim-kilavuzu.html");return}
+  if(d.hzdoc){const B=hzBuild(HZ);toast("Kılavuz hazırlanıyor…");(async()=>{let im=[];try{im=await hzShots(B)}catch(e){}if(S.view==="hazir"&&HZ.tab!=="oda")renderHazir();saveFile(new Blob([hzDoc(B,im)],{type:"text/html"}),slug(B.M.l)+"-uretim-kilavuzu.html")})();return}
+  if(d.hz3){const N=HZB?HZB.steps.length:0;if(d.hz3==="all")HZ3=null;else if(d.hz3==="prev")HZ3=HZ3==null?N-1:Math.max(0,HZ3-1);else if(d.hz3==="next")HZ3=HZ3==null?0:HZ3>=N-1?null:HZ3+1;else HZ3=+d.hz3;hz3Show(false);return}
+  if(d.hzl){HZ.lata=d.hzl;hzSave();renderHazir();return}
   if(d.hzlist){const B=hzBuild(HZ);const lbl=B.M.l+(B.M.bed?" "+HZ.mw+"×"+HZ.ml:"");if(!FL.rows.length)FL.name=lbl;
     B.parts.forEach(p=>FL.rows.push(flNew({ad:lbl+" · "+p.name,boy:p.a0,en:p.b0,adet:p.qty,mat:p.mat,bl:p.bl,bs:p.bs,desen:!!SET.grain&&GRAINY(p.mat)})));FL.net=false;flSave();S.view="liste";render();window.scrollTo(0,0);toast(B.parts.length+" parça kesim listesine eklendi");return}
   if(d.artikne){const isF=d.artikne==="f";toast("Artık alan hesaplanıyor…");setTimeout(()=>{const parts=isF?flParts():computeAll(S.mods).parts;ARTIKR={sig:partsSig(parts)+JSON.stringify(S.artik||{}),res:artikCalc(parts)};if(isF)renderListe();else renderSonuc();toast(ARTIKR.res.list.length?ARTIKR.res.list.length+" ürün artığa sığıyor":"Artığa sığan ürün yok")},60);return}
