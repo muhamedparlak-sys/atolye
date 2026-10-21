@@ -12,7 +12,7 @@ Mobilya ustası için telefondan çalışan tasarım ve kesim uygulaması. Tek b
 
 Duvardaki kolon ve tavandaki kiriş Ölçü adımında girilir; kolonun önü boş bırakılır, kirişin altına giren dolap 1 cm montaj payıyla kısaltılır, mutfakta sığmayan cihaz başka duvara taşınır.
 
-Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf aralığı, kapak genişliği (60 cm üstü otomatik çift kapak), kapak boyu (220 cm üstü tavan dolabı), tezgah 85–95 cm, menteşe sayısı, raf sehimi.
+Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf aralığı, kapak genişliği (60 cm üstü otomatik çift kapak), kapak boyu (220 cm üstü tavan dolabı), tezgah 85–95 cm, menteşe sayısı, raf sehimi (malzeme ve yüke göre mm olarak; destek önerisiyle).
 
 ## Hızlı başlangıç
 
@@ -22,6 +22,14 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 - Uygulama içinde: Ne yapıyoruz? ekranındaki **? Nasıl kullanılır** ve **★ Yenilikler**.
 
 ## Yenilikler
+
+**21 Ekim 2026 · akşam**
+- Raf sehimi: malzeme (suntalam, MDF, kontrplak, masif), açıklık, derinlik ve yüke göre "zamanla kaç mm sarkar"; Düzen'de rafa dokununca görünür, bel veren raf çizimde işaretli
+- Tek dokunuşla raf desteği: ön çıta, arka çıta, orta dikme, raf altı taşıyıcı, kalın (çift kat) raf; kesim listesi, hırdavat, delik planı, montaj ve 3D'ye girer
+- Ağır yük seçeneği: bel veren raflara destek, ön + arka baza, geniş gövdeye baza ara desteği kendiliğinden
+- Baza sayısı: 1 (önde) ya da 2 (önde ve arkada)
+- Kesim listesini düzeltme: parça ekle / çıkar, ölçü-adet-ad değiştir, işaretli satır, tasarıma döndür; plan, etiket, PDF, Excel ve teklif bu listeyi kullanır
+- Kulpsuz kapak: alt dolap önleri üstten 3 cm kısalır; suntalam L-U kanal çıtaları ya da alüminyum gola profil metrajı
 
 **21 Ekim 2026**
 - Kapak boyları: üst üste farklı boy ve yan yana hizasız kapak çizgileri uyarılır; 'Kapak boylarını eşitle' ve 'Kapak çizgilerini hizala'

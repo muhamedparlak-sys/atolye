@@ -7,7 +7,7 @@ Bu dosya, uzayan oturumdaki işi yeni bir oturumda kaldığı yerden sürdürmek
 - **Kullanıcı:** Suntalamı ebatlamada (fasoncu) kestiren marangoz.
 - **Yayın:**
   - GitHub Pages: https://muhamedparlak-sys.github.io/atolye/ (repo `muhamedparlak-sys/atolye`, dal `main`).
-  - Claude artifact: https://claude.ai/artifact/RmZN63J87JccuCsi2HEU8t (sürüm 38). Yeni oturumda güncellemek için önce `Artifact read`, sonra aynı `url` ile publish.
+  - Claude artifact: https://claude.ai/artifact/RmZN63J87JccuCsi2HEU8t (sürüm 39). Yeni oturumda güncellemek için önce `Artifact read`, sonra aynı `url` ile publish.
 - **Kayıtlı veriler** tarayıcı localStorage'ında durur; sürüm güncellemesi bunları silmez:
   - `atolye2_cur`, `atolye2_set`, `atolye2_projeler`, `atolye2_liste`, `atolye2_hizli`, `atolye2_foto`, `atolye2_seen`, `atolye2_hazir`
   - Yeni alan eklerken eski kayıtla birleştirin, örneğin `Object.assign(varsayılan, kayıtlı)`. `SET.mats` bu şekilde birleştiriliyor.
@@ -48,12 +48,19 @@ Bu dosya, uzayan oturumdaki işi yeni bir oturumda kaldığı yerden sürdürmek
   - Yardımcılar: `sheetUse`, `sheetSVG`, `cutDoc`, `cutText`, `cutCSV`.
   - Levha azaltma: `saverTips`, `whatifCalc`.
   - Artıktan kesim: `S.artik`. Artıktan ürün: `artikCalc`, `ARTIK`.
-- **Uyarılar:** `advise(mods,R)` → `add(lvl,txt,why)`; `notesSheet`. Sehim kuralları şimdilik yalnız metin uyarısı:
-  - 18 mm raf 80 cm'den geniş → uyarı.
+- **Uyarılar:** `advise(mods,R)` → `add(lvl,txt,why)`; `notesSheet`. Raf sehimi artık hesapla (aşağıda "Raf sehimi"); diğer kurallar metin:
   - Tabla 160 cm'den uzun → bilgi.
   - Askı borusu 90 cm'den uzun → orta taşıyıcı.
   - Köşe rafı → çıta önerisi.
   - Satırları bulmak için `grep -n sehim`.
+- **Raf sehimi ve destek (2026.10.21d):**
+  - `RAFMAT` (E, kdef), `RAFYUK` (kg/m), `USEYUK` (eşya → yük), `RAFDES` (on/arka/dikme/konsol/kalin), `rafSag(o)` → `{d0,d1,lim,st}`, `autoSup`, `yukOf`, `rafList`.
+  - Bant alanları: `b.sup` (elle seçilen destek; `{}` = destek yok), `b.yuk`, `b.rmat`. Geometri `BG.sag`, `BG.sup`, `BG.supAuto`, `BG.st` (raf kalınlığı), `BG.dep`.
+  - `S.agir` (ağır yük): `b.sup` yoksa ve raf bel veriyorsa `autoSup` uygulanır; `bazaN()` 2 olur; geniş gövdeye "Baza ara desteği".
+  - Arayüz: `rafPanelHTML` (göz düzenleyici), `rafSheet` (Düzen → Raflar); işleyiciler `data-sup/yuk/rmat/supauto/rafauto/agir`.
+- **Baza:** `floorOf().bazaN` 1|2 (yoksa `S.agir?2:1`), `data-bazan`.
+- **Kulpsuz:** `S.opener="gola"`, `S.golaMat` sunta|alu, `golaMod(m)` (alt ve ≤110 cm yer dolapları), `GOLA_H` 30, `GOLA_UST` 20; `CG.gola={L,U,sw}`; `openerHTML/openerSheet`.
+- **Elle düzeltilmiş kesim listesi:** `S.partOv[p.key]={a,b,qty,name,del}`, `S.extraParts=[{id,name,a,b,qty,mat,bl,bs}]`; `computeAll` sonunda yalnız `mods===S.mods&&!NOOV` iken uygulanır. `R.delParts`, `R.ovOrphans`, `p.ov` (tasarım değeri), `p.extra`. Arayüz: `partRows`, `partSheet`, `partEditNote`; `data-pedit/padd/psave/preset/pdel/prestore/povclear/porph`.
 - **Hırdavat ve fiyat:** `hardware(mods,R)`, `hwCost`, `CATALOG` (fiyat kütüphanesi aileleri `#` ile), `quote()` (`m.extra` modülleri teklif dışı).
 - **Delik planı:** `drillPlan`; birleşimler `JOINTS` (konfirmat/minifix/vida).
 - **Kapaklar:** `doorSplit`, `doorSplitHTML`, `colFronts`, `frontScan`, `alignFronts`, `equalizeDoors`, `frontHTML`, `frontSheet`.
@@ -77,7 +84,10 @@ Bu dosya, uzayan oturumdaki işi yeni bir oturumda kaldığı yerden sürdürmek
   - Fotoğrafla ölçü: `FM`, `fmH`, `renderFoto`.
   - Müşteri klasörleri: `folders`, `projSave`, `renderProj`.
 
-## SIRADAKİ İŞLER (kullanıcının son isteği)
+## YAPILDI (2026.10.21d)
+- Raf sehimi + destek elemanları, ağır yük, baza sayısı, kesim listesi düzeltme, kulpsuz L-U kanal (ayrıntı yukarıda, kod haritasında).
+
+## SIRADAKİ İŞLER (önceki not; 1 ve 2 tamamlandı)
 1. **Raf bel vermesi (sehim) ve destek elemanı.** Kullanıcı rafların sehim yapmasından endişeli; malzemeye göre destek eklenmesini istiyor.
    - Malzeme başına sehim hesabı: elastisite modülü E (yaklaşık değerler, kaynakla doğrulanmalı):
 
