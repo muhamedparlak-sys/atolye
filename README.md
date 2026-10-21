@@ -23,6 +23,14 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 
 ## Yenilikler
 
+**21 Ekim 2026**
+- Hazır modeller: Montessori ev yatak, Montessori yer yatağı, klasik karyola, ön yüzlü kitaplık, öğrenme kulesi (ölçüye göre, fire dostu)
+- Üretim kılavuzu (PDF): çizim, malzeme, ebatlama listesi, levha yerleşimi, hırdavat, alet, delik, montaj, yüzey işlemi, güvenlik kontrolü
+- Çocuk odası planla: oda ölçüsü + kapı + pencere → 3 yerleşim, oyun alanı, takımın levha sayısı
+- Yeni malzemeler: huş kontrplak, su kontrası, masif panel, ham MDF; çocuk odası malzeme karşılaştırması
+- Birleşim seçimi: minifix + kavela, karyola cıvatası, vida + kavela
+- Arabama sığsın: araç yükleme ölçüsü; sığmayan parçalar ve bölme önerisi, hazır modellerde ek yerli üretim
+
 **20 Ekim 2026 · akşam**
 - Levha yerleşiminde ~190 deneme (şerit kesim dahil), en az levhalı plan seçilir
 - Levha azaltma önerileri: raf/derinlik/boy 1–2 cm değişikliklerle son levhayı kurtarma, tek dokunuşla uygulama
