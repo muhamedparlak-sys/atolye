@@ -746,15 +746,16 @@ const HZJ={minifix:{l:"Minifix + kavela",d:"Gizli, sökülüp takılır; taşın
  vida:{l:"Vida + kavela + tutkal",d:"Sabit, en ucuz; sökülmez. Kontrplak ve masifte iyi tutar, suntalamda önerilmez."}};
 const HZM=[
  {k:"divan",l:"Divan",d:"Sandıklı, çekmeceli ya da latalı baza; başlıklı. Suntalamdan, düz kesim.",bed:true},
+ {k:"saklama",l:"Kutulu saklama ünitesi",d:"Oyuncak kutuları raylara kayar; bölme, yükseklik ve ray tipi ayarlı.",bed:false},
  {k:"ev",l:"Montessori ev yatak",d:"Çatılı çerçeve, yere yakın; çocuk kendi girip çıkar.",bed:true},
  {k:"yer",l:"Montessori yer yatağı",d:"Alçak kasa, korkuluklu, başlıklı.",bed:true},
  {k:"karyola",l:"Klasik karyola",d:"Baş ve ayak tahtalı, latalı kasa.",bed:true},
  {k:"kitap",l:"Ön yüzlü kitaplık",d:"Kitap kapakları önden görünür (Montessori).",bed:false},
  {k:"kule",l:"Öğrenme kulesi",d:"Tezgaha uzanmak için ayarlı basamak.",bed:false}];
-const HZDEF={dvT:"sandik",dvH:35,dvB:true,dvHB:110,dvC:2,dvK:true,cati:true,ayak:true,hb:40,ha:20,lata:"L",m:"ev",mw:90,ml:190,mat:"kontra18",joint:"minifix",wall:100,fh:15,guard:true,dbl:true,hh:90,hf:35,rh:22,lift:12,bas:true,W:80,H:70,D:30,raf:3,kH:90,kW:40,kD:48};
+const HZDEF={sW:99,sH:57,sD:44,sC:3,sP:11.5,sR:"alu",sB:true,dvT:"sandik",dvH:35,dvB:true,dvHB:110,dvC:2,dvK:true,cati:true,ayak:true,hb:40,ha:20,lata:"L",m:"ev",mw:90,ml:190,mat:"kontra18",joint:"minifix",wall:100,fh:15,guard:true,dbl:true,hh:90,hf:35,rh:22,lift:12,bas:true,W:80,H:70,D:30,raf:3,kH:90,kW:40,kD:48};
 let HZ=Object.assign({},HZDEF,LS.get("atolye2_hazir")||{});
 function hzSave(){LS.set("atolye2_hazir",HZ)}
-function hzIcon(k){const I={divan:'<path d="M6 46V30h44v16M6 30l4-12h36l4 12M6 38h44M10 46v3M46 46v3M4 18v28M4 18h4"/>',ev:'<path d="M8 46V22L28 6l20 16v24M8 46h40M12 40h32"/>',yer:'<path d="M6 40h44v6H6zM6 40v-8M50 40v-6M10 34h14"/>',karyola:'<path d="M6 46V18h8v28M42 46V30h8v16M14 36h28v6H14z"/>',kitap:'<path d="M10 46V10h36v36M10 22h36M10 34h36M14 22l4-8h8l-2 8M28 34l3-8h7l-1 8"/>',kule:'<path d="M14 48L18 8M42 48L38 8M17 20h22M16 32h24M15 42h26"/>'};
+function hzIcon(k){const I={saklama:'<path d="M8 8h40v40H8zM21 8v40M35 8v40M10 20h9M23 20h10M37 20h9M10 34h9M23 34h10M37 34h9"/>',divan:'<path d="M6 46V30h44v16M6 30l4-12h36l4 12M6 38h44M10 46v3M46 46v3M4 18v28M4 18h4"/>',ev:'<path d="M8 46V22L28 6l20 16v24M8 46h40M12 40h32"/>',yer:'<path d="M6 40h44v6H6zM6 40v-8M50 40v-6M10 34h14"/>',karyola:'<path d="M6 46V18h8v28M42 46V30h8v16M14 36h28v6H14z"/>',kitap:'<path d="M10 46V10h36v36M10 22h36M10 34h36M14 22l4-8h8l-2 8M28 34l3-8h7l-1 8"/>',kule:'<path d="M14 48L18 8M42 48L38 8M17 20h22M16 32h24M15 42h26"/>'};
   return `<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">${I[k]}</svg>`}
 /* bir model → parçalar, hırdavat, adımlar, çizim */
 function hzBuild(o){const t=18,mat=o.mat,M=HZM.find(x=>x.k===o.m)||HZM[0];
@@ -845,6 +846,28 @@ function hzBuild(o){const t=18,mat=o.mat,M=HZM.find(x=>x.k===o.m)||HZM[0];
     step("Korkuluk çıtalarını takın: arkada iki, önde bir. Ön taraf tezgaha bakar.");P("Korkuluk çıtası",Wi2,80,3,{bl:2,bs:0});
     GB(t,W-t,Hh-80,Hh,0,t,cur,{ex:[0,0,-1]});GB(t,W-t,Math.round(Hh*.75),Math.round(Hh*.75)+80,0,t,cur,{ex:[0,0,-1]});GB(t,W-t,Hh-80,Hh,D-t,D,cur,{ex:[0,0,1]});
     notes.push("Taban geniş ("+cm(D)+" cm) ki devrilmesin. Çocuk kulede tek başına bırakılmaz.")}
+  else if(o.m==="saklama"){const W=Math.round(o.sW*10),Hh=Math.round(o.sH*10),D=Math.round(o.sD*10),n=Math.max(1,Math.min(4,Math.round(o.sC)||3)),Hi=Hh-2*t,pit=Math.max(60,Math.round(o.sP*10)),L=Math.max(1,Math.floor((Hi-40)/pit)),cw=(W-(n+1)*t)/n,rl=D-20,ray=o.sR||"alu",nR=L*2*n;
+    const BC=["#F3C98B","#A9D3C5","#F2A9A0","#B9C7EA","#E7E3D8"];
+    step("Yan dikmeleri üst ve alt tablayla "+JL+" birleştirin; köşegenleri ölçüp eşitleyin.");
+    P("Yan dikme",Hh,D,2,{bl:1,bs:0});P("Üst / alt tabla",W-2*t,D,2,{bl:1,bs:0});joinLoad(4,"tablalar ↔ yan dikmeler");H("Keçe ayak altı",4);
+    GB(0,t,0,Hh,0,D,cur,{ex:[-1,0,0]});GB(W-t,W,0,Hh,0,D,cur,{ex:[1,0,0]});GB(t,W-t,0,t,0,D,cur,{ex:[0,-1,0]});GB(t,W-t,Hh-t,Hh,0,D,cur,{ex:[0,1,0]});
+    if(n>1){step("Ara dikmeleri eşit aralıkla yerleştirip üst ve alt tablaya bağlayın; bölme içi "+cm(cw)+" cm.");P("Ara dikme",Hi,D,n-1,{bl:1,bs:0});joinLight(2*(n-1),"ara dikmeler ↔ tablalar");
+      for(let i=1;i<n;i++){const x=t+i*(cw+t)-t;GB(x,x+t,t,Hh-t,0,D,cur,{ex:[0,0,1]})}}
+    const rY=j=>t+(j+1)*pit-10,faces=[];for(let i=0;i<n;i++){const x0=t+i*(cw+t);faces.push([x0,1],[x0+cw,-1])}
+    if(ray==="cnc")prep.push("Kutu kanalları (CNC): yan dikmelerin iç yüzüne ve ara dikmelerin iki yüzüne, alttan "+Array.from({length:L},(_,j)=>cm(rY(j))).join(", ")+" cm'de 10 mm genişlik × 5 mm derinlik kanal, önden arkaya. Ara dikmede iki yüzdeki kanal aynı hizaya gelir, 8 mm et kalır; daha derin açmayın.");
+    else{step(ray==="alu"?"Alüminyum L profilleri her bölmenin iki yüzüne, alttan "+cm(rY(0))+" cm'den başlayıp "+cm(pit)+" cm arayla vidalayın; ön uçtan 1 cm içeride, terazide.":"Ray çıtalarını her bölmenin iki yüzüne, alttan "+cm(rY(0))+" cm'den başlayıp "+cm(pit)+" cm arayla tutkal + vidayla takın; ön uçtan 1 cm içeride, terazide.");
+      if(ray==="alu"){H("Alüminyum L profil 15×15 mm",Math.ceil(nR*rl/100*1.1)/10,"m","kesim: "+nR+" × "+cm(rl)+" cm, %10 payla");H("Sunta vidası 3,5×16 (havşa)",nR*3,"ad","her raya 3")}
+      else{P("Kutu rayı çıtası",rl,25,nR,{band:false,note:"25 mm yüzü dikmeye yapışır, 18 mm çıkıntı yapar"});H("Sunta vidası 3,5×30",nR*3,"ad","her çıtaya 3; karşılıklı vidaları kaydırın")}
+      faces.forEach(([x,s])=>{for(let j=0;j<L;j++){const y=rY(j),th=ray==="alu"?15:18;GB(s>0?x:x-th,s>0?x+th:x,y-(ray==="alu"?2:25),y,10,10+rl,cur,{col:ray==="alu"?MET:WC,ex:[0,0,1]})}})}
+    if(o.sB){step("Arkalığı gönyeye alarak vidalayın; gövde kendiliğinden kare olur ve yana yatmaz.");P("Arkalık",W-4,Hh-4,1,{mat:"arka8",band:false});H("Sunta vidası 3,5×25",Math.ceil(2*(W+Hh)/150),"ad","arkalık");GB(2,W-2,2,Hh-2,-8,0,cur,{col:"#CFC7B8",ex:[0,0,-1]})}
+    step("Duvara bir gönyeyle sabitleyin: çocuk tırmanır ya da kutuya asılırsa devrilmesin.");H("Duvara sabitleme gönyesi",Hh>700?2:1,"ad","devrilmeye karşı");GB(W/2-20,W/2+20,Hh-60,Hh-20,-10,-8,cur,{col:MET});
+    const bigN=Math.floor(L/2);
+    for(let i=0;i<n;i++){const x0=t+i*(cw+t);for(let k=0;k<bigN;k++){const top=rY(2*k+1),bh=2*pit-25;GB(x0+4,x0+cw-4,top-bh,top,14,D-6,cur,{col:BC[(i+k)%BC.length],kind:"fix",ex:[0,0,1]})}}
+    {const one=parts.map(p=>Object.assign({},p)),fitN=[];for(const k of matsUsed(one.map(p=>({mat:p.mat})))){if(k==="arka8")continue;let best=0;for(let c=1;c<=8;c++){const pp=one.filter(p=>p.mat===k).map((p,i)=>({id:"s"+i,a:p.a0,b:p.b0,qty:p.qty*c,mat:k,bl:p.bl,bs:p.bs,free:!(SET.grain&&GRAINY(k))}));if(pack(pp,k,{quick:true,noArtik:true}).sheets.length===1)best=c;else break}fitN.push(best)}
+      if(fitN[0])notes.unshift("Bir "+SET.mats[mat].name+" levhasına "+fitN[0]+" iskelet sığar"+(SET.grain&&GRAINY(mat)?" (desen yönü korunarak; düz renkte daha fazla olabilir — Ayarlar → Desen yönü)":"")+". Aynı anda "+fitN[0]+" tane kestirmek en ucuzu.")}
+    notes.push("Bölme içi "+cm(cw)+" cm, derinlik "+cm(D)+" cm, "+L+" kademe ("+cm(pit)+" cm arayla). Bir büyük kutu 2 kademe, küçük kutu 1 kademe kaplar; her bölmeye "+bigN+" büyük kutu sığar.",
+      ray==="cnc"?"Kutunun ağız (dudak) kenarı kanala girecek kalınlıkta olmalı; kutuyu alıp kanal ölçüsünü ona göre verin.":"Kutunun gövdesi bölmeden en az "+cm((ray==="alu"?15:18)*2+10)+" cm dar, ağzı (dudağı) bölmeye 2–3 mm boşlukla girecek genişlikte olmalı; dudak raylara oturur.",
+      "Hazır plastik kutu kullanacaksanız önce kutuyu alıp ölçün, sonra bölme sayısını ve eni ona göre ayarlayın.")}
   else if(o.m==="divan"){const Wo=mw,Lo=ml,Wd=Wo-2*t,ft=30,top=Math.round(o.dvH*10),tip=o.dvT||"sandik",mid=Wo>=1200,FC="#2C2C2C";
     const fitM=(a,b,mt)=>{const m=SET.mats[mt],L=m.L-2*SET.trim,W=m.W-2*SET.trim,A=Math.max(a,b),Bb=Math.min(a,b);return A<=L&&Bb<=W};
     const big=(name,L,W,x={})=>{const mt=x.mat||mat;if(fitM(L,W,mt))P(name,L,W,1,x);else{P(name+" (iki parça)",L,Math.round(W/2),2,Object.assign({},x,{note:(x.note?x.note+"; ":"")+"levhaya sığmadı, ek yeri altından çıtayla birleştirilir"}));H("Birleştirme çıtası (ek yeri altına)",2,"ad",name)}};
@@ -934,6 +957,10 @@ function renderHazir(){document.querySelector("main").className="";const o=HZ,B=
   if(o.m==="yer")fields+=`<div class="grid3">${num("fh","Kasa yüksekliği cm",10,35)}</div>${babk}${lata}`;
   if(o.m==="karyola")fields+=`<div class="grid3">${num("hh","Baş tahtası cm",50,130)}${num("hf","Ayak tahtası cm",20,90)}${num("rh","Kasa yüksekliği cm",15,35)}${num("lift","Kasa yerden cm",5,30)}</div>${lata}`;
   if(o.m==="kitap")fields+=`<div class="grid3">${num("W","En cm",40,160)}${num("H","Yükseklik cm",40,120)}${num("D","Derinlik cm",20,40)}${num("raf","Raf sayısı",1,5)}</div>`;
+  if(o.m==="saklama")fields+=`<div class="row"><span>Hazır ölçü</span></div><div class="chips wrap">${[[99,44,57,3],[99,44,94,3],[66,44,94,2],[132,44,57,4]].map(([w,d,h,c])=>`<button class="chip sm" data-hzsp="${w}x${d}x${h}x${c}" aria-pressed="${o.sW===w&&o.sD===d&&o.sH===h&&o.sC===c}">${w}×${d}×${h} · ${c} bölme</button>`).join("")}</div>
+    <div class="grid3">${num("sW","En cm",30,200)}${num("sH","Yükseklik cm",30,150)}${num("sD","Derinlik cm",25,60)}${num("sC","Bölme sayısı",1,4)}${num("sP","Kademe aralığı cm",6,25)}</div>
+    <div class="row"><span>Kutu rayı</span></div><div class="chips wrap">${[["alu","Alüminyum L profil"],["cita","Suntalam çıta"],["cnc","CNC kanal"]].map(([k,l])=>`<button class="chip sm" data-hzsr="${k}" aria-pressed="${(o.sR||"alu")===k}">${l}</button>`).join("")}</div>
+    ${chk("sB","Arkalık (8 mm)","Gövdeyi kare tutar, yana yatmaz; bir levhadan birçok ünitenin arkalığı çıkar")}`;
   if(o.m==="divan")fields+=`<div class="row"><span>Divan tipi</span></div><div class="chips wrap">${[["sandik","Sandıklı (amortisörlü)"],["cekmece","Çekmeceli"],["lata","Latalı (açık)"]].map(([k,l])=>`<button class="chip sm" data-hzdv="${k}" aria-pressed="${(o.dvT||"sandik")===k}">${l}</button>`).join("")}</div>
     <div class="grid3">${num("dvH","Şiltesiz yükseklik cm",25,50)}${o.dvT==="cekmece"?num("dvC","Çekmeceli yan (1 ya da 2)",1,2):""}</div>
     ${chk("dvB","Başlık","Divana cıvatayla bağlanır, üstten duvara gönyelenir")}${o.dvB?`<div class="grid3">${num("dvHB","Başlık yerden cm",70,140)}</div>${chk("dvK","Kademeli başlık (iki kat)","Önüne daha küçük ikinci panel: farklı desen ya da döşeme; eğimli kesim gerekmez")}`:""}${o.dvT==="lata"?lata:""}`;
@@ -2557,7 +2584,7 @@ function renderTur(){
   <div class="types">${Object.entries(TYPES).map(([k,v])=>`<button class="tcard" data-type="${k}" aria-pressed="${S.type===k}">${ICONS[k]}<div style="display:flex;flex-direction:column;gap:2px"><b>${v.label}</b><span>${v.desc}</span></div></button>`).join("")}<button class="tcard" data-hzgo="divan">${hzIcon("divan")}<div style="display:flex;flex-direction:column;gap:2px"><b>Divan</b><span>Sandıklı, çekmeceli baza</span></div></button></div>
   <p class="hint">Türü seçin; ölçüyü girince uygulama hazır düzenler önerecek.</p>
   <div class="helprow"><button class="btn small ghost" data-helpopen="rehber">? Nasıl kullanılır</button><button class="btn small ghost" data-helpopen="yeni">★ Yenilikler</button></div>
-  <button class="tcard wide" data-view="hazir">${hzIcon("ev")}<div style="display:flex;flex-direction:column;gap:2px"><b>Hazır modeller</b><span>Divan, karyola, Montessori ev yatak, yer yatağı, kitaplık, öğrenme kulesi · ölçüye göre, üretim kılavuzlu</span></div></button>
+  <button class="tcard wide" data-view="hazir">${hzIcon("ev")}<div style="display:flex;flex-direction:column;gap:2px"><b>Hazır modeller</b><span>Divan, kutulu saklama ünitesi, karyola, Montessori ev yatak, yer yatağı, kitaplık, öğrenme kulesi · ölçüye göre, üretim kılavuzlu</span></div></button>
   <button class="tcard wide" data-view="liste"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="9" width="38" height="30" rx="2"/><path d="M5 22h20M25 9v30M25 28h18"/></svg><div style="display:flex;flex-direction:column;gap:2px"><b>Ölçüden levha planı</b><span>Tasarım yok, ölçüleri ben yazacağım: levha yerleşimi ve fasoncuya kesim listesi</span></div></button>`;
   setBar(null,"olcu","Ölçülere geç",!S.type);
 }
@@ -3144,8 +3171,11 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
 
 
 /* ====================== YARDIM · YENİLİKLER ====================== */
-const APPVER="2026.10.21e";
+const APPVER="2026.10.21f";
 const NEWS=[
+ {d:"21 Ekim 2026 · gece",t:"Kutulu saklama ünitesi",items:[
+  ["Kutulu saklama ünitesi","Hazır modellerde yeni: oyuncak kutuları raylara kayan, bölmeli saklama ünitesi. En, yükseklik, derinlik, bölme sayısı ve kademe aralığı ayarlı; hazır ölçüler 99×44×57, 99×44×94, 66×44×94, 132×44×57. Bir levhaya kaç iskelet sığdığını kendisi yazar (99×44×57 düz renkte 3 tane).","hazir"],
+  ["Kutu rayı","Alüminyum L profil (metrajı hırdavata), suntalam çıta (kesim listesine) ya da CNC kanal (kanal yükseklikleri hazırlığa yazılır). Arkalık ve duvar gönyesi dahil.",null]]},
  {d:"21 Ekim 2026 · gece",t:"Divan",items:[
   ["Divan","Ana ekranda yeni 'Divan' kartı (Hazır modeller içinde). Sandıklı (amortisörlü kapak), çekmeceli (tekerlekli, bir ya da iki yanda) ya da latalı; şilte ölçüsüne göre kendini kurar. Suntalamdan, yalnız düz kesim.","hazir"],
   ["Başlık","Divana cıvatayla bağlanan başlık; isteğe bağlı kademeli ön panel (farklı desen ya da döşeme) eğimli kesim istemeden sıcak bir görünüm verir.",null],
@@ -3631,6 +3661,8 @@ document.addEventListener("click",e=>{
   if(d.carask){openSheet(carSheet());return}
   if(d.hzm){HZ3=null;HZ.m=d.hzm;HZFIT=null;hzSave();renderHazir();return}
   if(d.hzdv){HZ3=null;HZ.dvT=d.hzdv;HZFIT=null;hzSave();renderHazir();return}
+  if(d.hzsr){HZ3=null;HZ.sR=d.hzsr;HZFIT=null;hzSave();renderHazir();return}
+  if(d.hzsp){const[w,dd,h,c]=d.hzsp.split("x").map(Number);Object.assign(HZ,{sW:w,sD:dd,sH:h,sC:c});HZ3=null;HZFIT=null;hzSave();renderHazir();return}
   if(d.hzgo){HZ3=null;HZ.m=d.hzgo;HZ.tab="model";if(d.hzgo==="divan"&&!HZ.dvSeen){HZ.mat="sunta";HZ.mw=160;HZ.ml=200;HZ.dvSeen=1}HZFIT=null;hzSave();S.view="hazir";render();window.scrollTo(0,0);return}
   if(d.hzsz){const[w,l]=d.hzsz.split("x").map(Number);HZ.mw=w;HZ.ml=l;HZFIT=null;hzSave();renderHazir();return}
   if(d.hzmat){HZ.mat=d.hzmat;HZFIT=null;hzSave();renderHazir();return}

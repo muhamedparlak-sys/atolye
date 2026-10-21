@@ -23,6 +23,9 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 
 ## Yenilikler
 
+**21 Ekim 2026 · gece (2)**
+- Kutulu saklama ünitesi (hazır model): bölme, kademe, ray tipi (alüminyum L, suntalam çıta, CNC kanal) ayarlı; bir levhaya kaç tane sığdığını hesaplar
+
 **21 Ekim 2026 · gece**
 - Divan (hazır model): sandıklı amortisörlü, tekerlekli çekmeceli ya da latalı; başlık ve kademeli ön panel; kesim listesi, levha planı, hırdavat, 3D ve üretim kılavuzu
 - Ana ekran: mutfak kartı diğer türlerle aynı ızgarada
