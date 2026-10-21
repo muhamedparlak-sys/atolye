@@ -7,7 +7,7 @@ Bu dosya, uzayan oturumdaki işi yeni bir oturumda kaldığı yerden sürdürmek
 - **Kullanıcı:** Suntalamı ebatlamada (fasoncu) kestiren marangoz.
 - **Yayın:**
   - GitHub Pages: https://muhamedparlak-sys.github.io/atolye/ (repo `muhamedparlak-sys/atolye`, dal `main`).
-  - Claude artifact: https://claude.ai/artifact/RmZN63J87JccuCsi2HEU8t (sürüm 39). Yeni oturumda güncellemek için önce `Artifact read`, sonra aynı `url` ile publish.
+  - Claude artifact: https://claude.ai/artifact/RmZN63J87JccuCsi2HEU8t (sürüm 38; 2026.10.21d henüz yayınlanmadı — yalnız GitHub Pages güncel). Yeni oturumda güncellemek için önce `Artifact read`, sonra aynı `url` ile publish.
 - **Kayıtlı veriler** tarayıcı localStorage'ında durur; sürüm güncellemesi bunları silmez:
   - `atolye2_cur`, `atolye2_set`, `atolye2_projeler`, `atolye2_liste`, `atolye2_hizli`, `atolye2_foto`, `atolye2_seen`, `atolye2_hazir`
   - Yeni alan eklerken eski kayıtla birleştirin, örneğin `Object.assign(varsayılan, kayıtlı)`. `SET.mats` bu şekilde birleştiriliyor.
@@ -120,3 +120,7 @@ Bu dosya, uzayan oturumdaki işi yeni bir oturumda kaldığı yerden sürdürmek
 
 ## Yanıt üslubu
 Kullanıcıya Türkçe, kısa ve sade yazın. Kullanıcı uygulamayı sahadaki usta ve "sade vatandaş" için istiyor: görsel, adım adım, anlaşılır olmalı.
+
+## Kredi notu
+- Artifact'i yeni bir oturumda güncellemek, yayından önce ~500 KB dosyanın tamamını okumayı gerektirir; en pahalı adım budur. Kullanıcıya önerildi: günlük deneme GitHub Pages'ten, artifact yalnız büyük sürümlerde.
+- Kullanıcının sıradaki fikri: suntalamdan, düz kesimli (ebatlamada eğimli kesim yok), sıcak görünümlü bebek/çocuk ürünleri — anne yanı beşik, dönüşen karyola, Montessori masa + sandalye, oyuncak dolabı. "Hazır modeller" altyapısına (HZM + hzBuild) eklenecek; EN 1130 / EN 716 güvenlik ölçüleri gömülecek.
