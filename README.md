@@ -24,6 +24,8 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 ## Yenilikler
 
 **21 Ekim 2026**
+- Kapak boyları: üst üste farklı boy ve yan yana hizasız kapak çizgileri uyarılır; 'Kapak boylarını eşitle' ve 'Kapak çizgilerini hizala'
+- Gardırop 235 cm üstü: tavan dolabı / tek gövde / üstü boş seçimi; taç isteğe bağlı
 - Hazır modellerde 3D ve adım adım montaj (kılavuzda her adımın resmi)
 - Ev yatak: metal L profil lata taşıyıcı, sökülebilir çatı modülü, başlık / ayak ucu paneli, iki yanda korkuluk
 - Hazır modeller: Montessori ev yatak, Montessori yer yatağı, klasik karyola, ön yüzlü kitaplık, öğrenme kulesi (ölçüye göre, fire dostu)

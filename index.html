@@ -319,6 +319,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .hz3wrap{display:flex;flex-direction:column;gap:8px}.hz3d{height:340px;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .hz3bar{display:flex;align-items:center;gap:8px}.hz3bar .btn{min-width:44px;font-size:20px}.hz3t{flex:1;font-size:15px;line-height:1.35}.hz3t small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
 .hzsum p{margin:6px 0;font-size:15px}
+.frontp{padding:10px 12px}.frontp .row b{font-size:14px}
 </style>
 </head>
 <body>
@@ -1014,6 +1015,60 @@ function roomHTML(){const r=rmOf();const sig=JSON.stringify([r,HZ.mat,HZ.wall,HZ
      <div class="btns"><button class="btn small" data-rmlist="${i}">Bu takımı kesim listesine aktar</button></div></div>`});
   h+=`<p class="note">Kurallar: kapının açılma alanı boş; dolap önünde 60 cm, yatak ve rafların önünde 40 cm geçiş; yüksek eşyalar (95 cm üstü) pencerenin önüne konmaz. Yürüme çağındaki çocuk için yatak yere yakın, raflar alçak ve duvara sabitli olmalı.</p>`;
   return h}
+
+/* ====================== KAPAK BOYLARI: HİZA ve EŞİTLEME ====================== */
+function colFronts(m,ci){const G=R&&R.geo[m.id];if(!G||!G.cols||!G.cols[ci])return null;const c=m.cols[ci],CG=G.cols[ci];
+  const hs=CG.bands.map(b=>b.h),ybs=[];let acc=0;hs.forEach(h=>{ybs.push(acc);acc+=h});const base=m.mount+(G.bz||0);
+  const fr=[];let cur=null;
+  c.bands.forEach((b,k)=>{const y0=ybs[k],y1=y0+hs[k];
+    if(b.kind==="cekmece"){fr.push({t:"cek",y0,y1,k0:k,k1:k});cur=null}
+    else if(b.door){if(cur&&b.join&&cur.k1===k-1){cur.k1=k;cur.y1=y1}else{cur={t:"door",y0,y1,k0:k,k1:k};fr.push(cur)}}
+    else{fr.push({t:"open",y0,y1,k0:k,k1:k});cur=null}});
+  const ds=(c.dsplit||[]).map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v),out=[];
+  fr.forEach(f=>{if(f.t!=="door"){out.push(f);return}let y=f.y0;ds.filter(o=>o.v>f.y0+150&&o.v<f.y1-150).forEach(o=>{out.push({t:"door",y0:y,y1:o.v,k0:f.k0,k1:f.k1,split:o.i});y=o.v});out.push({t:"door",y0:y,y1:f.y1,k0:f.k0,k1:f.k1})});
+  const joints=[];for(let i=0;i<out.length-1;i++){const a=out[i],b=out[i+1];if(a.t==="open"||b.t==="open")continue;
+    joints.push(a.split!=null?{kind:"split",i:a.split,y:a.y1,abs:base+a.y1,a,b}:{kind:"band",k:a.k1,y:a.y1,abs:base+a.y1,a,b})}
+  return{fronts:out,joints,hs,ybs,base}}
+function frontScan(mods){const lines=[],stacks=[];const kitchen=S.type==="mutfak";
+  mods.filter(m=>!m.gap&&!m.panel&&m.cols&&!m.extra).forEach(m=>m.cols.forEach((c,ci)=>{const J=colFronts(m,ci);if(!J)return;
+    J.joints.forEach(j=>lines.push({m,ci,j,abs:j.abs,wall:kitchen?m.wall:"A"}));
+    let run=[];const flush=()=>{if(run.length>=2){const hh=run.map(f=>f.y1-f.y0);if(Math.max(...hh)-Math.min(...hh)>20)stacks.push({m,ci,hh})}run=[]};
+    J.fronts.forEach((f,i)=>{if(f.t==="door"){if(run.length&&run[run.length-1].y1!==f.y0)flush();run.push(f)}else flush()});flush()}));
+  const mis=[];const byW={};lines.forEach(l=>(byW[l.wall]=byW[l.wall]||[]).push(l));
+  Object.values(byW).forEach(L=>{L.sort((a,b)=>a.abs-b.abs);let cl=[];const fl=()=>{if(cl.length>=2){const v=cl.map(x=>x.abs);if(Math.max(...v)-Math.min(...v)>3)mis.push(cl)}cl=[]};
+    L.forEach(l=>{if(cl.length&&l.abs-cl[cl.length-1].abs>100)fl();cl.push(l)});fl()});
+  /* aynı yükseklikteki gövdelerde, kapak-kapak çizgisi sayısı aynı olan bölmeler: i. çizgiler hizalı olmalı */
+  const grp={};lines.filter(l=>l.j.a.t==="door"&&l.j.b.t==="door").forEach(l=>{const g=l.wall+"|"+l.m.mount+"|"+l.m.H,c=l.m.id+":"+l.ci;((grp[g]=grp[g]||{})[c]=grp[g][c]||[]).push(l)});
+  const inMis=new Set(mis.flat());
+  Object.values(grp).forEach(cols=>{const byN={};Object.values(cols).forEach(L=>{L.sort((a,b)=>a.abs-b.abs);(byN[L.length]=byN[L.length]||[]).push(L)});
+    Object.values(byN).forEach(arr=>{if(arr.length<2)return;for(let i=0;i<arr[0].length;i++){const cl=arr.map(L=>L[i]);const v=cl.map(x=>x.abs);if(Math.max(...v)-Math.min(...v)>3&&!cl.every(x=>inMis.has(x))){mis.push(cl);cl.forEach(x=>inMis.add(x))}}})});
+  return{mis,stacks}}
+function colName(m,ci){return m.label+(m.cols.length>1?" "+(ci+1)+". bölme":"")}
+function moveJoints(m,ci,moves){const c=m.cols[ci],J=colFronts(m,ci);if(!J)return 0;const hs=J.hs.slice();let n=0,touched=false;
+  const minH=k=>c.bands[k].kind==="cekmece"?Math.max(1,c.bands[k].n|0)*(+SET.drawerMin||120):120;
+  moves.sort((a,b)=>a.ty-b.ty).forEach(mv=>{const j=mv.j,ty=Math.round(mv.ty);
+    if(j.kind==="split"){if(ty>j.a.y0+150&&ty<j.b.y1-150){c.dsplit[j.i]=ty;n++}return}
+    const k=j.k;let curY=0;for(let i=0;i<=k;i++)curY+=hs[i];const d=ty-curY;if(Math.abs(d)<1)return;
+    if(hs[k]+d>=minH(k)&&hs[k+1]-d>=minH(k+1)){hs[k]+=d;hs[k+1]-=d;n++;touched=true}});
+  if(touched){const last=c.bands.length-1;c.bands.forEach((b,i)=>{b.h=i===last?0:Math.round(hs[i])})}
+  return n}
+function alignFronts(mods){R=computeAll(S.mods);const{mis}=frontScan(mods);const per=new Map();let want=0;
+  mis.forEach(cl=>{const cnt={};cl.forEach(l=>{const v=Math.round(l.abs);cnt[v]=(cnt[v]||0)+1});const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]||a[0]-b[0]);
+    const target=top[0][1]>1?+top[0][0]:Math.round(cl.map(l=>l.abs).sort((a,b)=>a-b)[Math.floor(cl.length/2)]);
+    cl.forEach(l=>{if(Math.abs(l.abs-target)<1)return;want++;const key=l.m.id+":"+l.ci;if(!per.has(key))per.set(key,{m:l.m,ci:l.ci,moves:[]});per.get(key).moves.push({j:l.j,ty:target-(l.abs-l.j.y)})})});
+  let done=0;per.forEach(v=>{done+=moveJoints(v.m,v.ci,v.moves)});R=computeAll(S.mods);return{want,done}}
+function equalizeDoors(mods){R=computeAll(S.mods);let done=0,runs=0;
+  mods.filter(m=>!m.gap&&!m.panel&&m.cols).forEach(m=>m.cols.forEach((c,ci)=>{const J=colFronts(m,ci);if(!J)return;const moves=[];let run=[];
+    const flush=()=>{if(run.length>=2){runs++;const y0=run[0].y0,L=run[run.length-1].y1-y0,n=run.length;for(let i=0;i<n-1;i++){const j=J.joints.find(q=>q.a===run[i]);if(j)moves.push({j,ty:y0+L*(i+1)/n})}}run=[]};
+    J.fronts.forEach(f=>{if(f.t==="door"){if(run.length&&run[run.length-1].y1!==f.y0)flush();run.push(f)}else flush()});flush();
+    if(moves.length)done+=moveJoints(m,ci,moves)}));R=computeAll(S.mods);return{runs,done}}
+function frontHTML(m){if(!m||m.gap||m.panel||!m.cols)return"";const col=Math.min(S.col,m.cols.length-1);const J=colFronts(m,col);if(!J)return"";
+  const doors=J.fronts.filter(f=>f.t==="door");if(!doors.length)return"";const sc=frontScan(S.mods);const mine=sc.mis.filter(cl=>cl.some(l=>l.m===m)),st=sc.stacks.filter(x=>x.m===m);
+  const hsTxt=J.fronts.filter(f=>f.t!=="open").map(f=>(f.t==="cek"?"çekmece ":"")+cm(f.y1-f.y0)).join(" + ");
+  return `<div class="panel frontp"><div class="row"><span>Ön yüz (alttan üste)</span><b>${hsTxt} cm</b></div>
+   ${st.length?`<div class="note warnc">Üst üste kapaklar farklı boy: ${st.map(x=>colName(m,x.ci)+" "+x.hh.map(cm).join(" / ")+" cm").join("; ")}.</div>`:""}
+   ${mine.length?`<div class="note warnc">Yan yana kapak çizgileri hizasız: ${mine.map(cl=>cl.map(l=>colName(l.m,l.ci)+" "+cm(l.abs)).join(" · ")).join("; ")} cm (yerden).</div>`:""}
+   <div class="btns" style="margin:4px 0 0"><button class="btn small ${st.length?"":"ghost"}" data-deq="1">Kapak boylarını eşitle</button><button class="btn small ${mine.length?"":"ghost"}" data-dal="1">Kapak çizgilerini hizala</button></div></div>`}
 /* ====================== ARTIKTAN NE ÇIKAR ====================== */
 const ARTIK=[
  {k:"kom2",l:"Komodin · 2 çekmece",tip:"komodin",W:45,H:50,D:40,cek:2},
@@ -1239,7 +1294,7 @@ function furnitureVariants(type,inp){
       if(b.fill){mods.push(mkMod({role:"govde",x:b.x,W:b.w,H,D,gap:"Dolgu "+cm(b.w)+" cm"}));return}
       bi++;const lim=kirisLimit(inp,"A",b.x,b.x+b.w),effH=Math.min(H,lim);
       if(effH<1000){mods.push(mkMod({role:"govde",x:b.x,W:b.w,H:Math.max(300,effH),D,gap:"Kiriş altı"}));notes.push("Kiriş çok alçak; "+cm(b.x)+" cm'den sonraki "+cm(b.w)+" cm boş bırakıldı.");return}
-      const tavan=type==="gardirop"&&effH>2350?effH-2150:0, mainH=effH-tavan;
+      const topM=inp.top||"dolap",hi=type==="gardirop"&&effH>2350,tavan=hi&&topM==="dolap"?effH-2150:0, mainH=hi&&topM==="bos"?2150:effH-tavan;
       const nc=b.w<=650?1:Math.max(2,Math.round(b.w/600));
       const preset=[];for(let c=0;c<nc;c++){preset.push(pattern[pi%pattern.length]);pi++}
       const lb=nBody>1?"G"+bi:"G";
@@ -1701,7 +1756,10 @@ function advise(mods,R){
     if(bk==="3"&&open)add("info","Açık bölmede arkalık görünüyor; 3 mm duralit zayıf kalabilir.","Arkası görünen açık niş ve raflarda 8 mm ya da gövdeyle aynı 18 mm arkalık daha sağlam ve şık durur.");
     if(bk==="3"&&S.type==="cocuk")add("warn","Çocuk dolabında 3 mm arkalık.","Çocuk tırmanabilir ya da yaslanabilir; 8 mm arkalık ve duvar gönyesi önerilir.");
     if(bk==="18")add("info","18 mm arkalık içten geçiyor; ara tabla, raf ve çekmece derinliği 1,8 cm azaldı.","Arkalık yan dikmelerin arasına girer, konfirmat, minifix ya da vidayla bağlanır. Gövde çok sağlam olur ama ağırlaşır.")}
-  const order={warn:0,info:1,ok:2};return out.sort((a,b)=>order[a.lvl]-order[b.lvl]);
+   try{const sc=frontScan(mods);
+    sc.mis.forEach(cl=>add("warn","Kapak çizgileri hizasız: "+cl.map(l=>colName(l.m,l.ci)+" "+cm(l.abs)).join(", ")+" cm (yerden).","Yan yana kapakların ve çekmece önlerinin ara çizgileri aynı hizada olursa dolap derli toplu görünür. Dolaba dokunup 'Kapak çizgilerini hizala'ya basın; uygulama en çok kullanılan hizaya çeker."));
+    sc.stacks.forEach(x=>add("info",colName(x.m,x.ci)+": üst üste kapaklar farklı boy ("+x.hh.map(cm).join(" / ")+" cm).","Bilerek yapılmadıysa 'Kapak boylarını eşitle' ile hepsi aynı boy olur. Arkadaki ara tabla da kapak çizgisiyle birlikte kayar."))}catch(e){}
+   const order={warn:0,info:1,ok:2};return out.sort((a,b)=>order[a.lvl]-order[b.lvl]);
 }
 
 
@@ -2405,6 +2463,7 @@ function renderOlcu(){
     <label class="field big"><span class="k">${T.hL||"Boy"} · cm</span><input type="number" inputmode="decimal" id="in-H" data-inp="H" value="${i.H}"></label>
     <label class="field big"><span class="k">${T.dL||"Derinlik"}</span><input type="number" inputmode="decimal" id="in-D" data-inp="D" value="${i.D}"></label></div>
     <div class="note" id="dhint">${depthHint()}</div>
+    ${S.type==="gardirop"?`<span class="lbl">Boy 235 cm'yi geçerse üst kısım</span><div class="chips wrap">${[["dolap","Tavan dolabı"],["tek","Tek gövde tavana"],["bos","Üstü boş"]].map(([k,l])=>`<button class="chip sm" data-gtop="${k}" aria-pressed="${(i.top||"dolap")===k}">${l}</button>`).join("")}</div><div class="note">${{dolap:"Gövde 215 cm, üstüne ayrı tavan dolabı (kapaklı).",tek:"Gövde tavana kadar tek parça; kapağı ikiye bölmek Düzen'den.",bos:"Gövde 215 cm, üstü açık kalır; istenirse Düzen'den taç eklenir."}[i.top||"dolap"]} Taç her zaman isteğe bağlıdır (Düzen → Taç).</div>`:""}
     ${S.type==="kahve"?`<div class="grid3"><label class="field"><span class="k">Üst derinlik</span><input type="number" inputmode="decimal" id="in-du" data-inp="Du" value="${i.Du||30}"><span class="h">30–35 cm</span></label><label class="field"><span class="k">Tezgah</span><input type="number" inputmode="decimal" id="in-tzk" data-inp="tzK" value="${i.tzK||90}"><span class="h">85–95 cm</span></label><label class="field"><span class="k">Niş</span><input type="number" inputmode="decimal" id="in-nk" data-inp="nisK" value="${i.nisK||55}"><span class="h">makine 45–65</span></label></div>`:""}
     ${S.type==="yatak"?`<div class="grid3"><label class="field"><span class="k">Yatak eni · cm</span><input type="number" inputmode="decimal" id="in-bw" data-inp="bedW" value="${i.bedW||160}"></label><label class="field"><span class="k">Yatak yüksekliği</span><input type="number" inputmode="decimal" id="in-bh" data-inp="bedH" value="${i.bedH||50}"><span class="h">baza + şilte üstü</span></label></div>`:""}
     ${S.type==="tv"?`<label class="field"><span class="k">TV ekranı · inç</span><input type="number" inputmode="decimal" id="in-tv" data-inp="tvInch" value="${i.tvInch||55}"><span class="h">Konsol genişliği ve kule aralığı buna göre denetlenir</span></label>`:""}
@@ -2511,6 +2570,7 @@ function renderDuzen(){
       <button class="sumbtn" data-sheet="color"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--line);background:${bodyFill()}"></span>${frontSep()?`<span style="display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--line);background:${frontFill()}"></span>`:""}Renk</button>
       <button class="sumbtn" data-sheet="back">Arkalık ${BACKS[backOf()].short}</button>
       ${kitchen?`<button class="sumbtn" data-sheet="plan">Plan</button>`:""}
+      ${(()=>{try{const sc=frontScan(S.mods);const k=sc.mis.length+sc.stacks.length;return k?`<button class="sumbtn w" data-sheet="front">⚠ Kapak boyları · ${k}</button>`:""}catch(e){return""}})()}
       <button class="sumbtn" data-sheet="tac">Taç${tacOf().type!=="yok"?" · "+TAC[tacOf().type].l.split(" ")[0].toLocaleLowerCase("tr"):""}</button>
       ${kitchen||S.type==="kahve"?`<button class="sumbtn" data-sheet="tzu">Tezgah üstü${Object.values(tzuOf()).filter(Boolean).length?" · "+Object.values(tzuOf()).filter(Boolean).length:""}</button>`:""}
     </div>
@@ -2523,6 +2583,12 @@ function renderDuzen(){
   <div class="dz-bottom">${bottom}</div>`;
   setBar("oneri","sonuc","Kesim listesi");
 }
+function frontSheet(){R=computeAll(S.mods);const sc=frontScan(S.mods);
+  openSheet(`<div class="ed-head"><b>Kapak boyları</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+   ${sc.mis.length?`<span class="lbl">Hizasız çizgiler</span><ul class="vlist">${sc.mis.map(cl=>`<li>${cl.map(l=>esc(colName(l.m,l.ci))+" "+cm(l.abs)+" cm").join(" · ")}</li>`).join("")}</ul>`:`<p class="note">Yan yana kapak çizgileri hizalı ✓</p>`}
+   ${sc.stacks.length?`<span class="lbl">Üst üste farklı boy kapaklar</span><ul class="vlist">${sc.stacks.map(x=>`<li>${esc(colName(x.m,x.ci))}: ${x.hh.map(cm).join(" / ")} cm (alttan üste)</li>`).join("")}</ul>`:`<p class="note">Üst üste kapaklar eşit ✓</p>`}
+   <p class="note">Ölçüler yerden. Kapak çizgisi kayınca arkadaki ara tabla da kayar; çekmece önleri en az ${cm(+SET.drawerMin||120)} cm kalır.</p>
+   <div class="btns"><button class="btn" data-dal="all">Tüm dolapta çizgileri hizala</button><button class="btn ghost" data-deq="all">Tüm kapak boylarını eşitle</button></div>`)}
 function notesSheet(){const adv=advise(S.mods,R);
   openSheet(`<div class="ed-head"><b>Usta notları</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
    ${R.err.map(e=>`<ul class="adv"><li class="warn"><span class="ic">!</span><span>${esc(e.m+": "+e.txt)}</span></li></ul>`).join("")}
@@ -2561,6 +2627,7 @@ function editorHTML(m){
    ${kindHTML(m)}
    ${m.tall||m.hob||m.mw?"":`<div class="presets">${presetsFor(m).map(k=>`<button class="pre" data-pre="${k}" aria-pressed="${c.p===k}">${colIcon(k,m.role)}${esc(COLP[k].label)}</button>`).join("")}</div>`}
    ${doorSplitHTML(m,col)}
+   ${frontHTML(m)}
    <details class="more"><summary>İç ayrıntı (yükseklik, raf, kapak)</summary>
     ${c.bands.map((b,k)=>`<div class="band"><div class="band-h"><span>${k+1}. ${{raf:"Raf alanı",nis:"Niş",aski:b.hook?"Kanca":"Askı",cekmece:"Çekmece"}[b.kind]} ${k===0?"(alt)":k===c.bands.length-1?"(üst)":""}</span>
       <label class="toggle">${b.kind==="cekmece"?"":`<input type="checkbox" data-bdoor="${k}" ${b.door?"checked":""}> Kapak`}</label></div>
@@ -2856,9 +2923,11 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
 
 
 /* ====================== YARDIM · YENİLİKLER ====================== */
-const APPVER="2026.10.21b";
+const APPVER="2026.10.21c";
 const NEWS=[
  {d:"21 Ekim 2026",t:"Hazır modeller, çocuk odası, arabama sığsın",items:[
+  ["Kapak boylarını eşitle","Düzen'de dolaba dokununca 'Ön yüz' satırı kapak ve çekmece boylarını alttan üste yazar. Üst üste kapaklar farklı boyda ya da yan yana kapak çizgileri hizasızsa uyarır; 'Kapak boylarını eşitle' ve 'Kapak çizgilerini hizala' tek dokunuşla düzeltir (arkadaki ara tabla da kayar).",null],
+  ["Gardırop üstü","235 cm üstü gardıropta seçim sizde: ayrı tavan dolabı, tavana kadar tek gövde ya da üstü boş. Taç her zaman isteğe bağlı (Düzen → Taç).",null],
   ["3D adım adım montaj","Hazır modellerde 3D görünüm: parmakla çevirin; ‹ › ile her adımda hangi parçanın takıldığını mavi ve ayrık görün. Üretim kılavuzunda her adımın resmi var.","hazir"],
   ["Ev yatak yenilendi","Latalar metal L profile oturur (istenirse ahşap çıta). Çatı ayrı modül: metal lamalarla takılır, sökülünce çerçeve yatak kalır. Başlık ve ayak ucu paneli, iki yanda korkuluk seçimli.","hazir"],
   ["Hazır modeller","Ana sayfa → Hazır modeller: Montessori ev yatak, Montessori yer yatağı, klasik karyola, ön yüzlü kitaplık, öğrenme kulesi. Şilte ölçüsünü seçin; parça listesi, levha sayısı, hırdavat ve montaj sırası kendiliğinden çıkar. Parçaların çoğu şerit, levhaya sıkı yerleşir.","hazir"],
@@ -3413,6 +3482,8 @@ document.addEventListener("click",e=>{
   if(m){
     if(d.mw){const old=m.W;m.W=Math.max(150,m.W+ +d.mw*10);reflow(m,m.W-old);renderDuzen();return}
     if(d.mkind){const[row,k]=d.mkind.split(":");if(row==="a")setAltKind(m,k);else{setUpperKind(m,k)}relabel();S.band=null;S.col=0;persist();renderDuzen();toast("Modül: "+(({dolap:"dolap",cekmece:"çekmeceli",eviye:"eviye",bulasik:"bulaşık makinesi",ocakAnk:"ankastre fırın + ocak",ocakSet:"set üstü ocak",boy:"boy dolap",boymw:"boy dolap (mikrodalga)",buzdolabi:"buzdolabı",acik:"açık raf",mw:"mikrodalga nişi",davlumbaz:"davlumbaz"})[d.mkind.split(":")[1]]||""));return}
+    if(d.deq&&d.deq!=="all"){const r=equalizeDoors([m]);persist();renderDuzen();toast(r.done?"Kapak boyları eşitlendi":r.runs?"Eşitlenemedi: bölmeler çok dar kalıyor":"Bu dolapta üst üste kapak yok");return}
+    if(d.dal&&d.dal!=="all"){const r=alignFronts(S.mods);persist();renderDuzen();toast(r.done?r.done+" çizgi hizalandı":r.want?"Hizalanamadı: bir bölme çok dar kalıyor":"Kapak çizgileri zaten hizalı");return}
     if(d.dsp){const col=Math.min(S.col,m.cols.length-1);doorSplit(m,col,+d.dsp);renderDuzen();toast(d.dsp==="1"?"Kapak tek boy":"Kapak "+d.dsp+" parça");return}
     if(d.cweq){m.cols.forEach(c=>{delete c.w;delete c.r});renderDuzen();toast("Bölmeler eşitlendi");return}
     if(d.cwrec){recWidths(m);renderDuzen();toast("Bölmeler içine göre ayarlandı");return}
@@ -3461,7 +3532,10 @@ document.addEventListener("click",e=>{
        <div class="note">${ok?"Bağlantı "+Math.round(url.length/100)/10+" bin karakter; tasarımın tamamı bağlantının içinde, hiçbir sunucuya yüklenmez. Tasarımı değiştirirseniz yeni bağlantı gönderin.":"Tasarım çok büyük; bağlantı yerine 3D sayfa dosyasını gönderin."}</div>`);V3URL={url,msg}}catch(e){toast("Bağlantı hazırlanamadı")}})();return}
   if(d.v3lcopy){const t=$("#v3url");(navigator.clipboard?navigator.clipboard.writeText(V3URL.url):Promise.reject()).then(()=>toast("Bağlantı kopyalandı")).catch(()=>{if(t){t.focus();t.select()}toast("Seçtim; uzun basıp kopyalayın")});return}
   if(d.v3lshare){navigator.share({title:S.name+" — 3D",text:V3URL.msg.split("\n")[0],url:V3URL.url}).catch(()=>{});return}
-  if(d.sheet){({notes:notesSheet,back:backSheet,plan:planSheet,color:colorSheet,tzu:tzuSheet,tac:tacSheet})[d.sheet]();return}
+  if(d.deq==="all"){const r=equalizeDoors(S.mods);persist();closeSheet();renderDuzen();toast(r.done?"Kapak boyları eşitlendi":"Eşitlenecek kapak yok");return}
+  if(d.dal==="all"){const r=alignFronts(S.mods);persist();closeSheet();renderDuzen();toast(r.done?r.done+" çizgi hizalandı":r.want?"Hizalanamadı: bir bölme çok dar kalıyor":"Kapak çizgileri zaten hizalı");return}
+  if(d.gtop){S.inp.top=d.gtop;persist();renderOlcu();return}
+  if(d.sheet){({notes:notesSheet,back:backSheet,plan:planSheet,color:colorSheet,tzu:tzuSheet,tac:tacSheet,front:frontSheet})[d.sheet]();return}
   if(d.tact){tacOf().type=d.tact;const n=applyTac(S.mods);S.sel=null;S.band=null;persist();renderDuzen();tacSheet();if(n.length)toast(n[0]);return}
   if(d.tacy){tacOf().yan=d.tacy;applyTac(S.mods);persist();renderDuzen();tacSheet();return}
   if(d.tzuo){S.inp.tzu=Object.assign({},tzuOf());S.inp.tzu[d.tzuo]=!S.inp.tzu[d.tzuo];persist();renderOneri();return}
