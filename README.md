@@ -23,6 +23,10 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 
 ## Yenilikler
 
+**21 Ekim 2026 · gece**
+- Divan (hazır model): sandıklı amortisörlü, tekerlekli çekmeceli ya da latalı; başlık ve kademeli ön panel; kesim listesi, levha planı, hırdavat, 3D ve üretim kılavuzu
+- Ana ekran: mutfak kartı diğer türlerle aynı ızgarada
+
 **21 Ekim 2026 · akşam**
 - Raf sehimi: malzeme (suntalam, MDF, kontrplak, masif), açıklık, derinlik ve yüke göre "zamanla kaç mm sarkar"; Düzen'de rafa dokununca görünür, bel veren raf çizimde işaretli
 - Tek dokunuşla raf desteği: ön çıta, arka çıta, orta dikme, raf altı taşıyıcı, kalın (çift kat) raf; kesim listesi, hırdavat, delik planı, montaj ve 3D'ye girer
@@ -36,7 +40,7 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 - Gardırop 235 cm üstü: tavan dolabı / tek gövde / üstü boş seçimi; taç isteğe bağlı
 - Hazır modellerde 3D ve adım adım montaj (kılavuzda her adımın resmi)
 - Ev yatak: metal L profil lata taşıyıcı, sökülebilir çatı modülü, başlık / ayak ucu paneli, iki yanda korkuluk
-- Hazır modeller: Montessori ev yatak, Montessori yer yatağı, klasik karyola, ön yüzlü kitaplık, öğrenme kulesi (ölçüye göre, fire dostu)
+- Hazır modeller: divan, Montessori ev yatak, Montessori yer yatağı, klasik karyola, ön yüzlü kitaplık, öğrenme kulesi (ölçüye göre, fire dostu)
 - Üretim kılavuzu (PDF): çizim, malzeme, ebatlama listesi, levha yerleşimi, hırdavat, alet, delik, montaj, yüzey işlemi, güvenlik kontrolü
 - Çocuk odası planla: oda ölçüsü + kapı + pencere → 3 yerleşim, oyun alanı, takımın levha sayısı
 - Yeni malzemeler: huş kontrplak, su kontrası, masif panel, ham MDF; çocuk odası malzeme karşılaştırması

@@ -742,7 +742,7 @@ function pack(parts,mat,opt={}){
 
 
 /* ====================== HAZIR MODELLER (karyola, Montessori) ====================== */
-const BEDSZ=[[70,140],[90,190],[90,200],[100,200],[120,200],[140,190],[160,200]];
+const BEDSZ=[[70,140],[90,190],[90,200],[100,200],[120,200],[140,190],[160,200],[180,200]];
 const HZMATS=["kontra18","masif18","sunta","mdf18","sukontra18"];
 const MATADV={
  kontra18:{t:"Huş kontrplak",best:"Çocuk odası için en iyi denge",p:"Kenarı vida ve minifixi iyi tutar, darbeye dayanıklı, ince ve hafif. Kenar katmanları güzel görünür; bant gerekmez.",c:"Suntalamdan 2–3 kat pahalı. Kenarlar zımpara + yuvarlatma ister.",h:"E1 ya da E0 etiketli olanı alın; su bazlı vernik ya da mobilya yağı.",f:"₺₺₺"},
@@ -754,15 +754,16 @@ const HZJ={minifix:{l:"Minifix + kavela",d:"Gizli, sökülüp takılır; taşın
  civata:{l:"Karyola cıvatası + kavela",d:"Yük alan köşelerde en sağlamı (M6 cıvata + silindir somun). Yatak yıllarca sallanmaz; hafif yerlerde minifix kullanılır."},
  vida:{l:"Vida + kavela + tutkal",d:"Sabit, en ucuz; sökülmez. Kontrplak ve masifte iyi tutar, suntalamda önerilmez."}};
 const HZM=[
+ {k:"divan",l:"Divan",d:"Sandıklı, çekmeceli ya da latalı baza; başlıklı. Suntalamdan, düz kesim.",bed:true},
  {k:"ev",l:"Montessori ev yatak",d:"Çatılı çerçeve, yere yakın; çocuk kendi girip çıkar.",bed:true},
  {k:"yer",l:"Montessori yer yatağı",d:"Alçak kasa, korkuluklu, başlıklı.",bed:true},
  {k:"karyola",l:"Klasik karyola",d:"Baş ve ayak tahtalı, latalı kasa.",bed:true},
  {k:"kitap",l:"Ön yüzlü kitaplık",d:"Kitap kapakları önden görünür (Montessori).",bed:false},
  {k:"kule",l:"Öğrenme kulesi",d:"Tezgaha uzanmak için ayarlı basamak.",bed:false}];
-const HZDEF={cati:true,ayak:true,hb:40,ha:20,lata:"L",m:"ev",mw:90,ml:190,mat:"kontra18",joint:"minifix",wall:100,fh:15,guard:true,dbl:true,hh:90,hf:35,rh:22,lift:12,bas:true,W:80,H:70,D:30,raf:3,kH:90,kW:40,kD:48};
+const HZDEF={dvT:"sandik",dvH:35,dvB:true,dvHB:110,dvC:2,dvK:true,cati:true,ayak:true,hb:40,ha:20,lata:"L",m:"ev",mw:90,ml:190,mat:"kontra18",joint:"minifix",wall:100,fh:15,guard:true,dbl:true,hh:90,hf:35,rh:22,lift:12,bas:true,W:80,H:70,D:30,raf:3,kH:90,kW:40,kD:48};
 let HZ=Object.assign({},HZDEF,LS.get("atolye2_hazir")||{});
 function hzSave(){LS.set("atolye2_hazir",HZ)}
-function hzIcon(k){const I={ev:'<path d="M8 46V22L28 6l20 16v24M8 46h40M12 40h32"/>',yer:'<path d="M6 40h44v6H6zM6 40v-8M50 40v-6M10 34h14"/>',karyola:'<path d="M6 46V18h8v28M42 46V30h8v16M14 36h28v6H14z"/>',kitap:'<path d="M10 46V10h36v36M10 22h36M10 34h36M14 22l4-8h8l-2 8M28 34l3-8h7l-1 8"/>',kule:'<path d="M14 48L18 8M42 48L38 8M17 20h22M16 32h24M15 42h26"/>'};
+function hzIcon(k){const I={divan:'<path d="M6 46V30h44v16M6 30l4-12h36l4 12M6 38h44M10 46v3M46 46v3M4 18v28M4 18h4"/>',ev:'<path d="M8 46V22L28 6l20 16v24M8 46h40M12 40h32"/>',yer:'<path d="M6 40h44v6H6zM6 40v-8M50 40v-6M10 34h14"/>',karyola:'<path d="M6 46V18h8v28M42 46V30h8v16M14 36h28v6H14z"/>',kitap:'<path d="M10 46V10h36v36M10 22h36M10 34h36M14 22l4-8h8l-2 8M28 34l3-8h7l-1 8"/>',kule:'<path d="M14 48L18 8M42 48L38 8M17 20h22M16 32h24M15 42h26"/>'};
   return `<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">${I[k]}</svg>`}
 /* bir model → parçalar, hırdavat, adımlar, çizim */
 function hzBuild(o){const t=18,mat=o.mat,M=HZM.find(x=>x.k===o.m)||HZM[0];
@@ -853,6 +854,57 @@ function hzBuild(o){const t=18,mat=o.mat,M=HZM.find(x=>x.k===o.m)||HZM[0];
     step("Korkuluk çıtalarını takın: arkada iki, önde bir. Ön taraf tezgaha bakar.");P("Korkuluk çıtası",Wi2,80,3,{bl:2,bs:0});
     GB(t,W-t,Hh-80,Hh,0,t,cur,{ex:[0,0,-1]});GB(t,W-t,Math.round(Hh*.75),Math.round(Hh*.75)+80,0,t,cur,{ex:[0,0,-1]});GB(t,W-t,Hh-80,Hh,D-t,D,cur,{ex:[0,0,1]});
     notes.push("Taban geniş ("+cm(D)+" cm) ki devrilmesin. Çocuk kulede tek başına bırakılmaz.")}
+  else if(o.m==="divan"){const Wo=mw,Lo=ml,Wd=Wo-2*t,ft=30,top=Math.round(o.dvH*10),tip=o.dvT||"sandik",mid=Wo>=1200,FC="#2C2C2C";
+    const fitM=(a,b,mt)=>{const m=SET.mats[mt],L=m.L-2*SET.trim,W=m.W-2*SET.trim,A=Math.max(a,b),Bb=Math.min(a,b);return A<=L&&Bb<=W};
+    const big=(name,L,W,x={})=>{const mt=x.mat||mat;if(fitM(L,W,mt))P(name,L,W,1,x);else{P(name+" (iki parça)",L,Math.round(W/2),2,Object.assign({},x,{note:(x.note?x.note+"; ":"")+"levhaya sığmadı, ek yeri altından çıtayla birleştirilir"}));H("Birleştirme çıtası (ek yeri altına)",2,"ad",name)}};
+    const feet=st=>{H("Plastik divan ayağı 3 cm",mid?6:4,"ad","ayar vidalı");[[40,40],[Wo-90,40],[40,Lo-90],[Wo-90,Lo-90]].concat(mid?[[Wo/2-25,40],[Wo/2-25,Lo-90]]:[]).forEach(([x,z])=>GB(x,x+50,0,ft,z,z+50,st,{col:FC,ex:[0,-1,0]}))};
+    if(tip==="cekmece"){
+      const Hs=top-t,nC=Math.max(1,Math.min(2,Math.round(o.dvC)||2)),half=(Wo-t)/2,open=(Lo-3*t)/2,fh=Hs-50,bw=open-20,Dd=Math.round(half-t-30-t),bh=Math.max(100,fh-60),sides=nC>1?[0,1]:[1];
+      step("Baş ve ayak panellerini ortadaki omurga (orta kuşak) ile "+JL+" birleştirin."+(nC<2?" Çekmecesiz yana yan kasayı takın.":""));
+      P("Baş paneli",Wo,Hs,1,{bl:1,bs:2});P("Ayak paneli",Wo,Hs,1,{bl:1,bs:2});P("Orta kuşak (omurga)",Lo-2*t,Hs,1,{band:false});joinLoad(2,"baş/ayak ↔ omurga");H("Keçe ayak altı",6);
+      GB(0,Wo,0,Hs,0,t,cur,{ex:[0,0,-1]});GB(0,Wo,0,Hs,Lo-t,Lo,cur,{ex:[0,0,1]});GB(Wo/2-t/2,Wo/2+t/2,0,Hs,t,Lo-t,cur,{ex:[0,1,0]});
+      if(nC<2){P("Yan kasa",Lo-2*t,Hs,1,{bl:1,bs:0});joinLoad(2,"yan kasa ↔ baş/ayak");GB(0,t,0,Hs,t,Lo-t,cur,{ex:[-1,0,0]})}
+      step("Çekmeceli "+(nC>1?"iki yanda":"yanda")+" ortaya çekmece arası dikmeyi takın; her yan iki çekmece gözüne bölünür.");
+      P("Çekmece arası dikme",Math.round(half-t/2),Hs,nC,{bl:1,bs:0});joinLight(2*nC,"ara dikme ↔ omurga");
+      sides.forEach(sd=>{const x0=sd?Wo/2+t/2:0,x1=sd?Wo:Wo/2-t/2;GB(x0,x1,0,Hs,Lo/2-t/2,Lo/2+t/2,cur,{ex:[sd?1:-1,0,0]})});
+      step("Üst tablayı (şilte tabanı) kasaya vidalayın. Şilte nefes alsın diye 15 cm arayla Ø30 havalandırma deliği açın.");
+      big("Üst tabla (şilte tabanı)",Lo,Wo,{bl:2,bs:2,note:"Ø30 havalandırma deliği, 15 cm ara"});H("Sunta vidası 4×50",Math.ceil((2*Wo+3*Lo)/200),"ad","üst tabla ↔ kasa");GB(0,Wo,Hs,Hs+t,0,Lo,cur,{ex:[0,1,0]});
+      step("Çekmeceleri kurun: kutu, taban, tekerlek, en son ön. Önler göze 3 mm boşlukla girer.");
+      const nD=2*nC;P("Çekmece ön",open-6,fh,nD,{bl:2,bs:2});P("Çekmece yanı",Dd,bh,2*nD,{bl:1,bs:0});P("Çekmece arka/iç ön",bw-2*t,bh,2*nD,{bl:1,bs:0});P("Çekmece tabanı",bw,Dd,nD,{mat:"arka8",band:false});
+      H("Mobilya tekerleği Ø40 (çekmece altı)",4*nD,"ad","tabanın altından, yan kenarlara denk");H("Kulp ya da gömme tutamak",nD,"ad");H("Sunta vidası 3,5×30",nD*16,"ad","çekmece kutusu");
+      sides.forEach(sd=>[0,1].forEach(j=>{const z0=t+j*(open+t)+3;GB(sd?Wo-t:0,sd?Wo:t,20,20+fh,z0,z0+open-6,cur,{ex:[sd?1:-1,0,0]})}));
+      notes.push("Çekmece kutusu "+cm(bw)+" × "+cm(Dd)+" cm, yüksekliği "+cm(bh)+" cm; "+nD+" çekmece, tekerlekli (ray gerekmez, ucuz ve sağlam).","Çekmece tarafında yatağın yanında en az "+cm(Dd+200)+" cm boş yer kalmalı.");
+      mattress(0,Wo,Hs+t,0,Lo,200)}
+    else{const Hk=top-ft-t,yb=ft+Hk-25-t;
+      step("Kasayı kurun: iki uzun yan, baş ve ayak kasası; köşeleri "+JL+" ile birleştirin, köşegenleri eşitleyin. Ayakları takın.");
+      P("Yan kasa",Lo,Hk,2,{bl:1,bs:0});P("Baş / ayak kasası",Wd,Hk,2,{bl:1,bs:0});joinLoad(4,"kasa köşeleri");feet(cur);
+      GB(0,t,ft,ft+Hk,0,Lo,cur,{ex:[-1,0,0]});GB(Wo-t,Wo,ft,ft+Hk,0,Lo,cur,{ex:[1,0,0]});GB(t,Wo-t,ft,ft+Hk,0,t,cur,{ex:[0,0,-1]});GB(t,Wo-t,ft,ft+Hk,Lo-t,Lo,cur,{ex:[0,0,1]});
+      if(mid){const kh=tip==="lata"?yb-ft:Hk;P("Orta kuşak",Lo-2*t,kh,1,{band:false});joinLight(2,"orta kuşak uçları");GB(Wo/2-t/2,Wo/2+t/2,ft,ft+kh,t,Lo-t,cur,{ex:[0,1,0]})}
+      if(tip==="sandik"){
+        step("Sandık tabanını kasanın altına vidalayın"+(mid?" (orta kuşağa da)":"")+". Ağırlığı ayaklar taşır.");
+        if(!mid&&fitM(Lo,Wo,"arka8"))P("Sandık tabanı",Lo,Wo,1,{mat:"arka8",band:false});else P("Sandık tabanı (yarım)",Lo,Math.round(Wo/2+t/2),2,{mat:"arka8",band:false,note:"ek yeri orta kuşağın altında"});
+        H("Sunta vidası 3,5×25",Math.ceil((2*(Wo+Lo)+(mid?Lo:0))/150),"ad","sandık tabanı");GB(0,Wo,ft-8,ft,0,Lo,cur,{col:"#C9BFAE",ex:[0,-1,0]});
+        step("Kapağı (şilte tabanı) ters koyup amortisör mekanizmasını takın: kolları yan kasaların iç yüzüne, baş taraftan "+cm(Math.round(Lo*.1))+" cm içeride vidalayın. Kapak ayak tarafından kalkar.");
+        big("Sandık kapağı (şilte tabanı)",Lo,Wo,{bl:2,bs:2,note:"Ø30 havalandırma deliği, 15 cm ara"});
+        const kg=Math.round(Wo*Lo/1e6*11.7);H("Sandıklı baza amortisör mekanizması (piston, takım)",1,"takım","kapak ~"+kg+" kg + şilte; gücü satıcıyla seçin");H("Kapak tutamağı (kumaş kayış)",1);H("Ahşap vidası 4×30",16,"ad","mekanizma");
+        GB(0,Wo,ft+Hk,ft+Hk+t,0,Lo,cur,{ex:[0,1,0]});
+        notes.push("Sandık iç hacmi yaklaşık "+fmt(Wd*(Lo-2*t)*(Hk-8)/1e6)+" litre.","Kapak yaklaşık "+kg+" kg. Piston gücünü kapak + şilte ağırlığına göre satıcıyla seçin; takım hâlinde (sağ + sol) alınır.","Kapağa matkapla Ø30 havalandırma delikleri açın; şilte terlemez, küf yapmaz.");
+        mattress(0,Wo,ft+Hk+t,0,Lo,200)}
+      else{
+        step(Lp?"Metal L profilleri yan kasaların iç yüzüne, üst kenardan "+cm(25+t)+" cm aşağıya vidalayın.":"Lata taşıyıcı çıtaları yan kasaların iç yüzüne, üst kenardan "+cm(25+t)+" cm aşağıya sabitleyin.");support(t,Wo-t,t,Lo-2*t,yb,cur);
+        step("Lataları eşit aralıkla dizin, uçlarından vidalayın."+(mid?" Latalar orta kuşağın üstüne de oturur.":""));
+        const lw=80,gp=50,n=Math.ceil((Lo-2*t+gp)/(lw+gp)),gg=Math.round((Lo-2*t-n*lw)/(n-1));
+        P("Taban latası",Wd-4,lw,n,{mat:sm,band:false,note:"uçları yuvarlat; ara "+cm(gg)+" cm"});H(Lp?"Ahşap vidası 3.5×16":"Ahşap vidası 4×30",(mid?3:2)*n,"ad","her lata uçlarından"+(mid?" ve ortadan":""));
+        for(let i=0;i<n;i++){const z=t+i*(lw+gg);GB(t+2,Wo-t-2,yb,yb+t,z,z+lw,cur,{ex:[0,1,0]})}
+        if(sm!==mat)notes.push("Latalar "+SET.mats[sm].name+": suntalam ve MDF lata olarak esner ve kırılır.");
+        mattress(0,Wo,yb+t,0,Lo,200)}}
+    if(o.dvB){const HB=Math.round(o.dvHB*10);step("Başlığı baş tarafa dik koyup karyola cıvatasıyla divana bağlayın; üstten bir gönyeyle duvara sabitleyin.");
+      big("Başlık",Wo,HB,{bl:1,bs:2,keep:true});H("Karyola cıvatası M6 × 70 mm",4,"ad","başlık ↔ divan");H("Silindir (karyola) somunu M6",4);H("Duvar gönyesi + dübel",2,"ad","başlık üstü");
+      GB(0,Wo,0,HB,-t,0,cur,{ex:[0,0,-1]});
+      if(o.dvK){const kh=Math.max(150,HB-top-80),kw=Wo-160;if(HB-top>200){P("Başlık ön paneli (kademeli)",kw,kh,1,{bl:2,bs:2,keep:true,note:"farklı desen ya da döşeme"});H("Sunta vidası 4×30",8,"ad","ön panel arkadan");
+        GB(80,Wo-80,top+40,top+40+kh,0,t,cur,{col:"#C9A57C",ex:[0,0,1]});notes.push("Kademeli başlık eğimli kesim istemez: ön paneli ahşap desenli suntalamdan kesin ya da sünger + kumaşla döşeyin. Beyaz gövde + ahşap desen sıcak görünür.")}}}
+    if(mat==="sunta")notes.push("Suntalamda tüm görünen kenarlara 2 mm ABS bant; köşeleri yuvarlatılmış bant yumuşak ve sıcak gösterir.");
+    notes.unshift("Divan dış ölçüsü şilteyle aynı: "+cm(Wo)+" × "+cm(Lo)+" cm; şiltesiz yükseklik "+cm(top)+" cm.")}
   if(J==="minifix"&&mat==="masif18")notes.push("Masifte minifix zamanla gevşeyebilir; yük alan köşelerde karyola cıvatası daha sağlam.");
   if(J==="vida"&&(mat==="sunta"||mat==="mdf18"))notes.push("Suntalam ve MDF kenarındaki vida sökülüp takılınca tutmaz; minifix ya da karyola cıvatası seçin.");
   H("Ahşap tutkalı D3 (500 g)",1,"şişe");
@@ -891,6 +943,9 @@ function renderHazir(){document.querySelector("main").className="";const o=HZ,B=
   if(o.m==="yer")fields+=`<div class="grid3">${num("fh","Kasa yüksekliği cm",10,35)}</div>${babk}${lata}`;
   if(o.m==="karyola")fields+=`<div class="grid3">${num("hh","Baş tahtası cm",50,130)}${num("hf","Ayak tahtası cm",20,90)}${num("rh","Kasa yüksekliği cm",15,35)}${num("lift","Kasa yerden cm",5,30)}</div>${lata}`;
   if(o.m==="kitap")fields+=`<div class="grid3">${num("W","En cm",40,160)}${num("H","Yükseklik cm",40,120)}${num("D","Derinlik cm",20,40)}${num("raf","Raf sayısı",1,5)}</div>`;
+  if(o.m==="divan")fields+=`<div class="row"><span>Divan tipi</span></div><div class="chips wrap">${[["sandik","Sandıklı (amortisörlü)"],["cekmece","Çekmeceli"],["lata","Latalı (açık)"]].map(([k,l])=>`<button class="chip sm" data-hzdv="${k}" aria-pressed="${(o.dvT||"sandik")===k}">${l}</button>`).join("")}</div>
+    <div class="grid3">${num("dvH","Şiltesiz yükseklik cm",25,50)}${o.dvT==="cekmece"?num("dvC","Çekmeceli yan (1 ya da 2)",1,2):""}</div>
+    ${chk("dvB","Başlık","Divana cıvatayla bağlanır, üstten duvara gönyelenir")}${o.dvB?`<div class="grid3">${num("dvHB","Başlık yerden cm",70,140)}</div>${chk("dvK","Kademeli başlık (iki kat)","Önüne daha küçük ikinci panel: farklı desen ya da döşeme; eğimli kesim gerekmez")}`:""}${o.dvT==="lata"?lata:""}`;
   if(o.m==="kule")fields+=`<div class="grid3">${num("kH","Yükseklik cm",70,100)}${num("kW","İç en cm",30,50)}${num("kD","Taban derinliği cm",35,60)}</div>`;
   const fitH=HZFIT&&HZFIT.sig===JSON.stringify(o)?`<ul class="artikl">${HZFIT.res.map(r=>`<li><div><b>${r.proj?"Açık proje: "+esc(r.proj):esc(r.m.l)}</b><small>${r.proj?(r.extra<=0?"Bu model projenin artığından çıkar":"Projeye eklerseniz +"+r.extra+" levha"):(r.extra<=0?"Aynı levhalardan ek levha almadan çıkar":"+"+r.extra+" levha ile birlikte")}</small></div>${r.extra<=0?'<span class="pill ok">fire yok</span>':""}</li>`).join("")}</ul>`:`<button class="btn small" data-hzfit="1">Hesapla</button>`;
   const tabs=`<div class="seg hztab"><button class="chip" data-hztab="model" aria-pressed="${HZ.tab!=="oda"}">Modeller</button><button class="chip" data-hztab="oda" aria-pressed="${HZ.tab==="oda"}">Çocuk odası planla</button></div>`;
@@ -2508,10 +2563,10 @@ function setBar(back,next,nextLabel,nextDisabled){
 function renderTur(){
   $("#view").innerHTML=`<h1 class="c">Ne yapıyoruz?</h1>
   <button class="tcard wide qhentry" data-view="hizli"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="5" width="32" height="38" rx="2"/><path d="M24 5v38M20 22v5M28 22v5M8 34h32"/></svg><div style="display:flex;flex-direction:column;gap:2px"><b>Hızlı fiyat</b><span>Dolap ölçüsünü yaz, çekmece-raf sayısını seç: levha sayısı, yerleşim ve fiyat hemen</span></div></button>
-  <div class="types">${Object.entries(TYPES).map(([k,v])=>`<button class="tcard ${k==="mutfak"?"wide":""}" data-type="${k}" aria-pressed="${S.type===k}">${ICONS[k]}<div style="display:flex;flex-direction:column;gap:2px"><b>${v.label}</b><span>${v.desc}</span></div></button>`).join("")}</div>
+  <div class="types">${Object.entries(TYPES).map(([k,v])=>`<button class="tcard" data-type="${k}" aria-pressed="${S.type===k}">${ICONS[k]}<div style="display:flex;flex-direction:column;gap:2px"><b>${v.label}</b><span>${v.desc}</span></div></button>`).join("")}<button class="tcard" data-hzgo="divan">${hzIcon("divan")}<div style="display:flex;flex-direction:column;gap:2px"><b>Divan</b><span>Sandıklı, çekmeceli baza</span></div></button></div>
   <p class="hint">Türü seçin; ölçüyü girince uygulama hazır düzenler önerecek.</p>
   <div class="helprow"><button class="btn small ghost" data-helpopen="rehber">? Nasıl kullanılır</button><button class="btn small ghost" data-helpopen="yeni">★ Yenilikler</button></div>
-  <button class="tcard wide" data-view="hazir">${hzIcon("ev")}<div style="display:flex;flex-direction:column;gap:2px"><b>Hazır modeller</b><span>Karyola, Montessori ev yatak, yer yatağı, kitaplık, öğrenme kulesi · ölçüye göre, üretim kılavuzlu</span></div></button>
+  <button class="tcard wide" data-view="hazir">${hzIcon("ev")}<div style="display:flex;flex-direction:column;gap:2px"><b>Hazır modeller</b><span>Divan, karyola, Montessori ev yatak, yer yatağı, kitaplık, öğrenme kulesi · ölçüye göre, üretim kılavuzlu</span></div></button>
   <button class="tcard wide" data-view="liste"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="9" width="38" height="30" rx="2"/><path d="M5 22h20M25 9v30M25 28h18"/></svg><div style="display:flex;flex-direction:column;gap:2px"><b>Ölçüden levha planı</b><span>Tasarım yok, ölçüleri ben yazacağım: levha yerleşimi ve fasoncuya kesim listesi</span></div></button>`;
   setBar(null,"olcu","Ölçülere geç",!S.type);
 }
@@ -3098,8 +3153,12 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
 
 
 /* ====================== YARDIM · YENİLİKLER ====================== */
-const APPVER="2026.10.21d";
+const APPVER="2026.10.21e";
 const NEWS=[
+ {d:"21 Ekim 2026 · gece",t:"Divan",items:[
+  ["Divan","Ana ekranda yeni 'Divan' kartı (Hazır modeller içinde). Sandıklı (amortisörlü kapak), çekmeceli (tekerlekli, bir ya da iki yanda) ya da latalı; şilte ölçüsüne göre kendini kurar. Suntalamdan, yalnız düz kesim.","hazir"],
+  ["Başlık","Divana cıvatayla bağlanan başlık; isteğe bağlı kademeli ön panel (farklı desen ya da döşeme) eğimli kesim istemeden sıcak bir görünüm verir.",null],
+  ["Ana ekran","Mutfak kartı artık diğer türlerle aynı ızgarada.",null]]},
  {d:"21 Ekim 2026 · akşam",t:"Raflar bel vermesin, kesim listesini düzelt, kulpsuz",items:[
   ["Raf sehimi","Düzen'de rafa dokununca 'Bu raf zamanla kaç mm sarkar' görünür. Hesap malzemeye (suntalam, MDF, kontrplak, masif), rafın boyuna, derinliğine ve yüke (hafif, orta, kitap, ağır) göre yapılır; bel veren raf çizimde kırmızı kesik çizgiyle gösterilir.",null],
   ["Tek dokunuşla destek","Ön çıta, arka çıta, orta dikme, raf altı taşıyıcı ya da kalın (çift kat) raf. Her düğmede eklenince kaç mm'ye ineceği yazar. Eklenen destek kesim listesine, hırdavata, delik planına, montaja ve 3D'ye girer. Düzen → 'Raflar' ekranından bel veren hepsine birden eklenir.",null],
@@ -3580,6 +3639,8 @@ document.addEventListener("click",e=>{
   if(d.carp){const c=carOf();c.p=d.carp;Object.assign(c,{L:CARS[d.carp].L,W:CARS[d.carp].W,H:CARS[d.carp].H});c.on=true;persist();const op=!!document.getElementById("sheet");render();if(op)openSheet(carSheet());return}
   if(d.carask){openSheet(carSheet());return}
   if(d.hzm){HZ3=null;HZ.m=d.hzm;HZFIT=null;hzSave();renderHazir();return}
+  if(d.hzdv){HZ3=null;HZ.dvT=d.hzdv;HZFIT=null;hzSave();renderHazir();return}
+  if(d.hzgo){HZ3=null;HZ.m=d.hzgo;HZ.tab="model";if(d.hzgo==="divan"&&!HZ.dvSeen){HZ.mat="sunta";HZ.mw=160;HZ.ml=200;HZ.dvSeen=1}HZFIT=null;hzSave();S.view="hazir";render();window.scrollTo(0,0);return}
   if(d.hzsz){const[w,l]=d.hzsz.split("x").map(Number);HZ.mw=w;HZ.ml=l;HZFIT=null;hzSave();renderHazir();return}
   if(d.hzmat){HZ.mat=d.hzmat;HZFIT=null;hzSave();renderHazir();return}
   if(d.hzj){HZ.joint=d.hzj;hzSave();renderHazir();return}
