@@ -83,6 +83,7 @@ Bu dosya, uzayan oturumdaki işi yeni bir oturumda kaldığı yerden sürdürmek
   - `renderListe`, `flRowHTML`, `flParts`, `flResultsHTML`.
   - Satır ekleme, silme ve düzenleme burada zaten var: `data-fladd`, `data-fldel`, `data-flm`…
   - Projeden aktarma: `data-flimp`.
+- **3D geçiş (2026.10.23e):** `show3D(el,boxes,{anim:true})` aynı `el` üzerinde önceki kutularla (`T3.items`, anahtar tür|ad|modül#sıra) yumuşak geçiş yapar; kutular birim küp + `scale`. Kapakta `door3D` menteşe köşesini bulup y ekseninde döndürür; yeni kutular büyüyerek gelir. `anim3D` döngüde çalışır. Animasyon için DOM'u yeniden çizmeyin (mağazada `shSoft`, atölyede kapak düğmesi yerinde günceller).
 - **Mağaza (2026.10.23):** Woodcoder benzeri müşteri ekranı, sunucusuz.
   - `#m…` bağlantısı = `packStr({c:SET.shop, set:SET})` (deflate-raw + base64url). `bootHash()` açılışta çözer → `SHOP` dolu, `SET` bağlantıdan, `S` `atolye2_shopcur`'dan, `HZ` `atolye2_shophz`'den; `persist`/`hzSave` mağazada atölye anahtarlarına yazmaz. `body.shopmode` başlık düğmelerini gizler.
   - Ekranlar `renderShop` → `shHome/shCat/shOlcu/shSecim/shUrun/shHz` (`S.shStep`). Ürünler `SHOPCATS` (t = TYPES, h = hazır model). Fiyat: tür ürünlerde `shopPrice(mods)` = `quote().rounded`; hazırda `hzUnitPrice` (levhayı dolduran parti, adet başı) + `markup`.

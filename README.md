@@ -26,6 +26,7 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 ## Yenilikler
 
 **23 Ekim 2026 · gece**
+- 3D hareketli: kapaklar menteşesinden dönerek açılır, çekmeceler kayar, ölçü/renk/tip değişince model yumuşakça büyür; mağazada en-boy-derinlik sürgüsü, hazır modellerde "Kurulumu izle"
 - Mağazada müşteri "Atölyede ayrıntılı tasarla" ile düzen ekranına girip göz göz değiştirebilir; "Sipariş ver" ile güncel fiyatla mağazaya döner. Mağaza adı varsayılan "Atölye"
 - Mağaza yeni görünüm: canlı ölçü girişi (çizim + fiyat), gerçek çizimli ürün kareleri ve başlangıç fiyatı, sabit fiyat/sipariş çubuğu, adım göstergesi, tasarımı paylaşma, SSS; açık ve koyu tema
 

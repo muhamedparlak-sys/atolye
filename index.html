@@ -363,6 +363,8 @@ body.shopmode{--bg:#FAFAF7;--surface:#FFFFFF;--ink:#24272B;--muted:#5E636A;--lin
 .dimw{position:relative;height:22px;margin:-4px 8% 0;border-left:1.5px solid var(--dim);border-right:1.5px solid var(--dim)}.dimw::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1.5px solid var(--dim)}
 .dimw span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--surface);color:var(--dim);font:700 13px var(--f-body);padding:0 6px;font-variant-numeric:tabular-nums}
 .shopmode .shtile svg,.shopmode .shdemo svg,.shopmode .vcard .pic svg{pointer-events:none}
+.shrng{display:grid;gap:4px}.shrng span{display:flex;justify-content:space-between;font-size:14px}.shrng b{font:800 18px var(--f-display);font-stretch:80%;font-variant-numeric:tabular-nums}
+.shrng input{width:100%;accent-color:var(--tape);height:28px}
 .shtiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media (min-width:620px){.shtiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .shtile{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px;text-align:left;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;gap:6px;font:inherit}
@@ -2503,26 +2505,50 @@ function show3D(el,boxes,o={}){
     const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(38,1,20,200000),controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.52;
     scene.add(new THREE.HemisphereLight(0xffffff,0x8a8172,.85));const dl=new THREE.DirectionalLight(0xffffff,.55);dl.position.set(3000,6000,5000);scene.add(dl);
     const floor=new THREE.Mesh(new THREE.PlaneGeometry(40000,40000),new THREE.MeshLambertMaterial({color:0xDCD7CC}));floor.rotation.x=-Math.PI/2;floor.position.y=-1;scene.add(floor);
-    let raf=0,alive=true;const loop=()=>{if(!alive)return;controls.update();renderer.render(scene,camera);raf=requestAnimationFrame(loop)};
+    let raf=0,alive=true;const loop=()=>{if(!alive)return;if(T3&&T3.anim)anim3D();controls.update();renderer.render(scene,camera);raf=requestAnimationFrame(loop)};
     const size=()=>{const w=el.clientWidth||300,h=el.clientHeight||300;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};
     const ro=new ResizeObserver(size);ro.observe(el);size();loop();
     T3={el,renderer,scene,camera,controls,group:null,floor,dispose(){alive=false;cancelAnimationFrame(raf);ro.disconnect();renderer.dispose();renderer.domElement.remove()}}}
   T3.scene.background=new THREE.Color(bg);
+  // önceki kutular (geçiş için): aynı tür + ad + modül + sıra eşleşir
+  const prev=o.anim&&T3.items?T3.items:null,pmap={};if(prev)prev.forEach(it=>{(pmap[it.key]=pmap[it.key]||[]).push(it)});
   if(T3.group){T3.scene.remove(T3.group);T3.group.traverse(x=>{x.geometry&&x.geometry.dispose()})}
   const g=new THREE.Group(),mats={};const mat=(c,op)=>{const k=c+op;return mats[k]||(mats[k]=new THREE.MeshLambertMaterial({color:new THREE.Color(c),transparent:op<1,opacity:op}))};
-  const edgeM=new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true,opacity:.28});
+  const edgeM=new THREE.LineBasicMaterial({color:0x2a2a2a,transparent:true,opacity:.28}),UB=new THREE.BoxGeometry(1,1,1),UE=new THREE.EdgesGeometry(UB);
+  const items=[],seen={};
   boxes.forEach(b=>{if(o.upTo!=null&&b.step>o.upTo)return;const cur=o.upTo!=null&&b.step===o.upTo;
-    const w=b.x1-b.x0,h=b.y1-b.y0,d=b.z1-b.z0;const geo=new THREE.BoxGeometry(w,h,d);
+    const w=Math.max(.5,b.x1-b.x0),h=Math.max(.5,b.y1-b.y0),d=Math.max(.5,b.z1-b.z0);
     const c=cur&&b.kind!=="fix"?acc:b.col;const op=b.op!=null?b.op:(o.upTo!=null&&!cur&&b.step>=0?.55:1);
-    const mesh=new THREE.Mesh(geo,mat(c,op));const k=cur?140:0;mesh.position.set((b.x0+b.x1)/2+b.ex[0]*k,(b.y0+b.y1)/2+b.ex[1]*k,(b.z0+b.z1)/2+b.ex[2]*k);if(b.rz)mesh.rotation.z=b.rz;g.add(mesh);
-    if(b.kind!=="wall"){const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo),edgeM);e.position.copy(mesh.position);e.rotation.copy(mesh.rotation);g.add(e)}});
-  T3.scene.add(g);T3.group=g;
+    const mesh=new THREE.Mesh(UB,mat(c,op));const k=cur?140:0;mesh.scale.set(w,h,d);mesh.position.set((b.x0+b.x1)/2+b.ex[0]*k,(b.y0+b.y1)/2+b.ex[1]*k,(b.z0+b.z1)/2+b.ex[2]*k);if(b.rz)mesh.rotation.z=b.rz;g.add(mesh);
+    let edge=null;if(b.kind!=="wall"){edge=new THREE.LineSegments(UE,edgeM);edge.scale.copy(mesh.scale);edge.position.copy(mesh.position);edge.rotation.copy(mesh.rotation);g.add(edge)}
+    const kb=(b.kind==="sideR"?"side":b.kind)+"|"+(b.name||"")+"|"+(b.mod||""),n=seen[kb]=(seen[kb]||0)+1,key=kb+"#"+n;
+    items.push({key,mesh,edge,b,p:mesh.position.clone(),s:mesh.scale.clone(),ry:0})});
+  T3.scene.add(g);T3.group=g;T3.items=items;T3.anim=null;
+  if(prev){const tw=[];items.forEach(it=>{const pv=(pmap[it.key]||[]).shift();
+      if(!pv){tw.push({it,grow:true});it.mesh.scale.multiplyScalar(.001);it.edge&&it.edge.scale.copy(it.mesh.scale);return}
+      const a=pv.b,z=it.b;if(z.kind==="door"&&a.kind==="door"&&!z.rz){const hinge=door3D(a,z);if(hinge){tw.push({it,door:hinge,from:pv});return}}
+      if(pv.p.distanceTo(it.p)<.5&&pv.s.distanceTo(it.s)<.5)return;tw.push({it,from:pv})});
+    if(tw.length){T3.anim={t0:performance.now(),dur:o.animDur||650,tw};anim3D()}}
   if(T3.dims){T3.scene.remove(T3.dims);T3.dims.traverse(x=>{x.geometry&&x.geometry.dispose();x.material&&x.material.map&&x.material.map.dispose()});T3.dims=null}
   if(o.dims){try{T3.dims=dims3D(boxes);T3.scene.add(T3.dims)}catch(e){}}
   if(o.fit||!T3.fitted||o.cam){const bb=new THREE.Box3().setFromObject(g);if(!bb.isEmpty()){const c=bb.getCenter(new THREE.Vector3()),sz=bb.getSize(new THREE.Vector3());const r=Math.max(sz.x,sz.y,sz.z)*(o.dims?1.5:o.far||1.25)+600;
     const cam=o.cam||"persp";if(cam==="front")T3.camera.position.set(c.x,c.y+r*.05,c.z+r*1.35);else if(cam==="top")T3.camera.position.set(c.x,c.y+r*1.7,c.z+r*.02);else if(cam==="side")T3.camera.position.set(c.x+r*1.35,c.y+r*.05,c.z);else T3.camera.position.set(c.x+r*.55,c.y+r*.38,c.z+r*.95);
     T3.controls.target.copy(c);T3.controls.update();T3.fitted=true}}}
 
+/* kapak açılırken menteşe köşesinde döner: kapalı ve açık kutunun ortak köşesi menteşe ekseni */
+function door3D(a,z){const ca=[[a.x0,a.z0],[a.x1,a.z0],[a.x0,a.z1],[a.x1,a.z1]],cz=[[z.x0,z.z0],[z.x1,z.z0],[z.x0,z.z1],[z.x1,z.z1]];
+  const wa=a.x1-a.x0,da=a.z1-a.z0,wz=z.x1-z.x0,dz=z.z1-z.z0;if(Math.abs(wa-dz)>2||Math.abs(da-wz)>2)return null; // 90° dönmüş değilse eşleme yok
+  for(const p of ca)for(const q of cz)if(Math.abs(p[0]-q[0])<1&&Math.abs(p[1]-q[1])<1){const cx=(a.x0+a.x1)/2-p[0],cz2=(a.z0+a.z1)/2-p[1],tx=(z.x0+z.x1)/2-p[0],tz=(z.z0+z.z1)/2-p[1];
+    // y ekseninde θ dönüş: x'=x cosθ + z sinθ, z'=-x sinθ + z cosθ
+    for(const s of [1,-1]){const th=s*Math.PI/2,rx=cx*Math.cos(th)+cz2*Math.sin(th),rz=-cx*Math.sin(th)+cz2*Math.cos(th);if(Math.abs(rx-tx)<2&&Math.abs(rz-tz)<2)return{px:p[0],pz:p[1],cx,cz:cz2,th,w:wa,d:da}}}
+  return null}
+function anim3D(){const A=T3.anim;if(!A)return;let t=Math.min(1,(performance.now()-A.t0)/A.dur);const e=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+  A.tw.forEach(x=>{const it=x.it,m=it.mesh;
+    if(x.grow){m.scale.copy(it.s).multiplyScalar(Math.max(.001,e))}
+    else if(x.door){const D=x.door,a=D.th*e,c=Math.cos(a),s=Math.sin(a);m.scale.set(D.w,it.s.y,D.d);m.rotation.y=a;m.position.set(D.px+D.cx*c+D.cz*s,it.p.y,D.pz-D.cx*s+D.cz*c);if(t>=1){m.rotation.y=0;m.scale.copy(it.s);m.position.copy(it.p)}}
+    else{m.position.lerpVectors(x.from.p,it.p,e);m.scale.lerpVectors(x.from.s,it.s,e)}
+    if(it.edge){it.edge.position.copy(m.position);it.edge.scale.copy(m.scale);it.edge.rotation.copy(m.rotation)}});
+  if(t>=1)T3.anim=null}
 function dims3D(boxes){const g=new THREE.Group();const kitchen=S.type==="mutfak";const walls=kitchen?planWalls(S.inp.plan,S.inp).walls:{A:{dir:"h",x:0,y:0,L:Math.max(1,...S.mods.map(m=>m.x+m.W))}};
   const ids=new Set(boxes.filter(b=>b.mod&&b.kind!=="wall"&&b.kind!=="fix").map(b=>b.mod)),mods=S.mods.filter(m=>ids.has(m.id)&&!m.gap);if(!mods.length)return g;
   const ext=Math.max(...mods.map(m=>m.x+m.W))-Math.min(...mods.map(m=>m.x)),HH=Math.max(...mods.map(m=>m.mount+m.H)),U=Math.max(ext,HH,1200)/14;
@@ -2782,19 +2808,33 @@ function shColorHTML(){const c=colorsOf(),sw=(k,on,attr)=>`<button class="swatch
   return `<span class="lbl">Gövde rengi</span><div class="swatches">${Object.keys(COLORS).map(k=>sw(k,c.body===k||(!c.body&&k==="beyaz"),"body")).join("")}</div>
    <span class="lbl">Kapak rengi</span><div class="chips"><button class="chip" data-shcol="front:same" aria-pressed="${!frontSep()}">Gövdeyle aynı</button><button class="chip" data-shcol="front:diff" aria-pressed="${frontSep()}">Farklı renk</button></div>
    ${frontSep()?`<div class="swatches">${Object.keys(COLORS).filter(k=>k!==c.body).map(k=>sw(k,c.front===k,"front")).join("")}</div>`:""}`}
-function shUrun(){R=computeAll(S.mods);if(!colorsOf().body)colorsOf().body="beyaz";const p=shopPrice(S.mods),op=S.opener||"kulp";
-  const cnt=f=>Object.values(R.geo).reduce((s,G)=>s+(G.gap||!G.cols?0:G.cols.reduce((q,c)=>q+c[f].length,0)),0),nm=S.shName||TYPES[S.type].label;
-  $("#view").innerHTML=`${shProg(2)}<h1 class="c">${esc(nm)}</h1>
+function shUrun(){R=computeAll(S.mods);if(!colorsOf().body)colorsOf().body="beyaz";const p=shopPrice(S.mods),nm=S.shName||TYPES[S.type].label;
+  $("#view").innerHTML=`${shProg(2)}<h1 class="c" id="shTitle">${esc(nm)}</h1>
    <div class="hz3wrap"><div id="v3d" class="hz3d"><div class="note" style="padding:20px">3D yükleniyor…</div></div>
-    <div class="chips"><button class="chip sm" data-shopen="1" aria-pressed="${!!S.shOpen}">Kapaklar ${S.shOpen?"açık":"kapalı"}</button><span class="note" style="align-self:center">Parmakla çevirin</span></div></div>
-   ${priceHTML(p)}
+    <div class="chips"><button class="chip sm" data-shopen="1" aria-pressed="${!!S.shOpen}">${S.shOpen?"Kapakları kapat":"Kapakları aç"}</button><span class="note" style="align-self:center">Parmakla çevirin</span></div></div>
+   <div id="shRest">${shUrunRest(p)}</div>`;
+  shPriceBar(p,"secim");
+  load3D().then(()=>{const el=document.getElementById("v3d");if(!el)return;show3D(el,sceneBoxes(S.mods,R,{open:!!S.shOpen,walls:false}),{fit:true,dims:S.type!=="mutfak"})}).catch(()=>{const el=document.getElementById("v3d");if(el)el.innerHTML=`<div class="note" style="padding:16px">3D için internet gerekiyor.</div>`})}
+function shSizeHTML(){if(S.type==="mutfak"||S.shCustom)return"";const T=TYPES[S.type],i=S.inp,rng=(k,l,min,max)=>`<label class="shrng"><span>${l}<b id="shv-${k}">${i[k]} cm</b></span><input type="range" min="${min}" max="${max}" step="1" value="${i[k]}" data-shsz2="${k}" aria-label="${l}"></label>`;
+  return `<div class="panel"><span class="lbl">Ölçü</span>${rng("W",S.type==="yatak"?"Toplam en":"En",Math.max(40,Math.round(T.W*.4)),Math.round(T.W*1.8))}${rng("H",T.hL||"Yükseklik",Math.max(40,Math.round(T.H*.5)),Math.round(T.H*1.25))}${rng("D",T.dL||"Derinlik",Math.max(20,Math.round(T.D/10*.6)),Math.round(T.D/10*1.3))}<div class="note">Sürükleyin; model ve fiyat ölçüye göre değişir.</div></div>`}
+function shUrunRest(p){const op=S.opener||"kulp";return `${priceHTML(p)}${shSizeHTML()}
    <div class="panel">${shColorHTML()}
     <span class="lbl">Kulp</span><div class="chips" style="flex-wrap:wrap">${Object.entries(SHOPOPEN).map(([k,l])=>`<button class="chip" data-shop2="${k}" aria-pressed="${op===k}">${l}</button>`).join("")}</div></div>
    <div class="panel"><b>Özet</b><div class="note">${esc(shSummary())}</div><div class="btns"><button class="btn small ghost" data-shgo="olcu">Ölçüyü değiştir</button><button class="btn small ghost" data-shgo="secim">Başka düzen</button><button class="btn small ghost" data-shshare="1">Tasarımı paylaş</button></div>
     <button class="btn ghost" data-shfull="1">Atölyede ayrıntılı tasarla</button><div class="note">Bölme genişliği, raf, çekmece, askı, kapak; her göze ayrı ayrı. Bitince "Sipariş ver"e dokunun, fiyat güncellenir.</div></div>
-   ${shOrderForm()}`;
-  shPriceBar(p,"secim");
-  load3D().then(()=>{const el=document.getElementById("v3d");if(!el)return;show3D(el,sceneBoxes(S.mods,R,{open:!!S.shOpen,walls:false}),{fit:true,dims:S.type!=="mutfak"})}).catch(()=>{const el=document.getElementById("v3d");if(el)el.innerHTML=`<div class="note" style="padding:16px">3D için internet gerekiyor.</div>`})}
+   ${shOrderForm()}`}
+function shHzRest(B,p){const M=B.M,o=HZ;
+  const num=(k,l,min,max)=>`<label class="field"><span class="k">${l}</span><input type="number" inputmode="decimal" data-shhz="${k}" value="${o[k]}" min="${min}" max="${max}"></label>`;
+  let f="";if(M.bed)f+=`<span class="lbl">Yatak (şilte) ölçüsü</span><div class="chips wrap">${BEDSZ.map(([w,l])=>`<button class="chip sm" data-shsz="${w}x${l}" aria-pressed="${o.mw===w&&o.ml===l}">${w}×${l}</button>`).join("")}</div>`;
+  if(o.m==="divan")f+=`<span class="lbl">Tip</span><div class="chips wrap">${[["sandik","Sandıklı"],["cekmece","Çekmeceli"],["lata","Latalı"]].map(([k,l])=>`<button class="chip sm" data-shdv="${k}" aria-pressed="${(o.dvT||"sandik")===k}">${l}</button>`).join("")}</div><label class="check"><input type="checkbox" data-shhzc="dvB" ${o.dvB?"checked":""}><span>Başlık</span></label>`;
+  if(o.m==="saklama")f+=`<span class="lbl">Ölçü</span><div class="chips wrap">${[[99,44,57,3],[99,44,94,3],[66,44,94,2],[132,44,57,4]].map(([w,d,h,c])=>`<button class="chip sm" data-shsp="${w}x${d}x${h}x${c}" aria-pressed="${o.sW===w&&o.sH===h&&o.sC===c}">${w}×${h} · ${c} bölme</button>`).join("")}</div>`;
+  if(o.m==="kitap")f+=`<div class="grid3">${num("W","En cm",40,160)}${num("H","Yükseklik cm",40,120)}</div>`;
+  if(o.m==="ev")f+=`<label class="check"><input type="checkbox" data-shhzc="cati" ${o.cati?"checked":""}><span>Çatı</span></label>`;
+  if(M.bed&&o.m!=="divan")f+=`<label class="check"><input type="checkbox" data-shhzc="guard" ${o.guard?"checked":""}><span>Korkuluk</span></label>`;
+  return `${priceHTML(p)}
+   <div class="panel">${f}<span class="lbl">Malzeme</span><div class="chips wrap">${HZMATS.map(k=>`<button class="chip" data-shmat="${k}" aria-pressed="${o.mat===k}">${MATADV[k].t.split(" (")[0]}</button>`).join("")}</div><div class="note">${esc(MATADV[o.mat].best)} · ${esc(MATADV[o.mat].p)}</div></div>
+   <div class="panel"><b>Özet</b><div class="note">${esc(shSummary())}</div><div class="btns"><button class="btn small ghost" data-shshare="1">Tasarımı paylaş</button></div></div>
+   ${shOrderForm()}`}
 function shOrderForm(){return `<div class="panel" id="shOrderBox"><b>Sipariş</b>
    <label class="field"><span class="k">Adınız</span><input id="shWho" value="${esc(S.shWho||"")}" style="font-family:var(--f-body);font-size:16px" autocomplete="name"></label>
    <label class="field"><span class="k">İlçe / şehir</span><input id="shWhere" value="${esc(S.shWhere||"")}" style="font-family:var(--f-body);font-size:16px"></label>
@@ -2804,43 +2844,23 @@ function shSummary(){if(S.shStep==="hz"){const B=hzBuild(HZ);return B.M.l+" · "
   const c=colorsOf(),R2=R||computeAll(S.mods),cnt=f=>Object.values(R2.geo).reduce((s,G)=>s+(G.gap||!G.cols?0:G.cols.reduce((q,x)=>q+x[f].length,0)),0);
   return (S.type==="mutfak"?S.inp.plan+" mutfak, "+["A","B","C"].slice(0,{I:1,L:2,U:3}[S.inp.plan]).map(w=>S.inp[w]+" cm").join(" + "):TYPES[S.type].label+" "+S.inp.W+" × "+S.inp.H+" × "+S.inp.D+" cm")+
     " · "+(S.shName||"")+" · "+[cnt("doors")?cnt("doors")+" kapak":"",cnt("drawers")?cnt("drawers")+" çekmece":""].filter(Boolean).join(", ")+" · "+COLORS[c.body||"beyaz"].l+(frontSep()?" gövde, "+COLORS[c.front].l+" kapak":"")+" · "+SHOPOPEN[S.opener||"kulp"]}
-function shHz(){const B=hzBuild(HZ),M=B.M,o=HZ,p=hzUnitPrice(B);
-  const num=(k,l,min,max)=>`<label class="field"><span class="k">${l}</span><input type="number" inputmode="decimal" data-shhz="${k}" value="${o[k]}" min="${min}" max="${max}"></label>`;
-  let f="";if(M.bed)f+=`<span class="lbl">Yatak (şilte) ölçüsü</span><div class="chips wrap">${BEDSZ.map(([w,l])=>`<button class="chip sm" data-shsz="${w}x${l}" aria-pressed="${o.mw===w&&o.ml===l}">${w}×${l}</button>`).join("")}</div>`;
-  if(o.m==="divan")f+=`<span class="lbl">Tip</span><div class="chips wrap">${[["sandik","Sandıklı"],["cekmece","Çekmeceli"],["lata","Latalı"]].map(([k,l])=>`<button class="chip sm" data-shdv="${k}" aria-pressed="${(o.dvT||"sandik")===k}">${l}</button>`).join("")}</div><label class="check"><input type="checkbox" data-shhzc="dvB" ${o.dvB?"checked":""}><span>Başlık</span></label>`;
-  if(o.m==="saklama")f+=`<span class="lbl">Ölçü</span><div class="chips wrap">${[[99,44,57,3],[99,44,94,3],[66,44,94,2],[132,44,57,4]].map(([w,d,h,c])=>`<button class="chip sm" data-shsp="${w}x${d}x${h}x${c}" aria-pressed="${o.sW===w&&o.sH===h&&o.sC===c}">${w}×${h} · ${c} bölme</button>`).join("")}</div>`;
-  if(o.m==="kitap")f+=`<div class="grid3">${num("W","En cm",40,160)}${num("H","Yükseklik cm",40,120)}</div>`;
-  if(o.m==="ev")f+=`<label class="check"><input type="checkbox" data-shhzc="cati" ${o.cati?"checked":""}><span>Çatı</span></label>`;
-  if(M.bed&&o.m!=="divan")f+=`<label class="check"><input type="checkbox" data-shhzc="guard" ${o.guard?"checked":""}><span>Korkuluk</span></label>`;
+function shHz(){const B=hzBuild(HZ),M=B.M,p=hzUnitPrice(B);
   $("#view").innerHTML=`${shProg(2)}<h1 class="c">${esc(M.l)}</h1><p class="lead">${esc(M.d)}</p>
-   <div class="hz3wrap"><div id="hz3d" class="hz3d"><div class="note" style="padding:20px">3D yükleniyor…</div></div><div id="hz3t" hidden></div><div class="note">Parmakla çevirin, iki parmakla yakınlaştırın.</div></div>
-   ${priceHTML(p)}
-   <div class="panel">${f}<span class="lbl">Malzeme</span><div class="chips wrap">${HZMATS.map(k=>`<button class="chip" data-shmat="${k}" aria-pressed="${o.mat===k}">${MATADV[k].t.split(" (")[0]}</button>`).join("")}</div><div class="note">${esc(MATADV[o.mat].best)} · ${esc(MATADV[o.mat].p)}</div></div>
-   <div class="panel"><b>Özet</b><div class="note">${esc(shSummary())}</div><div class="btns"><button class="btn small ghost" data-shshare="1">Tasarımı paylaş</button></div></div>
-   ${shOrderForm()}`;
+   <div class="hz3wrap"><div id="hz3d" class="hz3d"><div class="note" style="padding:20px">3D yükleniyor…</div></div><div id="hz3t" hidden></div>
+    <div class="chips"><button class="chip sm" data-shbuild="1">Kurulumu izle</button><span class="note" style="align-self:center">Parmakla çevirin</span></div></div>
+   <div id="shRest">${shHzRest(B,p)}</div>`;
   shPriceBar(p,"cat");HZB=B;HZ3=null;hz3Show(true)}
-async function shOrder(){const who=($("#shWho")||{}).value||"",where=($("#shWhere")||{}).value||"",note=($("#shNote")||{}).value||"";S.shWho=who;S.shWhere=where;S.shNote=note;persist();
-  if(!who.trim()){toast("Adınızı yazın");$("#shWho")&&$("#shWho").focus();return}
-  const isH=S.shStep==="hz",B=isH?hzBuild(HZ):null,price=SHOP.price?(isH?hzUnitPrice(B):shopPrice(S.mods)):0,title=isH?B.M.l:(TYPES[S.type].label+(S.shName?" — "+S.shName:""));
-  const p=clone(S);["shStep","shCat","shWho","shWhere","shNote","shOpen","view","sel","band"].forEach(k=>delete p[k]);
-  const o={k:isH?"h":"t",title,sum:shSummary(),who:who+(where?" · "+where:""),price,date:new Date().toLocaleDateString("tr-TR")};if(isH){o.hz=clone(HZ);delete o.hz.tab}else o.p=p;
-  toast("Sipariş hazırlanıyor…");const link=PAGES+"#s"+await packStr(o);
-  const msg=["Merhaba, sipariş vermek istiyorum"+(SHOP.n?" ("+SHOP.n+" mağaza sayfası)":"")+".","","Ürün: "+title,o.sum,price>0?"Gördüğüm fiyat: "+fmt(price)+" ₺ (KDV dahil)":"","Ad: "+who+(where?" · "+where:""),note?"Not: "+note:"","","Tasarım: "+link].filter((x,i,a)=>x!==""||a[i-1]!=="").join("\n");
-  const wa="https://wa.me/"+SHOP.wa+"?text="+encodeURIComponent(msg);SHOPMSG=msg;
-  openSheet(`<div class="ed-head"><b>Siparişiniz hazır</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
-   <div class="note">WhatsApp açılınca mesajı göndermeniz yeterli. Tasarımınız mesajdaki bağlantıyla bize ulaşır.</div>
-   <a class="btn" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp'ı aç ve gönder</a>
-   <button class="btn ghost" data-shmsgcopy="1">Mesajı kopyala</button>
-   <div class="note">WhatsApp açılmazsa mesajı kopyalayıp ${esc(SHOP.wa?"+"+SHOP.wa:"bize")} numarasına yapıştırın.</div>`)}
-let SHOPMSG="";
-async function shShare(){const isH=S.shStep==="hz",d={st:S.shStep};if(isH){d.hz=clone(HZ);delete d.hz.tab}else{const p=clone(S);["shWho","shWhere","shNote","view","sel","band"].forEach(k=>delete p[k]);d.p=p}
-  const set=clone(SET);delete set.shop;const url=PAGES+"#m"+await packStr({c:SHOP,set,d}),title=isH?hzBuild(HZ).M.l:TYPES[S.type].label;
-  if(navigator.share){try{await navigator.share({title:title+" — "+(SHOP.n||"tasarım"),text:"Tasarımıma bak: "+shSummary(),url});return}catch(e){if(e&&e.name==="AbortError")return}}
-  try{await navigator.clipboard.writeText(url);toast("Bağlantı kopyalandı; WhatsApp'a yapıştırın")}catch(e){openSheet(`<div class="ed-head"><b>Tasarımı paylaş</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div><textarea readonly style="min-height:90px">${esc(url)}</textarea><div class="note">Bağlantıyı seçip kopyalayın.</div>`)}}
+/* sayfayı yeniden çizmeden güncelle: 3D yumuşak geçişle değişir, sayfa kaymaz */
+function shSoft(priceToo){const el3=document.getElementById(S.shStep==="hz"?"hz3d":"v3d"),rest=document.getElementById("shRest");if(!el3||!rest){shRe();return}
+  if(S.shStep==="hz"){const B=hzBuild(HZ);HZB=B;HZ3=null;const p=hzUnitPrice(B);rest.innerHTML=shHzRest(B,p);shPriceBar(p,"cat");if(window.THREE&&T3)show3D(el3,B.G,{anim:true,far:1.6});return}
+  R=computeAll(S.mods);const p=priceToo===false?null:shopPrice(S.mods);
+  if(p!=null){const ae=document.activeElement,k=ae&&ae.dataset&&ae.dataset.shsz2;rest.innerHTML=shUrunRest(p);shPriceBar(p,"secim");if(k){const n=rest.querySelector(`[data-shsz2="${k}"]`);n&&n.focus()}}
+  if(window.THREE&&T3)show3D(el3,sceneBoxes(S.mods,R,{open:!!S.shOpen,walls:false}),{anim:true,dims:S.type!=="mutfak"})}
+function shResize(k,v,final){S.inp[k]=v;const lb=document.getElementById("shv-"+k);if(lb)lb.textContent=v+" cm";VARS=variants();const v2=VARS[Math.min(S.shVar||0,VARS.length-1)];S.mods=clone(v2.mods);shSoft(!!final);if(final)persist()}
 function shRe(){const mn=document.querySelector("main"),sc=mn.scrollTop;renderShop();mn.scrollTop=sc}
 function shopClick(b,d){
   if(d.shfull){S.shFull=true;S.step="duzen";S.grid=true;S.sel=null;S.band=null;render();document.querySelector("main").scrollTop=0;toast("Bir göze dokunun; içini değiştirin");return true}
-  if(d.shfullexit!==undefined||(S.shFull&&((d.go&&["sonuc","montaj","tur"].includes(d.go))||d.rtgo||d.rt))){if(T3){T3.dispose();T3=null}S.shFull=false;document.body.classList.remove("shfull");S.shName=S.shName&&!/kendi/i.test(S.shName)?S.shName+" (kendi düzenim)":S.shName||"Kendi düzenim";S.shStep=S.mods.length?"urun":"olcu";renderShop();document.querySelector("main").scrollTop=0;if(d.shfullexit==="1")setTimeout(()=>{const el=document.getElementById("shOrderBox");el&&el.scrollIntoView({block:"center"})},400);return true}
+  if(d.shfullexit!==undefined||(S.shFull&&((d.go&&["sonuc","montaj","tur"].includes(d.go))||d.rtgo||d.rt))){if(T3){T3.dispose();T3=null}S.shFull=false;document.body.classList.remove("shfull");S.shCustom=true;S.shName=S.shName&&!/kendi/i.test(S.shName)?S.shName+" (kendi düzenim)":S.shName||"Kendi düzenim";S.shStep=S.mods.length?"urun":"olcu";renderShop();document.querySelector("main").scrollTop=0;if(d.shfullexit==="1")setTimeout(()=>{const el=document.getElementById("shOrderBox");el&&el.scrollIntoView({block:"center"})},400);return true}
   if(d.shgo){S.shStep=d.shgo;renderShop();document.querySelector("main").scrollTop=0;return true}
   if(d.shdw){S.shDemoW=Math.max(60,Math.min(400,(+S.shDemoW||200)+ +d.shdw));shDemoUpd();return true}
   if(d.shdemogo){if(S.type!=="gardirop"){S.type="gardirop";S.mods=[];S.colors=null;S.opener="kulp";S.back=BACK_DEF.gardirop;S.floor=null}Object.assign(S.inp,{W:Math.round(+S.shDemoW||200),H:220,D:58});S.name=TYPES.gardirop.label;S.shStep="secim";renderShop();document.querySelector("main").scrollTop=0;return true}
@@ -2852,14 +2872,15 @@ function shopClick(b,d){
     else{if(S.type!==key){S.type=key;S.mods=[];S.colors=null;S.opener="kulp";S.back=BACK_DEF[key]||"3";S.floor=null;if(key!=="mutfak"){const T=TYPES[key];Object.assign(S.inp,{W:T.W,H:T.H,D:T.D/10})}else Object.assign(S.inp,{plan:S.inp.plan||"L",A:S.inp.A||300,B:S.inp.B||240,C:S.inp.C||240})}S.name=TYPES[key].label;S.shStep="olcu"}
     renderShop();window.scrollTo(0,0);return true}
   if(d.shplan){S.inp.plan=d.shplan;shRe();return true}
-  if(d.shpick!==undefined){const v=VARS[+d.shpick];S.mods=clone(v.mods);S.shName=v.name;S.shStep="urun";renderShop();window.scrollTo(0,0);return true}
-  if(d.shopen){S.shOpen=!S.shOpen;shRe();return true}
-  if(d.shop2){S.opener=d.shop2;shRe();return true}
-  if(d.shcol){const[w,k]=d.shcol.split(":"),c=colorsOf();if(w==="body"){c.body=k;if(c.front===k)c.front=null}else if(k==="same")c.front=null;else if(k==="diff")c.front=Object.keys(COLORS).find(x=>x!==c.body&&x==="ceviz")||Object.keys(COLORS).find(x=>x!==c.body);else c.front=k;shRe();return true}
-  if(d.shsz){const[w,l]=d.shsz.split("x").map(Number);HZ.mw=w;HZ.ml=l;hzSave();shRe();return true}
-  if(d.shdv){HZ.dvT=d.shdv;hzSave();shRe();return true}
-  if(d.shsp){const[w,dd,h,c]=d.shsp.split("x").map(Number);Object.assign(HZ,{sW:w,sD:dd,sH:h,sC:c});hzSave();shRe();return true}
-  if(d.shmat){HZ.mat=d.shmat;hzSave();shRe();return true}
+  if(d.shpick!==undefined){const v=VARS[+d.shpick];S.mods=clone(v.mods);S.shName=v.name;S.shVar=+d.shpick;S.shCustom=false;S.shStep="urun";renderShop();window.scrollTo(0,0);return true}
+  if(d.shopen){S.shOpen=!S.shOpen;b.setAttribute("aria-pressed",S.shOpen);b.textContent=S.shOpen?"Kapakları kapat":"Kapakları aç";shSoft(false);return true}
+  if(d.shbuild){if(!HZB)return true;let k=0;const N=HZB.steps.length,el=document.getElementById("hz3d");el.scrollIntoView({block:"center",behavior:"smooth"});const run=()=>{if(S.shStep!=="hz"||!document.body.contains(el))return;HZ3=k<N?k:null;show3D(el,HZB.G,{upTo:HZ3,far:1.6,anim:true,animDur:500});if(k++<N)setTimeout(run,900)};run();return true}
+  if(d.shop2){S.opener=d.shop2;shSoft();return true}
+  if(d.shcol){const[w,k]=d.shcol.split(":"),c=colorsOf();if(w==="body"){c.body=k;if(c.front===k)c.front=null}else if(k==="same")c.front=null;else if(k==="diff")c.front=Object.keys(COLORS).find(x=>x!==c.body&&x==="ceviz")||Object.keys(COLORS).find(x=>x!==c.body);else c.front=k;shSoft();return true}
+  if(d.shsz){const[w,l]=d.shsz.split("x").map(Number);HZ.mw=w;HZ.ml=l;hzSave();shSoft();return true}
+  if(d.shdv){HZ.dvT=d.shdv;hzSave();shSoft();return true}
+  if(d.shsp){const[w,dd,h,c]=d.shsp.split("x").map(Number);Object.assign(HZ,{sW:w,sD:dd,sH:h,sC:c});hzSave();shSoft();return true}
+  if(d.shmat){HZ.mat=d.shmat;hzSave();shSoft();return true}
   if(d.shorder){shOrder();return true}
   if(d.shmsgcopy){navigator.clipboard&&navigator.clipboard.writeText(SHOPMSG).then(()=>toast("Mesaj kopyalandı"),()=>toast("Kopyalanamadı"));return true}
   return false}
@@ -2867,8 +2888,9 @@ function shopChange(x,d){
   if(d.shdwi){const v=parseFloat(String(x.value).replace(",","."));if(v>0){S.shDemoW=Math.max(60,Math.min(400,v));shDemoUpd()}return true}
   if(d.shi){const v=parseFloat(String(x.value).replace(",","."));if(v>0){S.inp[d.shi]=v;S.mods=[];persist()}return true}
   if(d.shchk){S.inp[d.shchk]=x.checked;S.mods=[];persist();return true}
-  if(d.shhz){const v=parseFloat(String(x.value).replace(",","."));if(v>0){HZ[d.shhz]=v;hzSave();shRe()}return true}
-  if(d.shhzc){HZ[d.shhzc]=x.checked;hzSave();shRe();return true}
+  if(d.shhz){const v=parseFloat(String(x.value).replace(",","."));if(v>0){HZ[d.shhz]=v;hzSave();shSoft()}return true}
+  if(d.shhzc){HZ[d.shhzc]=x.checked;hzSave();shSoft();return true}
+  if(d.shsz2){shResize(d.shsz2,Math.round(+x.value),true);return true}
   return false}
 
 /* ====================== GÖRÜNÜMLER ====================== */
@@ -3486,8 +3508,12 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
 
 
 /* ====================== YARDIM · YENİLİKLER ====================== */
-const APPVER="2026.10.23d";
+const APPVER="2026.10.23e";
 const NEWS=[
+ {d:"23 Ekim 2026 · gece",t:"3D canlandı",items:[
+  ["Hareketli 3D","Kapaklar menteşesinden dönerek açılıp kapanır, çekmeceler kayarak çıkar. Ölçü, renk ya da tip değişince model zıplamadan yumuşakça büyür, küçülür.",null],
+  ["Mağazada ölçü sürgüsü","Ürün ekranında en, yükseklik ve derinlik sürgüleri: müşteri sürükledikçe 3D model canlı büyür, bırakınca fiyat güncellenir.",null],
+  ["Kurulumu izle","Hazır modellerde (divan, Montessori yatak…) 'Kurulumu izle' parçaları sırayla yerine oturtur.",null]]},
  {d:"23 Ekim 2026 · gece",t:"Müşteri Atölye'de tasarlayabilir",items:[
   ["Atölyede ayrıntılı tasarla","Mağazada ürün ekranındaki düğmeyle müşteri Atölye'nin düzen ekranına girer: bölme, raf, çekmece, askı ve kapakları göz göz değiştirir, 3D'de bakar. 'Sipariş ver' ile mağazaya döner; fiyat yeni düzene göre hesaplanır. Kesim listesi, teklif dökümü ve fiyat kütüphanesi müşteriye gösterilmez.",null]]},
  {d:"23 Ekim 2026 · gece",t:"Yeni mağaza görünümü",items:[
@@ -4164,7 +4190,9 @@ document.addEventListener("click",e=>{
   if(d.backtype&&BACKS[d.backtype]){S.back=d.backtype;renderDuzen();persist();backSheet();toast("Arkalık: "+BACKS[d.backtype].label);return}
   if(d.mstep!==undefined){S.mStep=+d.mstep;persist();renderMontaj();return}
   if(d.msel){S.mSel=d.msel;if(T3)T3.fitted=false;persist();renderMontaj();return}
-  if(d.v3){if(d.v3==="dims")S.v3.dims=S.v3.dims===false;else S.v3[d.v3]=!S.v3[d.v3];persist();render3D();return}
+  if(d.v3){if(d.v3==="dims")S.v3.dims=S.v3.dims===false;else S.v3[d.v3]=!S.v3[d.v3];persist();
+    if(d.v3==="open"&&T3&&document.getElementById("v3d")){b.setAttribute("aria-pressed",S.v3.open);b.textContent="Kapaklar "+(S.v3.open?"açık":"kapalı");show3D(document.getElementById("v3d"),sceneBoxes(S.mods,R,{open:S.v3.open,walls:S.v3.walls}),{anim:true,dims:S.v3.dims!==false});return}
+    render3D();return}
   if(d.v3cam){S.v3=S.v3||{};S.v3.cam=d.v3cam;S.v3.camGo=true;render3D();return}
   if(d.v3shot){share3DSheet();return}
   if(d.v3exp){closeSheet();share3D(d.v3exp);return}
@@ -4219,6 +4247,7 @@ document.addEventListener("click",e=>{
   if(d.pdel){if(d.armed){const p=LS.get("atolye2_projeler")||[];p.splice(+d.pdel,1);LS.set("atolye2_projeler",p);renderProj()}else{b.dataset.armed=1;b.textContent="Emin misin?"}return}
 });
 document.addEventListener("input",e=>{const x=e.target,d=x.dataset;
+  if(SHOP&&d.shsz2){clearTimeout(x._t);const v=Math.round(+x.value),lb=document.getElementById("shv-"+d.shsz2);if(lb)lb.textContent=v+" cm";x._t=setTimeout(()=>{S.inp[d.shsz2]=v;VARS=variants();S.mods=clone(VARS[Math.min(S.shVar||0,VARS.length-1)].mods);shSoft(false)},90);return}
   if(x.id==="projName"){S.name=x.value;persist();return}
   if(d.fmrw||d.fmrh||d.fmlen){const v=parseFloat(String(x.value).replace(",","."));if(!isNaN(v)&&v>0){if(d.fmrw)FM.rw=v;else if(d.fmrh)FM.rh=v;else FM.len=v;fmSave();fmUpdate();const l=document.getElementById("fmlist");if(l)l.innerHTML=fmListHTML()}return}
   if(x.id==="projFolder"){S.folder=x.value.trim();persist();return}
