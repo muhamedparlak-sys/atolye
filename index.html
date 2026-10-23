@@ -340,7 +340,7 @@ body.shopmode{--bg:#FAFAF7;--surface:#FFFFFF;--ink:#24272B;--muted:#5E636A;--lin
   --f-display:"Archivo","Barlow Condensed",sans-serif;--f-body:"Archivo","IBM Plex Sans",system-ui,sans-serif;font-family:var(--f-body)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body.shopmode{--bg:#17191B;--surface:#202326;--ink:#ECEDEA;--muted:#A3A8AE;--line:#33373B;--accent:#F2BE22;--accent-ink:#1B1C1E;--soft:#3A3217;--dim:#FF7A6B;--wood:#8C6E4C;--wood-edge:#C9A57C}}
 :root[data-theme="dark"] body.shopmode{--bg:#17191B;--surface:#202326;--ink:#ECEDEA;--muted:#A3A8AE;--line:#33373B;--accent:#F2BE22;--accent-ink:#1B1C1E;--soft:#3A3217;--dim:#FF7A6B;--wood:#8C6E4C;--wood-edge:#C9A57C}
-.shopmode .top .icobtn,.shopmode #steps,.shopmode .brand{display:none}
+.shopmode .top .icobtn,.shopmode #steps{display:none}
 .shopmode #projName{color:var(--ink);font:800 19px var(--f-display);font-stretch:80%;padding-block:10px}
 .shopmode h1,.shopmode h1.c{font-family:var(--f-display);font-stretch:72%;font-weight:800;letter-spacing:-.01em;text-transform:none}
 .shopmode .tcard b,.shopmode .vcard b,.shopmode .ed-head b,.shopmode .sheet-in .ed-head b{font-family:var(--f-display);font-stretch:78%;text-transform:none;letter-spacing:0}
@@ -2659,13 +2659,13 @@ async function unpackStr(s){const v=s[0],b=s.slice(1).replace(/-/g,"+").replace(
   let txt;if(v==="1"){const ds=new DecompressionStream("deflate-raw");const w=ds.writable.getWriter();w.write(u);w.close();txt=await new Response(ds.readable).text()}else txt=new TextDecoder().decode(u);return JSON.parse(txt)}
 function waNum(n){let d=String(n||"").replace(/\D/g,"");if(d.startsWith("00"))d=d.slice(2);if(d.startsWith("0"))d="90"+d.slice(1);if(d.length===10&&d[0]==="5")d="90"+d;return d}
 /* ---- atölye tarafı: mağaza ayarları ve bağlantı ---- */
-function shopCfgOf(){SET.shop=Object.assign({n:"",wa:"",cats:{dolap:true,mutfak:true,cocuk:true},disc:10,price:true,note:""},SET.shop||{});SET.shop.cats=Object.assign({dolap:true,mutfak:true,cocuk:true},SET.shop.cats||{});return SET.shop}
+function shopCfgOf(){SET.shop=Object.assign({n:"Atölye",wa:"",cats:{dolap:true,mutfak:true,cocuk:true},disc:10,price:true,note:""},SET.shop||{});SET.shop.cats=Object.assign({dolap:true,mutfak:true,cocuk:true},SET.shop.cats||{});return SET.shop}
 function shopMiss(){const m=[];["sunta","arka3","arka8"].forEach(k=>{if(!(+SET.mats[k].price))m.push(SET.mats[k].name)});if(!(+SET.bandPrice))m.push("bant");if(!Object.keys(SET.hwPrice||{}).length)m.push("hırdavat fiyatları");return m}
 let SHOPLINK=null;
 function shopAdmSheet(){const c=shopCfgOf(),miss=shopMiss();
   openSheet(`<div class="ed-head"><b>Mağaza (müşteri sitesi)</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
    <div class="note">Müşteriniz bu bağlantıyı açınca sade bir mağaza görür: ürünü seçer, ölçüsünü girer, 3D'de görür, fiyatını görür ve siparişi WhatsApp'tan size gönderir. Siparişteki bağlantıyı açınca tasarım burada proje olarak açılır. Sunucu ve üyelik gerekmez.</div>
-   <label class="field"><span class="k">Mağaza adı</span><input data-shopset="n" value="${esc(c.n)}" placeholder="ör. Parlak Mobilya" style="font-family:var(--f-body);font-size:16px"></label>
+   <label class="field"><span class="k">Mağaza adı</span><input data-shopset="n" value="${esc(c.n)}" placeholder="Atölye" style="font-family:var(--f-body);font-size:16px"></label>
    <label class="field"><span class="k">WhatsApp numarası</span><input data-shopset="wa" inputmode="tel" value="${esc(c.wa)}" placeholder="05xx xxx xx xx"></label>
    <span class="lbl">Satışa açık ürünler</span>${Object.entries(SHOPCATS).map(([k,v])=>`<label class="check"><input type="checkbox" data-shopcat="${k}" ${c.cats[k]?"checked":""}><span>${v.l}<small>${v.d}</small></span></label>`).join("")}
    <label class="check"><input type="checkbox" data-shopset="price" ${c.price?"checked":""}><span>Fiyatı müşteriye göster<small>Kapalıysa "Fiyat için yazın" görünür. Fiyat, Teklif sekmesindeki işçilik, kâr ve KDV ayarlarıyla hesaplanır.</small></span></label>
@@ -2685,7 +2685,7 @@ async function bootHash(){const h=(typeof location!=="undefined"&&location.hash)
   if(h.startsWith("#m")){try{const d=await unpackStr(h.slice(2));SHOP=d.c;SET=Object.assign(clone(DEFAULT_SET),d.set||{});SET.mats=Object.assign(clone(DEFAULT_SET.mats),(d.set||{}).mats||{});
       S=Object.assign(freshState(),LS.get("atolye2_shopcur")||{});S.view=null;S.partOv={};S.extraParts=[];HZ=Object.assign({},HZDEF,LS.get("atolye2_shophz")||{});
       if(d.d){if(d.d.hz)HZ=Object.assign({},HZDEF,d.d.hz);if(d.d.p)S=Object.assign(freshState(),d.d.p,{view:null,partOv:{},extraParts:[]});S.shStep=d.d.st||"home";setTimeout(()=>toast("Paylaşılan tasarım açıldı"),400)}
-      document.body.classList.add("shopmode");document.title=(SHOP.n||"Mağaza")+" — ölçüye özel mobilya";const pn=$("#projName");pn.readOnly=true;pn.setAttribute("aria-label","Mağaza")}
+      document.body.classList.add("shopmode");document.title=(SHOP.n||"Atölye")+" — ölçüye özel mobilya";const pn=$("#projName");pn.readOnly=true;pn.setAttribute("aria-label","Mağaza")}
     catch(e){SHOP=null;setTimeout(()=>toast("Mağaza bağlantısı bozuk; gönderen kişiden yeniden isteyin."),300)}}
   else if(h.startsWith("#s")){try{ORDER=await unpackStr(h.slice(2))}catch(e){setTimeout(()=>toast("Sipariş bağlantısı bozuk."),300)}}}
 function orderSheet(){const o=ORDER;if(!o)return;
@@ -2707,7 +2707,7 @@ function priceHTML(p){const c=SHOP,q=qset();if(!c.price||!(p>0))return `<div cla
   const d=+c.disc||0;return `<div class="stat shprice"><span>Fiyat (KDV dahil)</span><b>${fmt(p)} ₺</b>${d?`<span>Peşin / havale: <b style="display:inline;font:inherit;font-weight:600">${fmt(Math.round(p*(1-d/100)))} ₺</b> (%${fmc(d)} indirim)</span>`:""}<span>${+q.transport?"Nakliye dahil":"Nakliye hariç"} · ${+q.install?"Montaj dahil":"Montaj hariç"}</span></div>`}
 /* ---- ekranlar ---- */
 function shBar(back,next,label){$("#bar").innerHTML=(back?`<button class="btn ghost" data-shgo="${back}">Geri</button>`:"")+(next?`<button class="btn" data-shgo="${next}">${label}</button>`:"")}
-function renderShop(){const st=S.shStep||"home";document.querySelector("main").className="";$("#projName").value=SHOP.n||"Mağaza";$("#steps").innerHTML="";
+function renderShop(){const st=S.shStep||"home";document.querySelector("main").className="";{const nm=(SHOP.n||"").trim();$("#projName").value=/^at[öo]lye$/i.test(nm)?"":nm}$("#steps").innerHTML="";
   if(st!=="urun"&&st!=="hz"&&T3){T3.dispose();T3=null}
   ({home:shHome,cat:shCat,olcu:shOlcu,secim:shSecim,urun:shUrun,hz:shHz}[st]||shHome)();persist()}
 /* giriş: canlı ölçü (akılda kalacak tek öğe), ürün kareleri gerçek çizim + başlangıç fiyatı, nasıl çalışır, neden, SSS */
@@ -3480,7 +3480,7 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
 
 
 /* ====================== YARDIM · YENİLİKLER ====================== */
-const APPVER="2026.10.23b";
+const APPVER="2026.10.23c";
 const NEWS=[
  {d:"23 Ekim 2026 · gece",t:"Yeni mağaza görünümü",items:[
   ["Canlı ölçü","Mağazanın girişinde gardırop çizimi: müşteri eni değiştirdikçe çizim ve fiyat anında değişir; 'Bu ölçüyle tasarla' ile devam eder.",null],
@@ -3971,7 +3971,7 @@ document.addEventListener("click",e=>{
   if(d.shopadm){shopAdmSheet();return}
   if(d.shoplink){shopMakeLink();return}
   if(d.shopcopy){navigator.clipboard&&navigator.clipboard.writeText(SHOPLINK).then(()=>toast("Bağlantı kopyalandı"),()=>toast("Kopyalanamadı; metni seçip kopyalayın"));return}
-  if(d.shopshare){navigator.share({title:(shopCfgOf().n||"Mağaza"),url:SHOPLINK}).catch(()=>{});return}
+  if(d.shopshare){navigator.share({title:(shopCfgOf().n||"Atölye"),url:SHOPLINK}).catch(()=>{});return}
   if(d.ordopen){orderOpen();return}
   if(d.go){if(b.disabled)return;
     if(d.go==="duzen"&&!S.mods.length)return;S.step=d.go;S.view=null;render();window.scrollTo(0,0);return}
