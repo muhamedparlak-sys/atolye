@@ -334,6 +334,8 @@ body.shopmode{--bg:#FAFAF7;--surface:#FFFFFF;--ink:#24272B;--muted:#5E636A;--lin
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body.shopmode{--bg:#17191B;--surface:#202326;--ink:#ECEDEA;--muted:#A3A8AE;--line:#33373B;--accent:#F2BE22;--accent-ink:#1B1C1E;--soft:#3A3217;--dim:#FF7A6B;--wood:#8C6E4C;--wood-edge:#C9A57C}}
 :root[data-theme="dark"] body.shopmode{--bg:#17191B;--surface:#202326;--ink:#ECEDEA;--muted:#A3A8AE;--line:#33373B;--accent:#F2BE22;--accent-ink:#1B1C1E;--soft:#3A3217;--dim:#FF7A6B;--wood:#8C6E4C;--wood-edge:#C9A57C}
 .shopmode .top .icobtn,.shopmode #steps{display:none}
+.shfullonly{display:none}.shopmode.shfull .shfullonly{display:inline-block;flex:none}.shopmode.shfull #steps{display:grid;grid-template-columns:repeat(4,1fr)}
+.shopmode.shfull #steps button:nth-child(1),.shopmode.shfull #steps button:nth-child(5),.shopmode.shfull #steps button:nth-child(6){display:none}
 .shopmode #projName{color:var(--ink);font:800 19px var(--f-display);font-stretch:80%;padding-block:10px}
 .shopmode h1,.shopmode h1.c{font-family:var(--f-display);font-stretch:72%;font-weight:800;letter-spacing:-.01em;text-transform:none}
 .shopmode .tcard b,.shopmode .vcard b,.shopmode .ed-head b,.shopmode .sheet-in .ed-head b{font-family:var(--f-display);font-stretch:78%;text-transform:none;letter-spacing:0}
@@ -2676,7 +2678,7 @@ async function bootHash(){const h=(typeof location!=="undefined"&&location.hash)
   if(h.startsWith("#m")){try{const d=await unpackStr(h.slice(2));SHOP=d.c;SET=Object.assign(clone(DEFAULT_SET),d.set||{});SET.mats=Object.assign(clone(DEFAULT_SET.mats),(d.set||{}).mats||{});
       S=Object.assign(freshState(),LS.get("atolye2_shopcur")||{});S.view=null;S.partOv={};S.extraParts=[];HZ=Object.assign({},HZDEF,LS.get("atolye2_shophz")||{});
       if(d.d){if(d.d.hz)HZ=Object.assign({},HZDEF,d.d.hz);if(d.d.p)S=Object.assign(freshState(),d.d.p,{view:null,partOv:{},extraParts:[]});S.shStep=d.d.st||"home";setTimeout(()=>toast("Paylaşılan tasarım açıldı"),400)}
-      document.body.classList.add("shopmode");document.title=(SHOP.n||"Atölye")+" — ölçüye özel mobilya";const pn=$("#projName");pn.readOnly=true;pn.setAttribute("aria-label","Mağaza")}
+      document.body.classList.add("shopmode");{const tr=document.querySelector(".top-row");if(tr&&!document.getElementById("shFullBack")){tr.insertAdjacentHTML("beforeend",`<button class="btn small ghost shfullonly" id="shFullBack" data-shfullexit="0">‹ Mağaza</button><button class="btn small shfullonly" data-shfullexit="1">Sipariş ver</button>`)}}document.title=(SHOP.n||"Atölye")+" — ölçüye özel mobilya";const pn=$("#projName");pn.readOnly=true;pn.setAttribute("aria-label","Mağaza")}
     catch(e){SHOP=null;setTimeout(()=>toast("Mağaza bağlantısı bozuk; gönderen kişiden yeniden isteyin."),300)}}
   else if(h.startsWith("#s")){try{ORDER=await unpackStr(h.slice(2))}catch(e){setTimeout(()=>toast("Sipariş bağlantısı bozuk."),300)}}}
 function orderSheet(){const o=ORDER;if(!o)return;
@@ -2779,7 +2781,8 @@ function shUrun(){R=computeAll(S.mods);if(!colorsOf().body)colorsOf().body="beya
    ${priceHTML(p)}
    <div class="panel">${shColorHTML()}
     <span class="lbl">Kulp</span><div class="chips" style="flex-wrap:wrap">${Object.entries(SHOPOPEN).map(([k,l])=>`<button class="chip" data-shop2="${k}" aria-pressed="${op===k}">${l}</button>`).join("")}</div></div>
-   <div class="panel"><b>Özet</b><div class="note">${esc(shSummary())}</div><div class="btns"><button class="btn small ghost" data-shgo="olcu">Ölçüyü değiştir</button><button class="btn small ghost" data-shgo="secim">Başka düzen</button><button class="btn small ghost" data-shshare="1">Tasarımı paylaş</button></div></div>
+   <div class="panel"><b>Özet</b><div class="note">${esc(shSummary())}</div><div class="btns"><button class="btn small ghost" data-shgo="olcu">Ölçüyü değiştir</button><button class="btn small ghost" data-shgo="secim">Başka düzen</button><button class="btn small ghost" data-shshare="1">Tasarımı paylaş</button></div>
+    <button class="btn ghost" data-shfull="1">Atölyede ayrıntılı tasarla</button><div class="note">Bölme genişliği, raf, çekmece, askı, kapak; her göze ayrı ayrı. Bitince "Sipariş ver"e dokunun, fiyat güncellenir.</div></div>
    ${shOrderForm()}`;
   shPriceBar(p,"secim");
   load3D().then(()=>{const el=document.getElementById("v3d");if(!el)return;show3D(el,sceneBoxes(S.mods,R,{open:!!S.shOpen,walls:false}),{fit:true,dims:S.type!=="mutfak"})}).catch(()=>{const el=document.getElementById("v3d");if(el)el.innerHTML=`<div class="note" style="padding:16px">3D için internet gerekiyor.</div>`})}
@@ -2827,6 +2830,8 @@ async function shShare(){const isH=S.shStep==="hz",d={st:S.shStep};if(isH){d.hz=
   try{await navigator.clipboard.writeText(url);toast("Bağlantı kopyalandı; WhatsApp'a yapıştırın")}catch(e){openSheet(`<div class="ed-head"><b>Tasarımı paylaş</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div><textarea readonly style="min-height:90px">${esc(url)}</textarea><div class="note">Bağlantıyı seçip kopyalayın.</div>`)}}
 function shRe(){const mn=document.querySelector("main"),sc=mn.scrollTop;renderShop();mn.scrollTop=sc}
 function shopClick(b,d){
+  if(d.shfull){S.shFull=true;S.step="duzen";S.grid=true;S.sel=null;S.band=null;render();document.querySelector("main").scrollTop=0;toast("Bir göze dokunun; içini değiştirin");return true}
+  if(d.shfullexit!==undefined||(S.shFull&&((d.go&&["sonuc","montaj","tur"].includes(d.go))||d.rtgo||d.rt))){if(T3){T3.dispose();T3=null}S.shFull=false;document.body.classList.remove("shfull");S.shName=S.shName&&!/kendi/i.test(S.shName)?S.shName+" (kendi düzenim)":S.shName||"Kendi düzenim";S.shStep=S.mods.length?"urun":"olcu";renderShop();document.querySelector("main").scrollTop=0;if(d.shfullexit==="1")setTimeout(()=>{const el=document.getElementById("shOrderBox");el&&el.scrollIntoView({block:"center"})},400);return true}
   if(d.shgo){S.shStep=d.shgo;renderShop();document.querySelector("main").scrollTop=0;return true}
   if(d.shdw){S.shDemoW=Math.max(60,Math.min(400,(+S.shDemoW||200)+ +d.shdw));shDemoUpd();return true}
   if(d.shdemogo){if(S.type!=="gardirop"){S.type="gardirop";S.mods=[];S.colors=null;S.opener="kulp";S.back=BACK_DEF.gardirop;S.floor=null}Object.assign(S.inp,{W:Math.round(+S.shDemoW||200),H:220,D:58});S.name=TYPES.gardirop.label;S.shStep="secim";renderShop();document.querySelector("main").scrollTop=0;return true}
@@ -2866,7 +2871,7 @@ function renderSteps(){const ci=stepIdx();
   $("#steps").innerHTML=STEPS.map(([k,l],i)=>{const reach=i<=ci||(i>=3&&S.mods.length);
     return `<button data-go="${k}" class="${i===ci&&!S.view?"cur":i<ci?"done":""}" ${reach||i<ci?"":"disabled"}>${l}</button>`}).join("")}
 function render(){
-  if(SHOP)return renderShop();
+  if(SHOP){document.body.classList.toggle("shfull",!!S.shFull);if(!S.shFull)return renderShop()}
   renderSteps();$("#projName").value=S.name;closeSheet&&document.getElementById("sheet")?.remove();
   const main=document.querySelector("main");main.className="";main.scrollTop=0;
   if(S.view==="ayar")return renderAyar();if(S.view==="lib")return renderLib();if(S.view==="liste")return renderListe();if(S.view==="hazir")return renderHazir();if(S.view==="hizli")return renderHizli();if(S.view==="yardim")return renderYardim();if(S.view==="foto")return renderFoto();if(S.view==="proj")return renderProj();
@@ -2875,6 +2880,7 @@ function render(){
   persist();
 }
 function setBar(back,next,nextLabel,nextDisabled){
+  if(SHOP&&S.shFull){if(next==="sonuc"||next==="montaj"){next="sonuc";nextLabel="Fiyat ve sipariş"}if(back==="tur")back=null}
   $("#bar").innerHTML=(back?`<button class="btn ghost" data-go="${back}">Geri</button>`:"")+(next?`<button class="btn" data-go="${next}" ${nextDisabled?"disabled style='opacity:.45'":""}>${nextLabel}</button>`:"");
 }
 function renderTur(){
@@ -3471,8 +3477,10 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
 
 
 /* ====================== YARDIM · YENİLİKLER ====================== */
-const APPVER="2026.10.23c";
+const APPVER="2026.10.23d";
 const NEWS=[
+ {d:"23 Ekim 2026 · gece",t:"Müşteri Atölye'de tasarlayabilir",items:[
+  ["Atölyede ayrıntılı tasarla","Mağazada ürün ekranındaki düğmeyle müşteri Atölye'nin düzen ekranına girer: bölme, raf, çekmece, askı ve kapakları göz göz değiştirir, 3D'de bakar. 'Sipariş ver' ile mağazaya döner; fiyat yeni düzene göre hesaplanır. Kesim listesi, teklif dökümü ve fiyat kütüphanesi müşteriye gösterilmez.",null]]},
  {d:"23 Ekim 2026 · gece",t:"Yeni mağaza görünümü",items:[
   ["Canlı ölçü","Mağazanın girişinde gardırop çizimi: müşteri eni değiştirdikçe çizim ve fiyat anında değişir; 'Bu ölçüyle tasarla' ile devam eder.",null],
   ["Ürün kareleri","Her ürün gerçek çizimiyle ve '…'den başlar' fiyatıyla görünür (fiyatlar sizin fiyat kütüphanenizden).",null],

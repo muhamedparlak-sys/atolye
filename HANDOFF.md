@@ -89,6 +89,7 @@ Bu dosya, uzayan oturumdaki işi yeni bir oturumda kaldığı yerden sürdürmek
   - Sipariş: `shOrder` → `#s…` bağlantısı (`{k,title,sum,who,price,p|hz}`) + `wa.me/<no>?text=`. Atölye açınca `orderSheet` → `orderOpen` projeye ekler (hazırda HZ'ye yükler).
   - Atölye tarafı: `shopAdmSheet` (ana ekranda `data-shopadm`), `shopMakeLink`; ayarlar `SET.shop`. Tıklama `shopClick`, değişiklik `shopChange`.
   - Görünüm (2026.10.23b): `body.shopmode` kendi token'ları (levha beyazı, grafit, şerit metre sarısı --tape, çizim kırmızısı --dim; Archivo, dar başlık). Giriş `shHome`: canlı ölçü `shDemoHTML` (gardırop, `S.shDemoW`), kareler `shArt` + başlangıç fiyatı `shFromCalc` (sırayla `shFill`, `atolye2_shopfrom` önbelleği), SSS. `shProg(i)` adım şeridi, `shPriceBar` sabit fiyat çubuğu, `shShare` (#m bağlantısına `d` = tasarım). Mağaza çizimlerinde `pointer-events:none` şart: SVG'deki `data-mod` atölye tıklamasını tetikliyordu.
+  - Tam tasarım (2026.10.23d): `S.shFull` iken `render()` atölye ekranlarını gösterir (`body.shfull`: Ölçü/Öneri/Düzen/3D adımları, başlıkta ‹ Mağaza + Sipariş ver). Kesim/Montaj/Teklif'e gidiş `shopClick`'te yakalanır ve mağazanın ürün ekranına döner; `setBar` etiketi "Fiyat ve sipariş".
   - Uyarı: fiyat istemcide hesaplandığı için bağlantıda maliyet ve kâr oranı da var (sheet'te not düşüldü).
   - Sıradaki: (2) parça etiketinde QR (montaj adımı) + CNC'li fasoncu için delikli DXF; (3) bebek/çocuk serisi (anne yanı beşik, dönüşen karyola, Montessori masa-sandalye; EN 1130 / EN 716).
 - **Diğer:**

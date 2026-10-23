@@ -26,6 +26,7 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 ## Yenilikler
 
 **23 Ekim 2026 · gece**
+- Mağazada müşteri "Atölyede ayrıntılı tasarla" ile düzen ekranına girip göz göz değiştirebilir; "Sipariş ver" ile güncel fiyatla mağazaya döner. Mağaza adı varsayılan "Atölye"
 - Mağaza yeni görünüm: canlı ölçü girişi (çizim + fiyat), gerçek çizimli ürün kareleri ve başlangıç fiyatı, sabit fiyat/sipariş çubuğu, adım göstergesi, tasarımı paylaşma, SSS; açık ve koyu tema
 
 **23 Ekim 2026**
