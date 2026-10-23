@@ -25,6 +25,9 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 
 ## Yenilikler
 
+**23 Ekim 2026 · gece**
+- Mağaza yeni görünüm: canlı ölçü girişi (çizim + fiyat), gerçek çizimli ürün kareleri ve başlangıç fiyatı, sabit fiyat/sipariş çubuğu, adım göstergesi, tasarımı paylaşma, SSS; açık ve koyu tema
+
 **23 Ekim 2026**
 - Mağaza (müşteri sitesi): tek bağlantıyla müşteriye sade mağaza — ürün seç, ölçü yaz, düzen ve renk seç, 3D, canlı fiyat (KDV dahil, peşin indirimi), WhatsApp'tan sipariş. Siparişteki bağlantı tasarımı atölyede proje olarak açar. Sunucu yok; ayarlar ve fiyatlar bağlantının içinde.
 

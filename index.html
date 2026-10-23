@@ -8,7 +8,7 @@
 <title>Atölye Kesim</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&family=Archivo:wdth,wght@62..125,400..800&display=swap">
 <style>
 /* Layout: telefon öncelikli sihirbaz — üstte adım çubuğu, ortada tek iş, altta sabit Geri/Devam çubuğu */
 :root{
@@ -335,9 +335,56 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 tr.pov td{background:var(--soft)}
 tr.pdel td{opacity:.5;text-decoration:line-through}
 tr.pdel td:last-child{text-decoration:none;opacity:1}
-.shopmode .top .icobtn,.shopmode #steps,.shopmode .brand{display:none}.shopmode #projName{color:var(--ink);font-weight:600}
-.shprice{padding:14px;display:flex;flex-direction:column;gap:2px}.shprice b{font:700 34px/1.1 var(--f-display)}.shprice span{font-size:13px;color:var(--muted)}
-.shp{font:700 22px var(--f-display);margin:2px 0}
+/* Mağaza teması: levha beyazı, grafit, şerit metre sarısı; ölçü çizgileri çizim kırmızısı */
+body.shopmode{--bg:#FAFAF7;--surface:#FFFFFF;--ink:#24272B;--muted:#5E636A;--line:#DDDDD6;--accent:#24272B;--accent-ink:#FFFFFF;--soft:#FFF4CF;--tape:#F2BE22;--tape-ink:#24272B;--dim:#C2362B;--wood:#C9A57C;--wood-edge:#8F6E44;
+  --f-display:"Archivo","Barlow Condensed",sans-serif;--f-body:"Archivo","IBM Plex Sans",system-ui,sans-serif;font-family:var(--f-body)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body.shopmode{--bg:#17191B;--surface:#202326;--ink:#ECEDEA;--muted:#A3A8AE;--line:#33373B;--accent:#F2BE22;--accent-ink:#1B1C1E;--soft:#3A3217;--dim:#FF7A6B;--wood:#8C6E4C;--wood-edge:#C9A57C}}
+:root[data-theme="dark"] body.shopmode{--bg:#17191B;--surface:#202326;--ink:#ECEDEA;--muted:#A3A8AE;--line:#33373B;--accent:#F2BE22;--accent-ink:#1B1C1E;--soft:#3A3217;--dim:#FF7A6B;--wood:#8C6E4C;--wood-edge:#C9A57C}
+.shopmode .top .icobtn,.shopmode #steps,.shopmode .brand{display:none}
+.shopmode #projName{color:var(--ink);font:800 19px var(--f-display);font-stretch:80%;padding-block:10px}
+.shopmode h1,.shopmode h1.c{font-family:var(--f-display);font-stretch:72%;font-weight:800;letter-spacing:-.01em;text-transform:none}
+.shopmode .tcard b,.shopmode .vcard b,.shopmode .ed-head b,.shopmode .sheet-in .ed-head b{font-family:var(--f-display);font-stretch:78%;text-transform:none;letter-spacing:0}
+.shopmode .lbl{text-transform:none;letter-spacing:0;font-size:13px;font-weight:700;color:var(--ink)}
+.shopmode .btn{border-radius:10px}
+.shopmode .btn:not(.ghost):not(.danger){background:var(--tape);border-color:var(--tape);color:var(--tape-ink);font-weight:700}
+.shopmode .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.shopmode .field input,.shopmode .field select{font-family:var(--f-body);font-variant-numeric:tabular-nums}
+.shhero h1{font-size:44px;line-height:.98;margin:4px 0 10px;max-width:12ch}
+.shhero p{color:var(--muted);margin:0 0 14px;max-width:34ch}
+.shdemo{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:10px}
+.shdemo .pic{min-height:210px;display:flex;align-items:center;justify-content:center}.shdemo .pic svg{width:100%;max-height:240px}
+.shdemo .row2{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.shstep{display:flex;align-items:stretch;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden}
+.shstep button{width:44px;border:0;background:var(--surface);color:var(--ink);font:700 22px var(--f-body);cursor:pointer}
+.shstep input{width:84px;border:0;border-inline:1.5px solid var(--ink);text-align:center;font:800 24px var(--f-display);font-stretch:80%;background:var(--surface);color:var(--ink);font-variant-numeric:tabular-nums}
+.shdemo .pr{margin-left:auto;text-align:right}.shdemo .pr b{display:block;font:800 30px/1 var(--f-display);font-stretch:75%;font-variant-numeric:tabular-nums}.shdemo .pr small{color:var(--muted)}
+.dimw{position:relative;height:22px;margin:-4px 8% 0;border-left:1.5px solid var(--dim);border-right:1.5px solid var(--dim)}.dimw::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1.5px solid var(--dim)}
+.dimw span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--surface);color:var(--dim);font:700 13px var(--f-body);padding:0 6px;font-variant-numeric:tabular-nums}
+.shopmode .shtile svg,.shopmode .shdemo svg,.shopmode .vcard .pic svg{pointer-events:none}
+.shtiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:620px){.shtiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.shtile{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px;text-align:left;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;gap:6px;font:inherit}
+.shtile .art{aspect-ratio:4/3;display:flex;align-items:flex-end;justify-content:center;border-radius:8px;background:var(--bg);padding:6px;overflow:hidden}
+.shtile .art svg{width:100%;height:100%}.shtile .art .hzdraw{display:block;width:100%;height:100%}.shtile .art .hzv{border:0;background:none;padding:0;height:100%}.shtile .art .hzv:nth-child(2),.shtile .art .lbl,.shtile .art.side .hzv:first-child{display:none}.shtile .art.side .hzv:nth-child(2){display:block}.shtile .art .hzv svg{max-height:none;height:100%}
+.shtile b{font:800 17px/1.1 var(--f-display);font-stretch:80%}.shtile small{color:var(--muted);font-size:13px;min-height:1.3em}
+.shtile:focus-visible,.shcatbtn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.shcats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:2px 0 4px}
+.shcatbtn{flex:none;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 14px;font:700 14px var(--f-body);cursor:pointer}
+.shcatbtn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.shprog{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:0 0 4px;list-style:none;padding:0}
+.shprog li{font-size:12px;color:var(--muted);border-top:3px solid var(--line);padding-top:5px}
+.shprog li.on{color:var(--ink);font-weight:700;border-color:var(--tape)}.shprog li.done{color:var(--ink);border-color:var(--ink)}
+.shbar{display:flex;align-items:center;gap:12px;width:100%}.shbar .pr{flex:1;min-width:0}.shbar .pr small{display:block;color:var(--muted);font-size:12px}
+.shbar .pr b{font:800 26px/1 var(--f-display);font-stretch:75%;font-variant-numeric:tabular-nums}.shbar .btn{flex:0 0 auto!important}
+.shfacts{list-style:none;margin:0;padding:0;display:grid;gap:12px}.shfacts li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}.shfacts li svg{width:26px;height:26px;color:var(--ink)}
+.shfacts b{display:block;font-size:15px}.shfacts span{color:var(--muted);font-size:14px}
+.shfaq details{border-top:1px solid var(--line);padding:12px 0}.shfaq details:last-child{border-bottom:1px solid var(--line)}.shfaq summary{cursor:pointer;font-weight:700;font-size:15px}.shfaq p{margin:8px 0 0;color:var(--muted);font-size:14px}
+.shsec{display:grid;gap:12px;margin-top:10px}.shsec h2{font:800 26px/1.05 var(--f-display);font-stretch:75%;text-transform:none;letter-spacing:0;margin:0}
+.shopmode .swatch i{height:30px}
+.shopmode .swatch[data-wood] i{background-image:repeating-linear-gradient(100deg,rgba(0,0,0,.07) 0 2px,transparent 2px 7px),repeating-linear-gradient(95deg,rgba(255,255,255,.08) 0 1px,transparent 1px 11px)}
+.shprice{padding:14px;display:flex;flex-direction:column;gap:2px}.shprice b{font:800 38px/1.05 var(--f-display);font-stretch:75%;font-variant-numeric:tabular-nums}.shprice span{font-size:13px;color:var(--muted)}
+.shp{font:800 24px var(--f-display);font-stretch:75%;margin:2px 0;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:no-preference){.shdemo .pr b.bump{animation:shbump .35s ease-out}@keyframes shbump{from{transform:translateY(-4px);opacity:.4}to{transform:none;opacity:1}}}
 a.btn{text-decoration:none;display:inline-block}
 .pedit{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:4px 8px;font:600 13px var(--f-body);cursor:pointer}
 </style>
@@ -2637,6 +2684,7 @@ async function shopMakeLink(){const c=shopCfgOf();if(!waNum(c.wa)||waNum(c.wa).l
 async function bootHash(){const h=(typeof location!=="undefined"&&location.hash)||"";
   if(h.startsWith("#m")){try{const d=await unpackStr(h.slice(2));SHOP=d.c;SET=Object.assign(clone(DEFAULT_SET),d.set||{});SET.mats=Object.assign(clone(DEFAULT_SET.mats),(d.set||{}).mats||{});
       S=Object.assign(freshState(),LS.get("atolye2_shopcur")||{});S.view=null;S.partOv={};S.extraParts=[];HZ=Object.assign({},HZDEF,LS.get("atolye2_shophz")||{});
+      if(d.d){if(d.d.hz)HZ=Object.assign({},HZDEF,d.d.hz);if(d.d.p)S=Object.assign(freshState(),d.d.p,{view:null,partOv:{},extraParts:[]});S.shStep=d.d.st||"home";setTimeout(()=>toast("Paylaşılan tasarım açıldı"),400)}
       document.body.classList.add("shopmode");document.title=(SHOP.n||"Mağaza")+" — ölçüye özel mobilya";const pn=$("#projName");pn.readOnly=true;pn.setAttribute("aria-label","Mağaza")}
     catch(e){SHOP=null;setTimeout(()=>toast("Mağaza bağlantısı bozuk; gönderen kişiden yeniden isteyin."),300)}}
   else if(h.startsWith("#s")){try{ORDER=await unpackStr(h.slice(2))}catch(e){setTimeout(()=>toast("Sipariş bağlantısı bozuk."),300)}}}
@@ -2662,49 +2710,89 @@ function shBar(back,next,label){$("#bar").innerHTML=(back?`<button class="btn gh
 function renderShop(){const st=S.shStep||"home";document.querySelector("main").className="";$("#projName").value=SHOP.n||"Mağaza";$("#steps").innerHTML="";
   if(st!=="urun"&&st!=="hz"&&T3){T3.dispose();T3=null}
   ({home:shHome,cat:shCat,olcu:shOlcu,secim:shSecim,urun:shUrun,hz:shHz}[st]||shHome)();persist()}
-function shHome(){const c=SHOP;
-  $("#view").innerHTML=`<h1 class="c">${esc(c.n||"Ölçüye özel mobilya")}</h1><p class="lead">Ölçünüzü girin, birkaç hazır düzenden birini seçin, rengini belirleyin; fiyatı hemen görün. Siparişi WhatsApp'tan verin.</p>
-   ${Object.entries(SHOPCATS).filter(([k])=>c.cats[k]).map(([k,v])=>`<button class="tcard wide" data-shcat="${k}">${k==="mutfak"?ICONS.mutfak:k==="cocuk"?hzIcon("ev"):ICONS.gardirop}<div style="display:flex;flex-direction:column;gap:2px"><b>${v.l}</b><span>${v.d}</span></div></button>`).join("")}
-   <div class="panel"><b>Nasıl çalışır?</b><ol class="wsteps"><li>Ürünü seçin ve ölçünüzü yazın.</li><li>Düzeni ve rengi seçin; 3D'de çevirip bakın.</li><li>"WhatsApp'tan sipariş ver"e dokunun; tasarımınız bize ulaşır, ölçüyü birlikte teyit ederiz.</li></ol>
-    ${c.note?`<div class="note">${esc(c.note)}</div>`:""}${+c.disc?`<div class="note">Peşin / havale ödemede %${fmc(+c.disc)} indirim.</div>`:""}</div>`;
-  $("#bar").innerHTML=c.wa?`<a class="btn ghost" href="https://wa.me/${esc(c.wa)}" target="_blank" rel="noopener">Bize yazın</a>`:""}
-function shCat(){const C=SHOPCATS[S.shCat]||SHOPCATS.dolap;
-  $("#view").innerHTML=`<h1 class="c">${esc(C.l)}</h1><div class="types">${C.items.map(([k,key])=>{const t=k==="t",lbl=t?TYPES[key].label:HZM.find(m=>m.k===key).l,ds=t?TYPES[key].desc:HZM.find(m=>m.k===key).d;
-    return `<button class="tcard" data-shitem="${k}:${key}">${t?ICONS[key]:hzIcon(key)}<div style="display:flex;flex-direction:column;gap:2px"><b>${esc(lbl)}</b><span>${esc(ds)}</span></div></button>`}).join("")}</div>`;
-  shBar("home")}
+/* giriş: canlı ölçü (akılda kalacak tek öğe), ürün kareleri gerçek çizim + başlangıç fiyatı, nasıl çalışır, neden, SSS */
+const SHFROMK="atolye2_shopfrom";let SHFROM=null;const SHART={};
+function shSig(){return JSON.stringify([SET.mats,SET.bandPrice,SET.hwPrice,SET.quote,SET.svc,SET.t])}
+function shFromGet(){if(!SHFROM||SHFROM.sig!==shSig()){const c=LS.get(SHFROMK);SHFROM=c&&c.sig===shSig()?c:{sig:shSig(),v:{}}}return SHFROM}
+function withType(type,inp,fn){const sv=S,sR=R;try{S=Object.assign(freshState(),{type,back:BACK_DEF[type]||"3"});if(type!=="mutfak"){const T=TYPES[type];Object.assign(S.inp,{W:T.W,H:T.H,D:T.D/10})}else Object.assign(S.inp,{plan:"I",A:300});Object.assign(S.inp,inp||{});return fn()}finally{S=sv;R=sR}}
+function shHzOpt(key){const o=Object.assign({},HZDEF,{m:key,mat:key==="divan"||key==="saklama"?"sunta":"kontra18"});if(key==="divan"){o.mw=90;o.ml=190;o.dvB=false;o.dvT="lata"}return o}
+function shFromCalc(k,key){if(k==="t")return withType(key,null,()=>{const ps=variants().map(v=>shopPrice(v.mods)).filter(p=>p>0);return ps.length?Math.min(...ps):0});return hzUnitPrice(hzBuild(shHzOpt(key)))}
+function shArt(k,key){const id=k+":"+key;if(SHART[id])return SHART[id];
+  SHART[id]=k==="t"?withType(key,null,()=>{const v=variants()[0];return wallSVG(v.mods,computeAll(v.mods),"A",{small:true})}):hzDraw(hzBuild(shHzOpt(key)));return SHART[id]}
+function shFromTxt(p){return SHOP.price&&p>0?fmt(p)+" ₺'den başlar":SHOP.price?"Fiyat için yazın":"Ölçünüze göre"}
+function shFill(){const F=shFromGet(),el=[...document.querySelectorAll("[data-from]")].find(e=>!e.dataset.done);if(!el)return;const id=el.dataset.from;
+  if(F.v[id]==null){const[k,key]=id.split(":");try{F.v[id]=shFromCalc(k,key)}catch(e){F.v[id]=0}LS.set(SHFROMK,F)}el.textContent=shFromTxt(F.v[id]);el.dataset.done=1;setTimeout(shFill,20)}
+function shDemoCalc(){const W=Math.max(60,Math.min(400,Math.round(S.shDemoW||200)));return withType("gardirop",{W,H:220,D:58},()=>{const v=variants()[0],r=computeAll(v.mods);return{W,svg:wallSVG(v.mods,r,"A",{small:true}),p:shopPrice(v.mods)}})}
+function shDemoHTML(){const D=shDemoCalc();return `<div class="pic">${D.svg}</div>
+   <div class="dimw" aria-hidden="true"><span>${D.W} cm</span></div>
+   <div class="row2"><div><div class="note" style="margin-bottom:4px">Gardırop eni</div><div class="shstep"><button data-shdw="-10" aria-label="10 cm daralt">−</button><input data-shdwi="1" inputmode="numeric" value="${D.W}" aria-label="Gardırop eni, cm"><button data-shdw="10" aria-label="10 cm genişlet">+</button></div></div>
+    <div class="pr"><small>220 cm boy, 58 cm derinlik</small><b class="bump">${SHOP.price&&D.p>0?fmt(D.p)+" ₺":"—"}</b><small>KDV dahil</small></div></div>
+   <button class="btn" data-shdemogo="1">Bu ölçüyle tasarla</button>`}
+function shDemoUpd(){const el=document.getElementById("shDemo");if(el)el.innerHTML=shDemoHTML()}
+const SHICO={tape:'<svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="13" r="8"/><circle cx="11" cy="13" r="2.5"/><path d="M19 13h6M22 11v4"/></svg>',
+  price:'<svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 13 13 4h9v9l-9 9z"/><circle cx="17.5" cy="8.5" r="1.6"/></svg>',
+  phone:'<svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h5l2 6-3 2a12 12 0 0 0 5 5l2-3 6 2v5a2 2 0 0 1-2 2A19 19 0 0 1 4 5a2 2 0 0 1 2-2z"/></svg>',
+  box:'<svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8l10-5 10 5v10l-10 5-10-5zM3 8l10 5 10-5M13 13v10"/></svg>',
+  cash:'<svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="22" height="14" rx="2"/><circle cx="13" cy="13" r="3"/></svg>'};
+function shHome(){const c=SHOP,q=qset(),cats=Object.keys(SHOPCATS).filter(k=>c.cats[k]);if(!cats.includes(S.shCat))S.shCat=cats[0];const C=SHOPCATS[S.shCat]||{items:[]};
+  $("#view").innerHTML=`<section class="shhero"><h1>Ölçünüze göre mobilya, fiyatı hemen burada.</h1><p>Duvarınızın ölçüsünü yazın; düzeni ve rengi seçin, kaça olduğunu o an görün. Siparişi WhatsApp'tan verin, ölçüyü birlikte teyit edelim.</p>
+    <div class="shdemo" id="shDemo">${shDemoHTML()}</div></section>
+   <section class="shsec" id="shTiles"><h2>Ne yaptırmak istiyorsunuz?</h2>
+    ${cats.length>1?`<div class="shcats" role="tablist">${cats.map(k=>`<button class="shcatbtn" role="tab" data-shcat="${k}" aria-pressed="${S.shCat===k}">${SHOPCATS[k].l}</button>`).join("")}</div>`:""}
+    <div class="shtiles">${C.items.map(([k,key])=>{const t=k==="t",lbl=t?TYPES[key].label:HZM.find(m=>m.k===key).l,F=shFromGet().v[k+":"+key];
+      return `<button class="shtile" data-shitem="${k}:${key}"><span class="art${k==="h"&&HZM.find(m=>m.k===key).bed?" side":""}">${shArt(k,key)}</span><b>${esc(lbl)}</b><small data-from="${k}:${key}" ${F!=null?'data-done="1"':""}>${F!=null?shFromTxt(F):"Fiyat hesaplanıyor…"}</small></button>`}).join("")}</div></section>
+   <section class="shsec"><h2>Nasıl çalışır?</h2><ol class="wsteps"><li>Ürünü seçin, ölçünüzü santim olarak yazın.</li><li>Size uyan düzenlerden birini seçin; rengi ve kulpu belirleyin, 3D'de çevirip bakın.</li><li>"Sipariş ver"e dokunun; tasarımınız WhatsApp'tan bize gelir. Ölçüyü telefonda ya da yerinde teyit eder, üretime alırız.</li></ol></section>
+   <section class="shsec"><h2>Neden bizden?</h2><ul class="shfacts">
+    <li>${SHICO.price}<div><b>Fiyat baştan belli</b><span>Ölçünüzü yazdığınız an KDV dahil fiyatı görürsünüz. Sipariş sonrası sürpriz kalem yok.</span></div></li>
+    <li>${SHICO.tape}<div><b>Santimine kadar sizin ölçünüz</b><span>Hazır kalıp değil; dolap duvarınıza, nişinize, kirişinize göre kesilir.</span></div></li>
+    <li>${SHICO.phone}<div><b>Ölçüyü birlikte teyit ederiz</b><span>Siparişten sonra sizi arar, ölçüyü doğrularız; gerekiyorsa yerinde ölçü alırız.</span></div></li>
+    <li>${SHICO.box}<div><b>Numaralı parça, adım adım kurulum</b><span>Her parçanın etiketinde numarası var; kurulum sırası resimli gelir.</span></div></li>
+    ${+c.disc?`<li>${SHICO.cash}<div><b>Peşin ve havalede %${fmc(+c.disc)} indirim</b><span>Fiyat ekranında indirimli tutar ayrıca yazar.</span></div></li>`:""}</ul></section>
+   <section class="shsec shfaq"><h2>Sık sorulanlar</h2>
+    <details><summary>Ölçüyü nasıl alayım?</summary><p>Dolabın duracağı yerin enini köşeden köşeye, boyunu yerden tavana, derinliğini duvardan öne doğru santim olarak ölçün. Duvar düz değilse en dar yeri yazın. Siparişten sonra zaten birlikte teyit ediyoruz.</p></details>
+    <details><summary>Ne kadar sürede teslim edilir?</summary><p>${c.note?esc(c.note):"Ölçü teyidinden sonra üretim süresini size yazılı olarak bildiririz."}</p></details>
+    <details><summary>Nakliye ve montaj dahil mi?</summary><p>${+q.transport?"Nakliye fiyata dahil.":"Nakliye fiyata dahil değil; adresinize göre ayrıca bildiririz."} ${+q.install?"Montaj fiyata dahil.":"Montaj dahil değil; isterseniz ayrıca fiyat veririz. Parçalar numaralı ve kurulum resimli geldiği için kendiniz de kurabilirsiniz."}</p></details>
+    <details><summary>Hangi malzeme kullanılıyor?</summary><p>Gövde ${esc(SET.mats.sunta.name)}, görünen kenarlarda PVC kenar bandı, frenli menteşe ve teleskopik ray. Bebek ve çocuk ürünlerinde malzemeyi siz seçersiniz; her birinin artısı ve eksisi yazar.</p></details>
+    <details><summary>Ödemeyi nasıl yapıyorum?</summary><p>Sitede ödeme alınmaz. Ölçüyü ve fiyatı teyit ettikten sonra ödeme yöntemini birlikte belirleriz${+c.disc?"; peşin ve havalede %"+fmc(+c.disc)+" indirim var":""}.</p></details>
+    <details><summary>Tasarımımı birine gösterebilir miyim?</summary><p>Evet. Ürün ekranında "Tasarımı paylaş"a dokunun; gönderdiğiniz kişi aynı tasarımı açar, isterse değiştirir.</p></details></section>`;
+  $("#bar").innerHTML=c.wa?`<a class="btn ghost" href="https://wa.me/${esc(c.wa)}" target="_blank" rel="noopener">WhatsApp'tan yazın</a><button class="btn" data-shtiles="1">Ürünleri gör</button>`:`<button class="btn" data-shtiles="1">Ürünleri gör</button>`;
+  setTimeout(shFill,60)}
+function shCat(){shHome();setTimeout(()=>{const el=document.getElementById("shTiles");el&&el.scrollIntoView()},0)}
+function shProg(i){return `<ol class="shprog" aria-label="Adımlar">${["Ölçü","Düzen","Renk","Sipariş"].map((l,k)=>`<li class="${k<i?"done":k===i?"on":""}" ${k===i?'aria-current="step"':""}>${l}</li>`).join("")}</ol>`}
+function shPriceBar(p,back){$("#bar").innerHTML=`<div class="shbar"><button class="btn ghost" data-shgo="${back}" aria-label="Geri" style="min-width:0;padding-inline:14px">‹</button><div class="pr"><small>KDV dahil</small><b>${SHOP.price&&p>0?fmt(p)+" ₺":"Fiyat için yazın"}</b></div><button class="btn" data-shtoorder="1">Sipariş ver</button></div>`}
 function shOlcu(){const T=TYPES[S.type],i=S.inp,k=S.type==="mutfak";
   const f=(key,l,h)=>`<label class="field big"><span class="k">${l}</span><input type="number" inputmode="decimal" data-shi="${key}" value="${i[key]}"><span class="h">${h||"cm"}</span></label>`;
-  $("#view").innerHTML=`<h1 class="c">${esc(T.label)} · ölçü</h1><p class="lead">${k?"Duvar uzunluklarını köşeden köşeye santim olarak yazın.":"Dolabın duracağı yerin ölçüsünü santim olarak yazın."}</p>
+  $("#view").innerHTML=`${shProg(0)}<h1 class="c">${esc(T.label)}: ölçünüz</h1><p class="lead">${k?"Duvar uzunluklarını köşeden köşeye santim olarak yazın.":"Dolabın duracağı yerin ölçüsünü santim olarak yazın."}</p>
    ${k?`<div class="panel"><span class="lbl">Mutfak şekli</span><div class="chips">${["I","L","U"].map(p=>`<button class="chip" data-shplan="${p}" aria-pressed="${i.plan===p}">${p} mutfak</button>`).join("")}</div>
      <div class="bigin">${["A","B","C"].slice(0,{I:1,L:2,U:3}[i.plan]).map(w=>f(w,w+" duvarı")).join("")}${f("tavan","Tavan yüksekliği")}</div>
      <span class="lbl">Cihazlar</span>${[["fridge","Buzdolabı"],["oven","Ankastre fırın + ocak"],["dish","Bulaşık makinesi"]].map(([kk,l])=>`<label class="check"><input type="checkbox" data-shchk="${kk}" ${i[kk]!==false?"checked":""}><span>${l}</span></label>`).join("")}</div>`
     :`<div class="panel"><div class="bigin">${f("W",S.type==="yatak"?"Toplam en":"En")}${f("H",T.hL||"Yükseklik")}${f("D",T.dL||"Derinlik")}</div></div>`}
    <p class="note">Ölçüyü kesinleştirmek için siparişten sonra sizi arıyoruz.</p>`;
-  shBar("cat","secim","Seçenekleri gör")}
+  shBar("cat","secim","Düzenleri gör")}
 function shSecim(){VARS=variants();
-  $("#view").innerHTML=`<h1 class="c">Size uygun düzenler</h1><p class="lead">${esc(S.type==="mutfak"?S.inp.plan+" mutfak":TYPES[S.type].label+" "+S.inp.W+" × "+S.inp.H+" × "+S.inp.D+" cm")} için ${VARS.length} seçenek. Birini seçin; rengi sonra seçeceksiniz.</p>
+  $("#view").innerHTML=`${shProg(1)}<h1 class="c">Size uygun düzenler</h1><p class="lead">${esc(S.type==="mutfak"?S.inp.plan+" mutfak":TYPES[S.type].label+" "+S.inp.W+" × "+S.inp.H+" × "+S.inp.D+" cm")} için ${VARS.length} seçenek. Birini seçin; rengi sonra seçeceksiniz.</p>
    <div class="vgrid">${VARS.map((v,k)=>{const r=computeAll(v.mods),p=shopPrice(v.mods);const cnt=f=>Object.values(r.geo).reduce((s,G)=>s+(G.gap||!G.cols?0:G.cols.reduce((q,c)=>q+c[f].length,0)),0);
      return `<div class="vcard"><div class="pic">${S.type==="mutfak"?planSVG(v.mods,false):wallSVG(v.mods,r,"A",{small:true})}</div><div class="body"><b>${esc(v.name)}</b><p>${esc(v.desc)}</p>
       <div class="tags">${cnt("doors")?`<span class="tag">${cnt("doors")} kapak</span>`:""}${cnt("drawers")?`<span class="tag">${cnt("drawers")} çekmece</span>`:""}${S.type==="mutfak"?`<span class="tag">${v.mods.filter(m=>!m.gap).length} modül</span>`:""}</div>
       <div class="shp">${SHOP.price&&p>0?fmt(p)+" ₺":"Fiyat için yazın"}</div><button class="btn" data-shpick="${k}">Bunu seç</button></div></div>`}).join("")}</div>`;
   shBar("olcu")}
-function shColorHTML(){const c=colorsOf(),sw=(k,on,attr)=>`<button class="swatch ${on?"on":""}" data-shcol="${attr}:${k}" aria-label="${COLORS[k].l}"><i style="background:${COLORS[k].c}"></i><span>${COLORS[k].l}</span></button>`;
+function shColorHTML(){const c=colorsOf(),sw=(k,on,attr)=>`<button class="swatch ${on?"on":""}" ${["sonoma","mese","ceviz"].includes(k)?"data-wood":""} data-shcol="${attr}:${k}" aria-label="${COLORS[k].l}"><i style="background:${COLORS[k].c}"></i><span>${COLORS[k].l}</span></button>`;
   return `<span class="lbl">Gövde rengi</span><div class="swatches">${Object.keys(COLORS).map(k=>sw(k,c.body===k||(!c.body&&k==="beyaz"),"body")).join("")}</div>
    <span class="lbl">Kapak rengi</span><div class="chips"><button class="chip" data-shcol="front:same" aria-pressed="${!frontSep()}">Gövdeyle aynı</button><button class="chip" data-shcol="front:diff" aria-pressed="${frontSep()}">Farklı renk</button></div>
    ${frontSep()?`<div class="swatches">${Object.keys(COLORS).filter(k=>k!==c.body).map(k=>sw(k,c.front===k,"front")).join("")}</div>`:""}`}
 function shUrun(){R=computeAll(S.mods);if(!colorsOf().body)colorsOf().body="beyaz";const p=shopPrice(S.mods),op=S.opener||"kulp";
   const cnt=f=>Object.values(R.geo).reduce((s,G)=>s+(G.gap||!G.cols?0:G.cols.reduce((q,c)=>q+c[f].length,0)),0),nm=S.shName||TYPES[S.type].label;
-  $("#view").innerHTML=`<h1 class="c">${esc(nm)}</h1>
+  $("#view").innerHTML=`${shProg(2)}<h1 class="c">${esc(nm)}</h1>
    <div class="hz3wrap"><div id="v3d" class="hz3d"><div class="note" style="padding:20px">3D yükleniyor…</div></div>
     <div class="chips"><button class="chip sm" data-shopen="1" aria-pressed="${!!S.shOpen}">Kapaklar ${S.shOpen?"açık":"kapalı"}</button><span class="note" style="align-self:center">Parmakla çevirin</span></div></div>
    ${priceHTML(p)}
    <div class="panel">${shColorHTML()}
     <span class="lbl">Kulp</span><div class="chips" style="flex-wrap:wrap">${Object.entries(SHOPOPEN).map(([k,l])=>`<button class="chip" data-shop2="${k}" aria-pressed="${op===k}">${l}</button>`).join("")}</div></div>
-   <div class="panel"><b>Özet</b><div class="note">${esc(shSummary())}</div><div class="btns"><button class="btn small ghost" data-shgo="olcu">Ölçüyü değiştir</button><button class="btn small ghost" data-shgo="secim">Başka düzen</button></div></div>
+   <div class="panel"><b>Özet</b><div class="note">${esc(shSummary())}</div><div class="btns"><button class="btn small ghost" data-shgo="olcu">Ölçüyü değiştir</button><button class="btn small ghost" data-shgo="secim">Başka düzen</button><button class="btn small ghost" data-shshare="1">Tasarımı paylaş</button></div></div>
    ${shOrderForm()}`;
-  shBar("secim");
+  shPriceBar(p,"secim");
   load3D().then(()=>{const el=document.getElementById("v3d");if(!el)return;show3D(el,sceneBoxes(S.mods,R,{open:!!S.shOpen,walls:false}),{fit:true,dims:S.type!=="mutfak"})}).catch(()=>{const el=document.getElementById("v3d");if(el)el.innerHTML=`<div class="note" style="padding:16px">3D için internet gerekiyor.</div>`})}
-function shOrderForm(){return `<div class="panel"><b>Sipariş</b>
+function shOrderForm(){return `<div class="panel" id="shOrderBox"><b>Sipariş</b>
    <label class="field"><span class="k">Adınız</span><input id="shWho" value="${esc(S.shWho||"")}" style="font-family:var(--f-body);font-size:16px" autocomplete="name"></label>
    <label class="field"><span class="k">İlçe / şehir</span><input id="shWhere" value="${esc(S.shWhere||"")}" style="font-family:var(--f-body);font-size:16px"></label>
    <label class="field"><span class="k">Not (isteğe bağlı)</span><input id="shNote" value="${esc(S.shNote||"")}" placeholder="ör. Kapı genişliği 80 cm, 3. kat" style="font-family:var(--f-body);font-size:15px"></label>
@@ -2712,7 +2800,7 @@ function shOrderForm(){return `<div class="panel"><b>Sipariş</b>
 function shSummary(){if(S.shStep==="hz"){const B=hzBuild(HZ);return B.M.l+" · "+cm(B.size.W)+" × "+cm(B.size.L)+" × "+cm(B.size.H)+" cm · "+MATADV[HZ.mat].t.split(" (")[0]}
   const c=colorsOf(),R2=R||computeAll(S.mods),cnt=f=>Object.values(R2.geo).reduce((s,G)=>s+(G.gap||!G.cols?0:G.cols.reduce((q,x)=>q+x[f].length,0)),0);
   return (S.type==="mutfak"?S.inp.plan+" mutfak, "+["A","B","C"].slice(0,{I:1,L:2,U:3}[S.inp.plan]).map(w=>S.inp[w]+" cm").join(" + "):TYPES[S.type].label+" "+S.inp.W+" × "+S.inp.H+" × "+S.inp.D+" cm")+
-    " · "+(S.shName||"")+" · "+cnt("doors")+" kapak, "+cnt("drawers")+" çekmece · "+COLORS[c.body||"beyaz"].l+(frontSep()?" gövde, "+COLORS[c.front].l+" kapak":"")+" · "+SHOPOPEN[S.opener||"kulp"]}
+    " · "+(S.shName||"")+" · "+[cnt("doors")?cnt("doors")+" kapak":"",cnt("drawers")?cnt("drawers")+" çekmece":""].filter(Boolean).join(", ")+" · "+COLORS[c.body||"beyaz"].l+(frontSep()?" gövde, "+COLORS[c.front].l+" kapak":"")+" · "+SHOPOPEN[S.opener||"kulp"]}
 function shHz(){const B=hzBuild(HZ),M=B.M,o=HZ,p=hzUnitPrice(B);
   const num=(k,l,min,max)=>`<label class="field"><span class="k">${l}</span><input type="number" inputmode="decimal" data-shhz="${k}" value="${o[k]}" min="${min}" max="${max}"></label>`;
   let f="";if(M.bed)f+=`<span class="lbl">Yatak (şilte) ölçüsü</span><div class="chips wrap">${BEDSZ.map(([w,l])=>`<button class="chip sm" data-shsz="${w}x${l}" aria-pressed="${o.mw===w&&o.ml===l}">${w}×${l}</button>`).join("")}</div>`;
@@ -2721,13 +2809,13 @@ function shHz(){const B=hzBuild(HZ),M=B.M,o=HZ,p=hzUnitPrice(B);
   if(o.m==="kitap")f+=`<div class="grid3">${num("W","En cm",40,160)}${num("H","Yükseklik cm",40,120)}</div>`;
   if(o.m==="ev")f+=`<label class="check"><input type="checkbox" data-shhzc="cati" ${o.cati?"checked":""}><span>Çatı</span></label>`;
   if(M.bed&&o.m!=="divan")f+=`<label class="check"><input type="checkbox" data-shhzc="guard" ${o.guard?"checked":""}><span>Korkuluk</span></label>`;
-  $("#view").innerHTML=`<h1 class="c">${esc(M.l)}</h1><p class="lead">${esc(M.d)}</p>
+  $("#view").innerHTML=`${shProg(2)}<h1 class="c">${esc(M.l)}</h1><p class="lead">${esc(M.d)}</p>
    <div class="hz3wrap"><div id="hz3d" class="hz3d"><div class="note" style="padding:20px">3D yükleniyor…</div></div><div id="hz3t" hidden></div><div class="note">Parmakla çevirin, iki parmakla yakınlaştırın.</div></div>
    ${priceHTML(p)}
    <div class="panel">${f}<span class="lbl">Malzeme</span><div class="chips wrap">${HZMATS.map(k=>`<button class="chip" data-shmat="${k}" aria-pressed="${o.mat===k}">${MATADV[k].t.split(" (")[0]}</button>`).join("")}</div><div class="note">${esc(MATADV[o.mat].best)} · ${esc(MATADV[o.mat].p)}</div></div>
-   <div class="panel"><b>Özet</b><div class="note">${esc(shSummary())}</div></div>
+   <div class="panel"><b>Özet</b><div class="note">${esc(shSummary())}</div><div class="btns"><button class="btn small ghost" data-shshare="1">Tasarımı paylaş</button></div></div>
    ${shOrderForm()}`;
-  shBar("cat");HZB=B;HZ3=null;hz3Show(true)}
+  shPriceBar(p,"cat");HZB=B;HZ3=null;hz3Show(true)}
 async function shOrder(){const who=($("#shWho")||{}).value||"",where=($("#shWhere")||{}).value||"",note=($("#shNote")||{}).value||"";S.shWho=who;S.shWhere=where;S.shNote=note;persist();
   if(!who.trim()){toast("Adınızı yazın");$("#shWho")&&$("#shWho").focus();return}
   const isH=S.shStep==="hz",B=isH?hzBuild(HZ):null,price=SHOP.price?(isH?hzUnitPrice(B):shopPrice(S.mods)):0,title=isH?B.M.l:(TYPES[S.type].label+(S.shName?" — "+S.shName:""));
@@ -2742,10 +2830,19 @@ async function shOrder(){const who=($("#shWho")||{}).value||"",where=($("#shWher
    <button class="btn ghost" data-shmsgcopy="1">Mesajı kopyala</button>
    <div class="note">WhatsApp açılmazsa mesajı kopyalayıp ${esc(SHOP.wa?"+"+SHOP.wa:"bize")} numarasına yapıştırın.</div>`)}
 let SHOPMSG="";
+async function shShare(){const isH=S.shStep==="hz",d={st:S.shStep};if(isH){d.hz=clone(HZ);delete d.hz.tab}else{const p=clone(S);["shWho","shWhere","shNote","view","sel","band"].forEach(k=>delete p[k]);d.p=p}
+  const set=clone(SET);delete set.shop;const url=PAGES+"#m"+await packStr({c:SHOP,set,d}),title=isH?hzBuild(HZ).M.l:TYPES[S.type].label;
+  if(navigator.share){try{await navigator.share({title:title+" — "+(SHOP.n||"tasarım"),text:"Tasarımıma bak: "+shSummary(),url});return}catch(e){if(e&&e.name==="AbortError")return}}
+  try{await navigator.clipboard.writeText(url);toast("Bağlantı kopyalandı; WhatsApp'a yapıştırın")}catch(e){openSheet(`<div class="ed-head"><b>Tasarımı paylaş</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div><textarea readonly style="min-height:90px">${esc(url)}</textarea><div class="note">Bağlantıyı seçip kopyalayın.</div>`)}}
 function shRe(){const mn=document.querySelector("main"),sc=mn.scrollTop;renderShop();mn.scrollTop=sc}
 function shopClick(b,d){
-  if(d.shgo){S.shStep=d.shgo;renderShop();window.scrollTo(0,0);return true}
-  if(d.shcat){S.shCat=d.shcat;S.shStep="cat";renderShop();return true}
+  if(d.shgo){S.shStep=d.shgo;renderShop();document.querySelector("main").scrollTop=0;return true}
+  if(d.shdw){S.shDemoW=Math.max(60,Math.min(400,(+S.shDemoW||200)+ +d.shdw));shDemoUpd();return true}
+  if(d.shdemogo){if(S.type!=="gardirop"){S.type="gardirop";S.mods=[];S.colors=null;S.opener="kulp";S.back=BACK_DEF.gardirop;S.floor=null}Object.assign(S.inp,{W:Math.round(+S.shDemoW||200),H:220,D:58});S.name=TYPES.gardirop.label;S.shStep="secim";renderShop();document.querySelector("main").scrollTop=0;return true}
+  if(d.shtiles){const el=document.getElementById("shTiles");el&&el.scrollIntoView({behavior:"smooth"});return true}
+  if(d.shtoorder){const el=document.getElementById("shOrderBox");if(el){el.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>{const w=$("#shWho");w&&!w.value&&w.focus()},350)}return true}
+  if(d.shshare){shShare();return true}
+  if(d.shcat){S.shCat=d.shcat;if(S.shStep==="home"||S.shStep==="cat"){const mn=document.querySelector("main"),sc=mn.scrollTop;S.shStep="home";renderShop();mn.scrollTop=sc}else{S.shStep="cat";renderShop()}return true}
   if(d.shitem){const[k,key]=d.shitem.split(":");if(k==="h"){HZ.m=key;HZ.qty=0;if(key==="divan"||key==="saklama")HZ.mat="sunta";hzSave();S.shStep="hz"}
     else{if(S.type!==key){S.type=key;S.mods=[];S.colors=null;S.opener="kulp";S.back=BACK_DEF[key]||"3";S.floor=null;if(key!=="mutfak"){const T=TYPES[key];Object.assign(S.inp,{W:T.W,H:T.H,D:T.D/10})}else Object.assign(S.inp,{plan:S.inp.plan||"L",A:S.inp.A||300,B:S.inp.B||240,C:S.inp.C||240})}S.name=TYPES[key].label;S.shStep="olcu"}
     renderShop();window.scrollTo(0,0);return true}
@@ -2762,6 +2859,7 @@ function shopClick(b,d){
   if(d.shmsgcopy){navigator.clipboard&&navigator.clipboard.writeText(SHOPMSG).then(()=>toast("Mesaj kopyalandı"),()=>toast("Kopyalanamadı"));return true}
   return false}
 function shopChange(x,d){
+  if(d.shdwi){const v=parseFloat(String(x.value).replace(",","."));if(v>0){S.shDemoW=Math.max(60,Math.min(400,v));shDemoUpd()}return true}
   if(d.shi){const v=parseFloat(String(x.value).replace(",","."));if(v>0){S.inp[d.shi]=v;S.mods=[];persist()}return true}
   if(d.shchk){S.inp[d.shchk]=x.checked;S.mods=[];persist();return true}
   if(d.shhz){const v=parseFloat(String(x.value).replace(",","."));if(v>0){HZ[d.shhz]=v;hzSave();shRe()}return true}
@@ -3157,7 +3255,7 @@ function openerSheet(){openSheet(`<div class="ed-head"><b>Kulp ve açılış</b>
 function renderSonuc(){
   relabel();R=computeAll(S.mods);const tabs=[["parca","Parçalar"],["plaka","Plakalar"],["etiket","Etiket"],["delik","Delik"],["hw","Hırdavat"],["teklif","Teklif"],["gonder","Gönder"]];if(!S.opener)S.opener="kulp";
   let h=`<div class="chips">${tabs.map(([k,l])=>`<button class="chip" data-rt="${k}" aria-pressed="${S.resTab===k}">${l}</button>`).join("")}</div>`;
-  if(S.resTab==="parca"){h+=partEditNote()+`<p class="note"><b>Düzeltme:</b> parça numarasına (✎) dokunup ölçü, adet ya da adı değiştirin, parçayı çıkarın; en alttan yeni parça ekleyin.</p><p class="note"><b>Bant:</b> parçanın kenarına dokunarak bant ekleyin ya da kaldırın (turuncu = bantlı; üst-alt uzun, sağ-sol kısa kenar). ${+SET.bandT?"Bant kalınlığı "+SET.bandT+" mm kesim ölçüsünden düşülüyor.":"Kalın bantta kesimden düşmek için Ayarlar → Bant kalınlığı."}${Object.keys(S.bandOv||{}).length?` <button class="btn small ghost" data-bandreset="1">Bantları sıfırla</button>`:""}</p><p class="note" style="display:none">Ölçüler mm. Bant: ilk iki çizgi uzun kenarlar, son ikisi kısa kenarlar; turuncu = bant var. Parça adının altında hangi dolaplarda kullanıldığı yazar.</p>`;
+  if(S.resTab==="parca"){h+=partEditNote()+`${backOf()!=="18"?`<p class="note"><b>Arkalık:</b> kanal açılmaz, gövdenin arkasına çakılır. Ölçüsü dış enden 4 mm, bazanın üstündeki gövde boyundan 4 mm eksik (her kenarda 2 mm pay).</p>`:""}<p class="note"><b>Düzeltme:</b> parça numarasına (✎) dokunup ölçü, adet ya da adı değiştirin, parçayı çıkarın; en alttan yeni parça ekleyin.</p><p class="note"><b>Bant:</b> parçanın kenarına dokunarak bant ekleyin ya da kaldırın (turuncu = bantlı; üst-alt uzun, sağ-sol kısa kenar). ${+SET.bandT?"Bant kalınlığı "+SET.bandT+" mm kesim ölçüsünden düşülüyor.":"Kalın bantta kesimden düşmek için Ayarlar → Bant kalınlığı."}${Object.keys(S.bandOv||{}).length?` <button class="btn small ghost" data-bandreset="1">Bantları sıfırla</button>`:""}</p><p class="note" style="display:none">Ölçüler mm. Bant: ilk iki çizgi uzun kenarlar, son ikisi kısa kenarlar; turuncu = bant var. Parça adının altında hangi dolaplarda kullanıldığı yazar.</p>`;
     matsUsed(R.parts).forEach(mt=>{h+=`<div class="matbar"><span class="sw ${mt!=="sunta"&&mt!=="kapak"?"back":""}" style="${mt==="sunta"?"background:"+bodyFill():mt==="kapak"?"background:"+frontFill():""}"></span>${esc(matLabel(mt))}</div><div class="tablewrap"><table><thead><tr><th>No</th><th>Parça</th><th style="text-align:right">Adet</th><th style="text-align:right">Boy × En</th><th>Bant</th></tr></thead><tbody>${partRows(mt)}</tbody></table></div><div class="btns" style="margin-top:6px"><button class="btn small ghost" data-padd="${mt}">+ ${esc(matLabel(mt))} parçası ekle</button></div>`});
     {const dm=[...new Set((R.delParts||[]).map(p=>p.mat))].filter(k=>!matsUsed(R.parts).includes(k));dm.forEach(mt=>{h+=`<div class="matbar">${esc(matLabel(mt))}</div><div class="tablewrap"><table><tbody>${partRows(mt)}</tbody></table></div>`})}
     h+=`<div class="btns"><button class="btn" data-padd="sunta">+ Parça ekle</button></div>`}
@@ -3382,8 +3480,14 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
 
 
 /* ====================== YARDIM · YENİLİKLER ====================== */
-const APPVER="2026.10.23";
+const APPVER="2026.10.23b";
 const NEWS=[
+ {d:"23 Ekim 2026 · gece",t:"Yeni mağaza görünümü",items:[
+  ["Canlı ölçü","Mağazanın girişinde gardırop çizimi: müşteri eni değiştirdikçe çizim ve fiyat anında değişir; 'Bu ölçüyle tasarla' ile devam eder.",null],
+  ["Ürün kareleri","Her ürün gerçek çizimiyle ve '…'den başlar' fiyatıyla görünür (fiyatlar sizin fiyat kütüphanenizden).",null],
+  ["Sabit fiyat çubuğu","Ürün ekranında fiyat ve 'Sipariş ver' hep altta; üstte Ölçü, Düzen, Renk, Sipariş adımları.",null],
+  ["Paylaş ve SSS","Müşteri tasarımını eşine, ailesine bağlantıyla gönderebilir; açan kişi aynı tasarımı görür. Sık sorulanlar ve 'Neden bizden' bölümü eklendi.",null],
+  ["Arkalık notu","Kesim → Parçalar'da arkalığın kanalsız, arkaya çakıldığı ve nasıl ölçülendiği yazar.",null]]},
  {d:"23 Ekim 2026",t:"Mağaza: müşteri kendi tasarlasın, WhatsApp'tan sipariş versin",items:[
   ["Mağaza bağlantısı","Ana ekran → 'Mağaza (müşteri sitesi)': mağaza adınızı ve WhatsApp numaranızı yazın, satışa açık ürünleri seçin, bağlantıyı oluşturun. Instagram'a, Google İşletme sayfanıza ya da WhatsApp durumuna koyun.",null],
   ["Müşteri ekranı","Müşteri sade bir mağaza görür: dolap ve depolama, mutfak, bebek ve çocuk. Ölçüsünü yazar, hazır düzenlerden birini seçer, rengi ve kulpu belirler, 3D'de çevirir, fiyatı (KDV dahil, peşin indirimiyle) görür.",null],
