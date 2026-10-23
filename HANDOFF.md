@@ -83,6 +83,13 @@ Bu dosya, uzayan oturumdaki işi yeni bir oturumda kaldığı yerden sürdürmek
   - `renderListe`, `flRowHTML`, `flParts`, `flResultsHTML`.
   - Satır ekleme, silme ve düzenleme burada zaten var: `data-fladd`, `data-fldel`, `data-flm`…
   - Projeden aktarma: `data-flimp`.
+- **Mağaza (2026.10.23):** Woodcoder benzeri müşteri ekranı, sunucusuz.
+  - `#m…` bağlantısı = `packStr({c:SET.shop, set:SET})` (deflate-raw + base64url). `bootHash()` açılışta çözer → `SHOP` dolu, `SET` bağlantıdan, `S` `atolye2_shopcur`'dan, `HZ` `atolye2_shophz`'den; `persist`/`hzSave` mağazada atölye anahtarlarına yazmaz. `body.shopmode` başlık düğmelerini gizler.
+  - Ekranlar `renderShop` → `shHome/shCat/shOlcu/shSecim/shUrun/shHz` (`S.shStep`). Ürünler `SHOPCATS` (t = TYPES, h = hazır model). Fiyat: tür ürünlerde `shopPrice(mods)` = `quote().rounded`; hazırda `hzUnitPrice` (levhayı dolduran parti, adet başı) + `markup`.
+  - Sipariş: `shOrder` → `#s…` bağlantısı (`{k,title,sum,who,price,p|hz}`) + `wa.me/<no>?text=`. Atölye açınca `orderSheet` → `orderOpen` projeye ekler (hazırda HZ'ye yükler).
+  - Atölye tarafı: `shopAdmSheet` (ana ekranda `data-shopadm`), `shopMakeLink`; ayarlar `SET.shop`. Tıklama `shopClick`, değişiklik `shopChange`.
+  - Uyarı: fiyat istemcide hesaplandığı için bağlantıda maliyet ve kâr oranı da var (sheet'te not düşüldü).
+  - Sıradaki: (2) parça etiketinde QR (montaj adımı) + CNC'li fasoncu için delikli DXF; (3) bebek/çocuk serisi (anne yanı beşik, dönüşen karyola, Montessori masa-sandalye; EN 1130 / EN 716).
 - **Diğer:**
   - Fotoğrafla ölçü: `FM`, `fmH`, `renderFoto`.
   - Müşteri klasörleri: `folders`, `projSave`, `renderProj`.

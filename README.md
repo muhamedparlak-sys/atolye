@@ -16,12 +16,17 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 
 ## Hızlı başlangıç
 
+- **Mağaza:** Ne yapıyoruz? ekranında *Mağaza (müşteri sitesi)* → WhatsApp numarası → bağlantıyı oluştur → müşteriye gönder. Siparişler WhatsApp'a tasarım bağlantısıyla gelir.
+
 - **Tasarımla:** Ne? → türü seç → Ölçü → Öneri'den bir düzen seç → Düzen'de göze dokunup ayarla → Kesim sekmesinden listeyi kesimhaneye, teklifi müşteriye gönder.
 - **Sadece fiyat:** Ne yapıyoruz? ekranında *Hızlı fiyat*: dolap ölçüsü, bölme/çekmece/raf sayısı → levha sayısı, yerleşim ve fiyat.
 - **Ölçüler hazırsa:** *Ölçüden levha planı*: boy × en × adet yaz → levha yerleşimi → PDF / Excel / metin olarak fasoncuya gönder.
 - Uygulama içinde: Ne yapıyoruz? ekranındaki **? Nasıl kullanılır** ve **★ Yenilikler**.
 
 ## Yenilikler
+
+**23 Ekim 2026**
+- Mağaza (müşteri sitesi): tek bağlantıyla müşteriye sade mağaza — ürün seç, ölçü yaz, düzen ve renk seç, 3D, canlı fiyat (KDV dahil, peşin indirimi), WhatsApp'tan sipariş. Siparişteki bağlantı tasarımı atölyede proje olarak açar. Sunucu yok; ayarlar ve fiyatlar bağlantının içinde.
 
 **21 Ekim 2026 · gece (3)**
 - Hazır modellerde "Levhayı doldur": önerilen üretim adedi, 1–6 adet için levha/fire karşılaştırması; kesim listesi, levha planı, hırdavat, maliyet ve kılavuz seçilen adet için, adet başı maliyetle
