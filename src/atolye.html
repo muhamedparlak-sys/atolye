@@ -2685,28 +2685,31 @@ function shopCfgOf(){SET.shop=Object.assign({n:"Atölye",wa:"",cats:{dolap:true,
 function shopMiss(){const m=[];["sunta","arka3","arka8"].forEach(k=>{if(!(+SET.mats[k].price))m.push(SET.mats[k].name)});if(!(+SET.bandPrice))m.push("bant");if(!Object.keys(SET.hwPrice||{}).length)m.push("hırdavat fiyatları");return m}
 let SHOPLINK=null;
 function shopAdmSheet(){const c=shopCfgOf(),miss=shopMiss();
-  if(!SHOPLINK)shopAuto();
   openSheet(`<div class="ed-head"><b>Mağazam</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
-   <div class="note">Müşteriniz bu bağlantıyı açınca sade bir mağaza görür: ürünü seçer, ölçüsünü girer, 3D'de görür, fiyatını görür ve siparişi WhatsApp'tan size gönderir. Siparişteki bağlantıyı açınca tasarım burada proje olarak açılır. Sunucu ve üyelik gerekmez.</div>
+   <div class="note">Mağaza siteniz: <a href="${esc(SITEURL)}" target="_blank" rel="noopener">${esc(SITEURL.replace(/^https:\/\//,""))}</a>. Müşteri ürünü seçer, ölçüsünü girer, 3D'de görür, fiyatı görür ve siparişi WhatsApp'tan size gönderir. Siparişteki bağlantıyı açınca tasarım burada proje olarak açılır.</div>
    <label class="field"><span class="k">Mağaza adı</span><input data-shopset="n" value="${esc(c.n)}" placeholder="Atölye" style="font-family:var(--f-body);font-size:16px"></label>
-   <label class="field"><span class="k">WhatsApp numarası</span><input data-shopset="wa" inputmode="tel" value="${esc(c.wa)}" placeholder="05xx xxx xx xx"></label>
+   <label class="field"><span class="k">Siparişlerin geleceği WhatsApp numarası</span><input data-shopset="wa" inputmode="tel" value="${esc(c.wa)}" placeholder="05xx xxx xx xx"></label>
    <span class="lbl">Satışa açık ürünler</span>${Object.entries(SHOPCATS).map(([k,v])=>`<label class="check"><input type="checkbox" data-shopcat="${k}" ${c.cats[k]?"checked":""}><span>${v.l}<small>${v.d}</small></span></label>`).join("")}
    <label class="check"><input type="checkbox" data-shopset="price" ${c.price?"checked":""}><span>Fiyatı müşteriye göster<small>Kapalıysa "Fiyat için yazın" görünür. Fiyat, Teklif sekmesindeki işçilik, kâr ve KDV ayarlarıyla hesaplanır.</small></span></label>
    <label class="field"><span class="k">Peşin / havale indirimi %</span><input type="number" inputmode="decimal" data-shopset="disc" value="${c.disc}"></label>
    <label class="field"><span class="k">Müşteriye not (isteğe bağlı)</span><input data-shopset="note" value="${esc(c.note)}" placeholder="ör. Teslim 15 iş günü · Antalya içi montaj ücretsiz" style="font-family:var(--f-body);font-size:15px"></label>
    ${miss.length?`<div class="note" style="color:var(--warn)">Eksik fiyat: ${esc(miss.join(", "))}. Fiyat kütüphanesinden (₺ düğmesi) girin; yoksa müşteri yanlış fiyat görür.</div>`:""}
-   <div id="shopLinkOut">${SHOPLINK?shopLinkHTML():`<div class="note">Bağlantı WhatsApp numarasını yazınca kendiliğinden hazırlanır.</div>`}</div>
-   <div class="note">Fiyatlarınızı değiştirince bağlantı da yenilenir; yeni bağlantıyı paylaşın, eski bağlantı eski fiyatları gösterir. Hazır modellerde (divan, Montessori yatak…) fiyat, levhayı dolduran toplu üretime göre adet başı hesaplanır.</div>
+   <div class="btns"><button class="btn ghost" data-shoppv="1">Bu ayarlarla önizle</button></div>
+   <span class="lbl">Siteye işle</span>
+   <div class="note">Ayarlarınız ve fiyatlarınız siteye siz yayınlayınca geçer. İki yol var:</div>
+   <div class="btns"><button class="btn" data-shopcode="1">Yayın kodunu kopyala</button><button class="btn ghost" data-shopdl="1">Site dosyasını indir (.html)</button></div>
+   <div class="note">Yayın kodunu Claude'a "mağazayı yayınla" diyerek gönderin, siteye işlenir. Ya da site dosyasını indirip kendi alan adınıza ya da herhangi bir barındırmaya yükleyin (tek dosya, sunucu gerekmez). Hazır modellerde (divan, Montessori yatak…) fiyat, levhayı dolduran toplu üretime göre adet başı hesaplanır.</div>
    <div class="note" style="color:var(--warn)">Fiyat müşterinin telefonunda hesaplandığı için bağlantıda plaka fiyatlarınız ve kâr oranınız da bulunur; bilgisayardan anlayan biri bunları çözebilir. Hassas buluyorsanız "Fiyatı müşteriye göster"i kapatın.</div>`)}
 function shopLinkHTML(){return `<div class="btns"><button class="btn" data-shoppv="1">Mağazayı gör</button><button class="btn ghost" data-shopshare="1">${navigator.share?"Paylaş":"Bağlantıyı kopyala"}</button></div>
   <details class="more"><summary>Bağlantının kendisi</summary><textarea readonly style="min-height:80px;margin-top:8px">${esc(SHOPLINK)}</textarea><div class="btns"><button class="btn small ghost" data-shopcopy="1">Kopyala</button></div></details>
   <div class="note">Instagram profilinize, Google İşletme sayfanıza ya da WhatsApp durumunuza koyabilirsiniz. Bağlantı uzun; kısaltmak için bit.ly gibi bir servis kullanabilirsiniz.</div>`}
 /* ana ekrandaki mağaza kartı: kurulduysa tek dokunuşla gör / paylaş */
-function shopCardHTML(){const c=shopCfgOf(),ok=waNum(c.wa).length>=11,miss=shopMiss();
+function shopCardHTML(){const miss=shopMiss(),c=shopCfgOf();
   return `<div class="panel shopcard"><div class="prow" style="justify-content:flex-start;gap:12px"><svg viewBox="0 0 48 48" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);flex:none"><path d="M6 18l4-10h28l4 10M6 18h36v22H6zM6 18c0 4 3 6 6 6s6-2 6-6c0 4 3 6 6 6s6-2 6-6c0 4 3 6 6 6s6-2 6-6M20 40V30h8v10"/></svg>
-   <div style="flex:1;min-width:0"><b style="font:700 20px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.03em">Mağazam</b><div class="note">${ok?"Müşteriniz ölçüsünü yazar, fiyatı görür, WhatsApp'tan sipariş verir.":"Müşteri kendi tasarlasın, fiyatı görsün, WhatsApp'tan sipariş versin. Kurulum 30 saniye."}</div></div></div>
-   ${ok?`<div class="btns"><button class="btn small" data-shoppv="1">Mağazayı gör</button><button class="btn small ghost" data-shopshare="1">Müşteriye gönder</button><button class="btn small ghost" data-shopadm="1">Ayarlar</button></div>${miss.length?`<div class="note" style="color:var(--warn)">Eksik fiyat: ${esc(miss.join(", "))}</div>`:""}`
-    :`<label class="field"><span class="k">WhatsApp numaranız</span><input data-shopset="wa" inputmode="tel" placeholder="05xx xxx xx xx" value="${esc(c.wa)}"></label><div class="btns"><button class="btn small" data-shopquick="1">Mağazamı aç</button><button class="btn small ghost" data-shopadm="1">Ayrıntılı ayarlar</button></div>`}</div>`}
+   <div style="flex:1;min-width:0"><b style="font:700 20px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.03em">Mağaza sitesi</b><div class="note">Müşteriniz ölçüsünü yazar, 3D'de görür, fiyatı görür, WhatsApp'tan sipariş verir.</div>
+    <div class="note" style="font-family:var(--f-mono);font-size:12px;word-break:break-all">${esc(SITEURL.replace(/^https:\/\//,""))}</div></div></div>
+   <div class="btns"><a class="btn small" href="${esc(SITEURL)}" target="_blank" rel="noopener">Siteyi aç</a><button class="btn small ghost" data-shopsite="1">Müşteriye gönder</button><button class="btn small ghost" data-shopadm="1">Ayarlar ve yayın</button></div>
+   ${miss.length||!waNum(c.wa)?`<div class="note" style="color:var(--warn)">${[!waNum(c.wa)?"sipariş için WhatsApp numarası eksik":"",miss.length?"eksik fiyat: "+miss.join(", "):""].filter(Boolean).join(" · ")}</div>`:""}</div>`}
 let SHOPAUTO=null;
 function shopAuto(){clearTimeout(SHOPAUTO);SHOPAUTO=setTimeout(async()=>{const c=shopCfgOf();if(waNum(c.wa).length<11){SHOPLINK=null;return}const set=clone(SET);delete set.shop;SHOPLINK=PAGES+"#m"+await packStr({c:Object.assign({},c,{wa:waNum(c.wa)}),set});const el=document.getElementById("shopLinkOut");if(el)el.innerHTML=shopLinkHTML()},150)}
 async function shopEnsure(){const c=shopCfgOf();if(waNum(c.wa).length<11){toast("Önce WhatsApp numaranızı yazın");const i=document.querySelector('[data-shopset="wa"]');i&&i.focus();return null}
@@ -2715,16 +2718,24 @@ async function shopPreview(){const l=await shopEnsure();if(!l)return;try{session
 async function shopSend(){const l=await shopEnsure();if(!l)return;const c=shopCfgOf(),txt=(c.n||"Atölye")+": ölçünüzü yazın, fiyatı hemen görün, siparişi WhatsApp'tan verin.";
   if(navigator.share){try{await navigator.share({title:c.n||"Atölye",text:txt,url:l});return}catch(e){if(e&&e.name==="AbortError")return}}
   try{await navigator.clipboard.writeText(l);toast("Mağaza bağlantısı kopyalandı; WhatsApp'a yapıştırın")}catch(e){shopAdmSheet()}}
+async function shopCode(){const c=shopCfgOf(),set=clone(SET);delete set.shop;return "ATOLYE-MAGAZA:"+await packStr({c:Object.assign({},c,{wa:waNum(c.wa)}),set})}
+async function shopSiteFile(){toast("Site dosyası hazırlanıyor…");try{const r=await fetch(PAGES+"index.html",{cache:"no-store"});let h=await r.text();const c=shopCfgOf(),set=clone(SET);delete set.shop;
+    const cfg={c:Object.assign({},c,{wa:waNum(c.wa)}),set},n=c.n||"Atölye";h=h.replace("<title>Atölye Kesim</title>","<title>"+esc(n)+" — ölçüye özel mobilya</title>");
+    const mk="<script>\n/* ====================== AYARLAR";if(!h.includes(mk))throw new Error("şablon");h=h.replace(mk,"<script>window.SHOP_BAKED="+JSON.stringify(cfg).split("</").join("<\\/")+";<\/script>\n"+mk);
+    saveFile(new Blob([h],{type:"text/html"}),slug(n)+"-magaza.html")}catch(e){toast("İndirilemedi: internet bağlantısını kontrol edin")}}
 async function shopMakeLink(){const c=shopCfgOf();if(!waNum(c.wa)||waNum(c.wa).length<11){toast("Önce WhatsApp numarasını yazın");return}
   const set=clone(SET);delete set.shop;SHOPLINK=PAGES+"#m"+await packStr({c:Object.assign({},c,{wa:waNum(c.wa)}),set});persist();const el=document.getElementById("shopLinkOut");if(el)el.innerHTML=shopLinkHTML();toast("Mağaza bağlantısı hazır")}
 /* ---- açılış: #m (mağaza) ya da #s (sipariş) ---- */
+const SHOPSITE=typeof window!=="undefined"&&!!window.SHOP_BAKED; // magaza/ sitesi: ayarlar sayfaya gömülü
+const SITEURL=PAGES+"magaza/";
 async function bootHash(){const h=(typeof location!=="undefined"&&location.hash)||"";
-  if(h.startsWith("#m")){try{const d=await unpackStr(h.slice(2));SHOP=d.c;SET=Object.assign(clone(DEFAULT_SET),d.set||{});SET.mats=Object.assign(clone(DEFAULT_SET.mats),(d.set||{}).mats||{});
+  if(SHOPSITE&&!h.startsWith("#m")){let dd=null;if(h.startsWith("#d")){try{dd=await unpackStr(h.slice(2))}catch(e){}}const B=window.SHOP_BAKED;await bootHashApply({c:B.c,set:B.set||{},d:dd});return}
+  if(h.startsWith("#m")){try{const d=await unpackStr(h.slice(2));await bootHashApply(d)}catch(e){SHOP=null;setTimeout(()=>toast("Mağaza bağlantısı bozuk; gönderen kişiden yeniden isteyin."),300)}}
+  else if(h.startsWith("#s")){try{ORDER=await unpackStr(h.slice(2))}catch(e){setTimeout(()=>toast("Sipariş bağlantısı bozuk."),300)}}}
+async function bootHashApply(d){{SHOP=d.c;SET=Object.assign(clone(DEFAULT_SET),d.set||{});SET.mats=Object.assign(clone(DEFAULT_SET.mats),(d.set||{}).mats||{});
       S=Object.assign(freshState(),LS.get("atolye2_shopcur")||{});S.view=null;S.partOv={};S.extraParts=[];HZ=Object.assign({},HZDEF,LS.get("atolye2_shophz")||{});
       if(d.d){if(d.d.hz)HZ=Object.assign({},HZDEF,d.d.hz);if(d.d.p)S=Object.assign(freshState(),d.d.p,{view:null,partOv:{},extraParts:[]});S.shStep=d.d.st||"home";setTimeout(()=>toast("Paylaşılan tasarım açıldı"),400)}
-      document.body.classList.add("shopmode");{let pv=false;try{pv=sessionStorage.getItem("atolye_pv")==="1"}catch(e){}const own=(LS.get("atolye2_set")||{}).shop;if(pv||(own&&waNum(own.wa)===SHOP.wa)){const tr=document.querySelector(".top-row");tr&&tr.insertAdjacentHTML("beforeend",`<button class="btn small ghost shownbtn" data-shownback="1">Atölyeye dön</button>`)}}{const tr=document.querySelector(".top-row");if(tr&&!document.getElementById("shFullBack")){tr.insertAdjacentHTML("beforeend",`<button class="btn small ghost shfullonly" id="shFullBack" data-shfullexit="0">‹ Mağaza</button><button class="btn small shfullonly" data-shfullexit="1">Sipariş ver</button>`)}}document.title=(SHOP.n||"Atölye")+" — ölçüye özel mobilya";const pn=$("#projName");pn.readOnly=true;pn.setAttribute("aria-label","Mağaza")}
-    catch(e){SHOP=null;setTimeout(()=>toast("Mağaza bağlantısı bozuk; gönderen kişiden yeniden isteyin."),300)}}
-  else if(h.startsWith("#s")){try{ORDER=await unpackStr(h.slice(2))}catch(e){setTimeout(()=>toast("Sipariş bağlantısı bozuk."),300)}}}
+      document.body.classList.add("shopmode");{let pv=false;try{pv=sessionStorage.getItem("atolye_pv")==="1"}catch(e){}const own=(LS.get("atolye2_set")||{}).shop;if(pv||(own&&waNum(own.wa)===SHOP.wa)){const tr=document.querySelector(".top-row");tr&&tr.insertAdjacentHTML("beforeend",`<button class="btn small ghost shownbtn" data-shownback="1">Atölyeye dön</button>`)}}{const tr=document.querySelector(".top-row");if(tr&&!document.getElementById("shFullBack")){tr.insertAdjacentHTML("beforeend",`<button class="btn small ghost shfullonly" id="shFullBack" data-shfullexit="0">‹ Mağaza</button><button class="btn small shfullonly" data-shfullexit="1">Sipariş ver</button>`)}}document.title=(SHOP.n||"Atölye")+" — ölçüye özel mobilya";const pn=$("#projName");pn.readOnly=true;pn.setAttribute("aria-label","Mağaza")}}
 function orderSheet(){const o=ORDER;if(!o)return;
   openSheet(`<div class="ed-head"><b>Siparişten gelen tasarım</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
    <div class="panel"><b>${esc(o.title||"Tasarım")}</b><div class="note">${esc(o.sum||"")}</div>${o.who?`<div class="note">Müşteri: ${esc(o.who)}</div>`:""}${o.price?`<div class="note">Müşterinin gördüğü fiyat: <b>${fmt(o.price)} ₺</b> (${esc(o.date||"")})</div>`:""}</div>
@@ -2868,6 +2879,25 @@ function shSoft(priceToo){const el3=document.getElementById(S.shStep==="hz"?"hz3
   if(p!=null){const ae=document.activeElement,k=ae&&ae.dataset&&ae.dataset.shsz2;rest.innerHTML=shUrunRest(p);shPriceBar(p,S.type==="mutfak"?"secim":"home");if(k){const n=rest.querySelector(`[data-shsz2="${k}"]`);n&&n.focus()}}
   if(window.THREE&&T3)show3D(el3,sceneBoxes(S.mods,R,{open:!!S.shOpen,walls:false}),{anim:true,dims:S.type!=="mutfak"})}
 function shResize(k,v,final){S.inp[k]=v;const lb=document.getElementById("shv-"+k);if(lb)lb.textContent=v+" cm";VARS=variants();const v2=VARS[Math.min(S.shVar||0,VARS.length-1)];S.mods=clone(v2.mods);shSoft(!!final);if(final)persist()}
+async function shOrder(){const who=($("#shWho")||{}).value||"",where=($("#shWhere")||{}).value||"",note=($("#shNote")||{}).value||"";S.shWho=who;S.shWhere=where;S.shNote=note;persist();
+  if(!who.trim()){toast("Adınızı yazın");$("#shWho")&&$("#shWho").focus();return}
+  if(!SHOP.wa){toast("Mağaza sipariş numarasını henüz eklemedi");return}
+  const isH=S.shStep==="hz",B=isH?hzBuild(HZ):null,price=SHOP.price?(isH?hzUnitPrice(B):shopPrice(S.mods)):0,title=isH?B.M.l:(TYPES[S.type].label+(S.shName?" — "+S.shName:""));
+  const p=clone(S);["shStep","shCat","shWho","shWhere","shNote","shOpen","view","sel","band"].forEach(k=>delete p[k]);
+  const o={k:isH?"h":"t",title,sum:shSummary(),who:who+(where?" · "+where:""),price,date:new Date().toLocaleDateString("tr-TR")};if(isH){o.hz=clone(HZ);delete o.hz.tab}else o.p=p;
+  toast("Sipariş hazırlanıyor…");const link=PAGES+"#s"+await packStr(o);
+  const msg=["Merhaba, sipariş vermek istiyorum"+(SHOP.n?" ("+SHOP.n+" mağaza sayfası)":"")+".","","Ürün: "+title,o.sum,price>0?"Gördüğüm fiyat: "+fmt(price)+" ₺ (KDV dahil)":"","Ad: "+who+(where?" · "+where:""),note?"Not: "+note:"","","Tasarım: "+link].filter((x,i,a)=>x!==""||a[i-1]!=="").join("\n");
+  const wa="https://wa.me/"+SHOP.wa+"?text="+encodeURIComponent(msg);SHOPMSG=msg;
+  openSheet(`<div class="ed-head"><b>Siparişiniz hazır</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div>
+   <div class="note">WhatsApp açılınca mesajı göndermeniz yeterli. Tasarımınız mesajdaki bağlantıyla bize ulaşır.</div>
+   <a class="btn" href="${esc(wa)}" target="_blank" rel="noopener">WhatsApp'ı aç ve gönder</a>
+   <button class="btn ghost" data-shmsgcopy="1">Mesajı kopyala</button>
+   <div class="note">WhatsApp açılmazsa mesajı kopyalayıp ${esc(SHOP.wa?"+"+SHOP.wa:"bize")} numarasına yapıştırın.</div>`)}
+let SHOPMSG="";
+async function shShare(){const isH=S.shStep==="hz",d={st:S.shStep};if(isH){d.hz=clone(HZ);delete d.hz.tab}else{const p=clone(S);["shWho","shWhere","shNote","view","sel","band"].forEach(k=>delete p[k]);d.p=p}
+  const set=clone(SET);delete set.shop;const url=SHOPSITE?location.origin+location.pathname+"#d"+await packStr(d):PAGES+"#m"+await packStr({c:SHOP,set,d}),title=isH?hzBuild(HZ).M.l:TYPES[S.type].label;
+  if(navigator.share){try{await navigator.share({title:title+" — "+(SHOP.n||"tasarım"),text:"Tasarımıma bak: "+shSummary(),url});return}catch(e){if(e&&e.name==="AbortError")return}}
+  try{await navigator.clipboard.writeText(url);toast("Bağlantı kopyalandı; WhatsApp'a yapıştırın")}catch(e){openSheet(`<div class="ed-head"><b>Tasarımı paylaş</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div><textarea readonly style="min-height:90px">${esc(url)}</textarea><div class="note">Bağlantıyı seçip kopyalayın.</div>`)}}
 function shRe(){const mn=document.querySelector("main"),sc=mn.scrollTop;renderShop();mn.scrollTop=sc}
 function shopClick(b,d){
   if(d.shownback){try{sessionStorage.removeItem("atolye_pv")}catch(e){}history.replaceState(null,"",location.pathname+location.search);location.reload();return true}
@@ -3522,8 +3552,11 @@ function labelsHTML(){const L=labelList(),F=S.lblF||"a4_24";
 
 
 /* ====================== YARDIM · YENİLİKLER ====================== */
-const APPVER="2026.10.24";
+const APPVER="2026.10.24b";
 const NEWS=[
+ {d:"24 Ekim 2026",t:"Mağaza artık ayrı bir web sitesi",items:[
+  ["Mağaza sitesi","Mağaza kendi adresinde açılan ayrı bir site: muhamedparlak-sys.github.io/atolye/magaza. Müşteri doğrudan mağazayı görür; numara ya da uzun bağlantı gerekmez. Ana ekrandaki 'Mağaza sitesi' kartından açın ya da müşteriye gönderin.",null],
+  ["Yayınlama","Ayarlarınızı ve fiyatlarınızı siteye işlemek için 'Ayarlar ve yayın' → 'Yayın kodunu kopyala' → Claude'a gönderin. Ya da 'Site dosyasını indir' ile tek dosyalık siteyi kendi alan adınıza yükleyin.",null]]},
  {d:"24 Ekim 2026",t:"Mağaza en üstte, tek dokunuşla",items:[
   ["Mağazam","Ana ekranın en üstünde ve üst çubukta mağaza düğmesi. WhatsApp numaranızı yazıp 'Mağazamı aç'a dokunun; bağlantı kendiliğinden hazırlanır. 'Mağazayı gör' ile müşterinin göreceğini açarsınız, 'Atölyeye dön' ile geri gelirsiniz; 'Müşteriye gönder' paylaşım menüsünü açar.",null],
   ["Müşteri için tek dokunuş","Müşteri ürüne dokununca ölçü ekranı beklemeden 3D, fiyat ve sipariş açılır. Ölçüyü sürgüyle, iç düzeni tek dokunuşla değiştirir; model ve fiyat anında güncellenir.",null]]},
@@ -4023,6 +4056,9 @@ document.addEventListener("click",e=>{
   if(d.shoplink){shopMakeLink();return}
   if(d.shopcopy){navigator.clipboard&&navigator.clipboard.writeText(SHOPLINK).then(()=>toast("Bağlantı kopyalandı"),()=>toast("Kopyalanamadı; metni seçip kopyalayın"));return}
   if(d.shopshare){shopSend();return}
+  if(d.shopsite){const c=shopCfgOf(),txt=(c.n||"Atölye")+": ölçünüzü yazın, fiyatı hemen görün, siparişi WhatsApp'tan verin.";if(navigator.share){navigator.share({title:c.n||"Atölye",text:txt,url:SITEURL}).catch(()=>{})}else navigator.clipboard.writeText(SITEURL).then(()=>toast("Site adresi kopyalandı"),()=>toast(SITEURL));return}
+  if(d.shopcode){shopCode().then(t=>navigator.clipboard.writeText(t).then(()=>toast("Yayın kodu kopyalandı; Claude'a gönderin"),()=>openSheet(`<div class="ed-head"><b>Yayın kodu</b><button class="icobtn" data-closesheet="1" aria-label="Kapat">✕</button></div><textarea readonly style="min-height:120px">${esc(t)}</textarea>`)));return}
+  if(d.shopdl){shopSiteFile();return}
   if(d.shoppv){shopPreview();return}
   if(d.shopquick){const i=document.querySelector('[data-shopset="wa"]');if(i)shopCfgOf().wa=i.value.trim();persist();shopPreview();return}
   if(d.ordopen){orderOpen();return}

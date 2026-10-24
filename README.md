@@ -16,7 +16,7 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 
 ## Hızlı başlangıç
 
-- **Mağaza:** Ana ekranın en üstündeki *Mağazam* → WhatsApp numarası → bağlantıyı oluştur → müşteriye gönder. Siparişler WhatsApp'a tasarım bağlantısıyla gelir.
+- **Mağaza sitesi:** https://muhamedparlak-sys.github.io/atolye/magaza/ — ana ekrandaki *Mağaza sitesi* kartından açılır, müşteriye gönderilir; *Ayarlar ve yayın* ile fiyatlar siteye işlenir. Eski: → WhatsApp numarası → bağlantıyı oluştur → müşteriye gönder. Siparişler WhatsApp'a tasarım bağlantısıyla gelir.
 
 - **Tasarımla:** Ne? → türü seç → Ölçü → Öneri'den bir düzen seç → Düzen'de göze dokunup ayarla → Kesim sekmesinden listeyi kesimhaneye, teklifi müşteriye gönder.
 - **Sadece fiyat:** Ne yapıyoruz? ekranında *Hızlı fiyat*: dolap ölçüsü, bölme/çekmece/raf sayısı → levha sayısı, yerleşim ve fiyat.
@@ -24,6 +24,9 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 - Uygulama içinde: Ne yapıyoruz? ekranındaki **? Nasıl kullanılır** ve **★ Yenilikler**.
 
 ## Yenilikler
+
+**24 Ekim 2026 (2)**
+- Mağaza ayrı bir web sitesi: https://muhamedparlak-sys.github.io/atolye/magaza/ — müşteri doğrudan mağazayı görür. Ayarlar ve fiyatlar `shop/config.json`'dan sayfaya gömülür; uygulamadan "Yayın kodu" ya da tek dosyalık "Site dosyası" ile yayınlanır
 
 **24 Ekim 2026**
 - Mağazam ana ekranın en üstünde ve üst çubukta: numara yaz → "Mağazamı aç"; bağlantı kendiliğinden hazırlanır, "Mağazayı gör" / "Müşteriye gönder" / "Atölyeye dön"

@@ -1,0 +1,15 @@
+{
+ "c": {
+  "n": "Atölye",
+  "wa": "",
+  "cats": {
+   "dolap": true,
+   "mutfak": true,
+   "cocuk": true
+  },
+  "disc": 10,
+  "price": true,
+  "note": ""
+ },
+ "set": null
+}
