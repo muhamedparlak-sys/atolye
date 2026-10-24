@@ -16,7 +16,7 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 
 ## Hızlı başlangıç
 
-- **Mağaza:** Ne yapıyoruz? ekranında *Mağaza (müşteri sitesi)* → WhatsApp numarası → bağlantıyı oluştur → müşteriye gönder. Siparişler WhatsApp'a tasarım bağlantısıyla gelir.
+- **Mağaza:** Ana ekranın en üstündeki *Mağazam* → WhatsApp numarası → bağlantıyı oluştur → müşteriye gönder. Siparişler WhatsApp'a tasarım bağlantısıyla gelir.
 
 - **Tasarımla:** Ne? → türü seç → Ölçü → Öneri'den bir düzen seç → Düzen'de göze dokunup ayarla → Kesim sekmesinden listeyi kesimhaneye, teklifi müşteriye gönder.
 - **Sadece fiyat:** Ne yapıyoruz? ekranında *Hızlı fiyat*: dolap ölçüsü, bölme/çekmece/raf sayısı → levha sayısı, yerleşim ve fiyat.
@@ -24,6 +24,10 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 - Uygulama içinde: Ne yapıyoruz? ekranındaki **? Nasıl kullanılır** ve **★ Yenilikler**.
 
 ## Yenilikler
+
+**24 Ekim 2026**
+- Mağazam ana ekranın en üstünde ve üst çubukta: numara yaz → "Mağazamı aç"; bağlantı kendiliğinden hazırlanır, "Mağazayı gör" / "Müşteriye gönder" / "Atölyeye dön"
+- Müşteri ürüne dokununca doğrudan 3D + fiyat + sipariş; ölçü sürgüsü ve iç düzen seçimi aynı ekranda (mutfak hariç)
 
 **23 Ekim 2026 · gece**
 - 3D hareketli: kapaklar menteşesinden dönerek açılır, çekmeceler kayar, ölçü/renk/tip değişince model yumuşakça büyür; mağazada en-boy-derinlik sürgüsü, hazır modellerde "Kurulumu izle"
