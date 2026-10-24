@@ -25,6 +25,10 @@ Ergonomi kuralları "Usta notları" olarak gösterilir: askı boşluğu, raf ara
 
 ## Yenilikler
 
+**24 Ekim 2026 (3)**
+- Mağaza odalara göre (oturma, yemek, antre, yatak, çocuk, ofis, mutfak, banyo-balkon)
+- Yeni hazır modeller (3 parametrik aile): sehpa, yan sehpa, bank, yemek/toplantı/ayakta/yönetici/sekreter/makyaj masası (yan ayaklı, etekli, depolamalı); büfe, şifonyer, komodin, ayakkabılık, vitrin (cam kapak, duvara monte); katman duvar kitaplık, duvar rafı, bölme dolap / giyinme adası
+
 **24 Ekim 2026 (2)**
 - Mağaza ayrı bir web sitesi: https://muhamedparlak-sys.github.io/atolye/magaza/ — müşteri doğrudan mağazayı görür. Ayarlar ve fiyatlar `shop/config.json`'dan sayfaya gömülür; uygulamadan "Yayın kodu" ya da tek dosyalık "Site dosyası" ile yayınlanır
 

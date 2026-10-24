@@ -70,6 +70,7 @@ Bu dosya, uzayan oturumdaki işi yeni bir oturumda kaldığı yerden sürdürmek
   - `load3D` (three r128 cdnjs + OrbitControls jsdelivr).
   - `show3D(el,boxes,{upTo,fit,far,cam,dims})` — kutularda `x0..z1`, `col`, `step`, `ex`, `kind`, `rz`.
   - `sceneBoxes`, `link3D`, `share3D`, GLB dışa aktarma.
+- **Genel aileler (2026.10.24c):** `HZG` (table / kup / kabin) + `gv(k)`, `gset`, `hzgFields(k,pre)`; değerler `HZ.g[k]`. `hzBuild` içinde `else if(HZG[o.m])` dalı. Kabin deseni `P`: k kapak, g cam kapak (cam ölçüsü hırdavata), cN çekmece, o niş. Mağaza odaları `SHOPCATS` (oturma, yemek, antre, yatak, cocuk, ofis, mutfak, banyo). Koltuk ve sandalye yok (döşeme / masif gerekir); köşe dolap varyantları henüz yok.
 - **Hazır modeller (divan, ev yatak, yer yatağı, karyola, kitaplık, öğrenme kulesi):**
   - Toplu üretim (2026.10.21g): hazır modellerin hedefi levhayı doldurmak. `hzBuild` tek adet üretir; `hzRec(B)` ana malzemede 1–12 adet için levha sayısını (pack quick) hesaplar, önerilen = küçük partide (1 adedin levhası + 1, en az 2 levha) adet başı en az levha; `HZ.qty` 0 = otomatik. `hzCur()` = `hzBatch(hzBuild(HZ), hzQty)` — ekran, kılavuz, kesim listesine aktar ve hzFit bunu kullanır. Arayüz `hzQtyHTML`, `data-hzq`.
   - Kutulu saklama ünitesi (2026.10.21f): `o.m==="saklama"`, `sW,sH,sD,sC,sP,sR(alu|cita|cnc),sB`; notlara "bir levhaya N iskelet" (pack quick ile) yazılır; `data-hzsp` hazır ölçüler, `data-hzsr` ray tipi.
